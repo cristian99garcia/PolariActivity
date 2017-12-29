@@ -20,6 +20,8 @@
 
 import random
 
+from gettext import gettext as _
+
 from consts import ALL_CHANNELS, CURRENT_CHANNEL, UserType
 
 from twisted.internet.error import ReactorAlreadyInstalledError
