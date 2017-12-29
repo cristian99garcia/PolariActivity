@@ -75,13 +75,13 @@ class Client(irc.IRCClient, GObject.GObject):
 
     def signedOn(self):
         self.emit("signed-on")
-        self.emit("status-message", "== Signed on!")
+        self.emit("status-message", _("== Signed on!"))
         for c in self.factory.channels:
             self.join(c)
 
     def joined(self, channel):
         self.emit("joined", channel)
-        self.emit("status-message", "== Joined: " + channel)
+        self.emit("status-message", _("== Joined: ") + channel)
         self.who(channel)
 
     def privmsg(self, user, channel, msg):
@@ -98,7 +98,7 @@ class Client(irc.IRCClient, GObject.GObject):
 
     def irc_ERR_NICKNAMEINUSE(self, prefix, params):
         if params[0] != "*":
-            self.emit("system-message", ALL_CHANNELS, "Nickname is already in use: %s" % params[1])
+            self.emit("system-message", ALL_CHANNELS, _("Nickname is already in use: %s") % params[1])
 
         else:
             self.nickname = get_random_nickname()
@@ -196,11 +196,11 @@ class Client(irc.IRCClient, GObject.GObject):
     def set_away(self, away, message=""):
         if away:
             self.away(message)
-            self.emit("system-message", ALL_CHANNELS, "You have been marked as being away")
+            self.emit("system-message", ALL_CHANNELS, _("You have been marked as being away"))
 
         else:
             self.back()
-            self.emit("system-message", ALL_CHANNELS, "You are no longer marked as being away")
+            self.emit("system-message", ALL_CHANNELS, _("You are no longer marked as being away"))
 
     def receivedMOTD(self, info):
         for line in info:
@@ -211,7 +211,7 @@ class Client(irc.IRCClient, GObject.GObject):
         self.emit("topic-changed", channel, topic)
 
         if "." not in nickname:
-            self.emit("system-message", channel, "%s changed the topic of %s to: %s" % (nickname, channel, topic))
+            self.emit("system-message", channel, _("{nickname} changed the topic of {channel} to: {topic}").format(nickname=nickname, channel=channel, topic=topic))
 
     def noticed(self, nickname, mynickname, message):
         self.emit("status-message", "== " + nickname.split("!")[0] + " " + message)
@@ -219,7 +219,7 @@ class Client(irc.IRCClient, GObject.GObject):
         if "You are now identified for" in message:
             new_nick = message.split(" ")[-1][1:-2]
             self.emit("nickname-changed", new_nick)
-            self.emit("system-message", CURRENT_CHANNEL, "You are now identified for %s" % new_nick)
+            self.emit("system-message", CURRENT_CHANNEL, _("You are now identified for {new_nick}").format(new_nick=new_nick))
 
     def modeChanged(self, user, channel, set, modes, args):
         usertype = UserType.NORMAL
@@ -243,7 +243,7 @@ class Client(irc.IRCClient, GObject.GObject):
 
         else:
             if args[0] != None:
-                message = "%s puts mode %s%s to %s" % (changer, "+" if set else "-", modes, args[0])
+                message = _("{changer} puts mode {plusminus}{modes} to {args}").format(changer=changer, plusminus = "+" if set else "-", modes=modes, args=args[0])
                 self.emit("system-message", channel, message)
 
         self.emit("mode-changed", channel, usertype, args[0])
@@ -316,14 +316,14 @@ class ClientFactory(protocol.ClientFactory, GObject.GObject):
                 self.client.close_channel(channel)
 
     def clientConnectionLost(self, connector, reason):
-        self.emit("system-message", ALL_CHANNELS, "Connection lost: %s" % reason)
+        self.emit("system-message", ALL_CHANNELS, _("Connection lost: {reason}").format(reason=reason))
         connector.connect()
 
     def clientConnectionFailed(self, connector, reason):
-        self.emit("system-message", ALL_CHANNELS, "Connection failed: %s" % reason)
+        self.emit("system-message", ALL_CHANNELS, _("Connection failed: {reason}").format(reason=reason))
 
     def start_connection(self, host, port):
-        self.emit("system-message", ALL_CHANNELS, "Connecting to %s:%d" % (host, port))
+        self.emit("system-message", ALL_CHANNELS, _("Connecting to {host}:{port}").format(host=host, port=port))
         reactor.connectTCP(host, port, self)
         reactor.run()
 

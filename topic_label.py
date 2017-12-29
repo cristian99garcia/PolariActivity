@@ -50,7 +50,7 @@ class TopicLabel(Gtk.EventBox):
 
         self.entry = Gtk.Entry()
         self.entry.set_text(self.topic)
-        self.entry.set_placeholder_text("Set a topic for this channel")
+        self.entry.set_placeholder_text(_("Set a topic for this channel"))
         self.entry.connect("key-press-event", self._key_press_cb)
         self.entry.connect("activate", self._activate_cb)
 

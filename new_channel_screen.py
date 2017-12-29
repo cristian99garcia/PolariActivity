@@ -86,38 +86,38 @@ class NewChannelScreen(Gtk.EventBox):
 
         self.form = Gtk.VBox()
 
-        self.nick = Field("Nick", nick or DEFAULT_NICKNAME)
+        self.nick = Field(_("Nick"), nick or DEFAULT_NICKNAME)
         self.nick.entry.connect("changed", self.__text_changed)
         self.nick.entry.connect("activate", self.send_data)
 
         if not self.logged:
             self.form.pack_start(self.nick, False, False, 5)
 
-        self.server = Field("Server", host or DEFAULT_SERVER)
+        self.server = Field(_("Server"), host or DEFAULT_SERVER)
         self.server.entry.connect("changed", self.__text_changed)
         self.server.entry.connect("activate", self.send_data)
 
         if not self.logged:
             self.form.pack_start(self.server, False, False, 5)
 
-        self.port = Field("Port", port or DEFAULT_PORT)
+        self.port = Field(_("Port"), port or DEFAULT_PORT)
         self.port.entry.connect("changed", self.__text_changed)
         self.port.entry.connect("activate", self.send_data)
 
         if not self.logged:
             self.form.pack_start(self.port, False, False, 5)
 
-        self.channels = Field("Channel", channel or DEFAULT_CHANNEL)
+        self.channels = Field(_("Channel"), channel or DEFAULT_CHANNEL)
         self.channels.entry.connect("changed", self.__text_changed)
         self.channels.entry.connect("activate", self.send_data)
         self.form.pack_start(self.channels, False, False, 5)
 
-        self.cancel = AddChannelButton("Cancel")
+        self.cancel = AddChannelButton(_("Cancel"))
         self.cancel.set_sensitive(not init)
         self.cancel.connect("clicked", self.__cancel)
         buttonbox.add(self.cancel)
 
-        self.enter = AddChannelButton("Connect!")
+        self.enter = AddChannelButton(_("Connect!"))
         self.enter.connect("clicked", self.send_data)
         buttonbox.add(self.enter)
 

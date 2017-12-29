@@ -1,0 +1,136 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US.po\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. TRANS: "name" option from activity.info file
+msgid "Polari"
+msgstr "" 
+
+#: chat_box.py:101
+msgid "Speak"
+msgstr ""
+
+#: client.py:31
+msgid "Error doing 'gtk3reactor.install()', may not work properly"
+msgstr ""
+
+#: client.py:78
+msgid "== Signed on!"
+msgstr "" 
+
+#: client.py:84
+msgid "== Joined: "
+msgstr ""
+
+# client.py:101
+msgid "Nickname is already in use: %s"
+msgstr ""
+
+# client.py:199
+msgid "You have been marked as being away"
+msgstr ""
+
+# client.py:203
+msgid "You are no longer marked as being away"
+msgstr ""
+
+# client.py:214
+msgid "%s changed the topic of %s to: %s"
+msgstr ""
+
+# client.py:222
+msgid "You are now identified for %s"
+msgstr ""
+
+# client.py:246
+msgid "%s puts mode %s%s to %s"
+msgstr ""
+
+# client.py:319
+msgid "Connection lost: %s"
+msgstr ""
+
+# client.py:323
+msgid "Connection failed: %s"
+msgstr ""
+
+# client.py:326
+msgid "Connecting to %s:%d"
+msgstr ""
+
+#: consts.py:49
+msgid " is already in use."
+msgstr ""
+
+#: consts.py:50
+msgid "Lost connection with the server..."
+msgstr ""
+
+#: consts.py:51
+msgid "Error connecting to the server...closing the socket."
+msgstr "" 
+
+#: consts.py:52
+msgid "You already have a session on this host with this channel and with this nickname."
+msgstr "" 
+
+#: consts.py:53
+msgid "Automatically selected session you tried to create."
+msgstr ""
+
+#: polari.py:71
+msgid "Add a channel"
+msgstr ""
+
+#: polari_canvas.py:191
+msgid "Logging in, please wait"
+msgstr ""
+
+#: polari_canvas.py:212
+msgid "You've already joined %s"
+msgstr ""
+
+#: polari_canvas.py:236
+msgid "Joined to: %s"
+msgstr ""
+
+#: polari_canvas.py:270
+msgid "%s has changed nick to %s"
+msgstr ""
+
+#: polari_canvas.py:278
+msgid "%s joined."
+msgstr ""
+
+#: polari_canvas.py:283
+msgid "%s has left."
+msgstr ""
+
+#: polari_canvas.py:291
+msgid "%s has quit. [%s]"
+msgstr ""
+
+#: polari_canvas.py:346
+msgid "Polari for Sugar"
+msgstr "" 
+
+#: polari_canvas.py:352
+msgid "Add channel"
+msgstr ""
+
+#: topic_label.py:53
+msgid "Set a topic for this channel"
+msgstr ""

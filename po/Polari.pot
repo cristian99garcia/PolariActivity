@@ -1,0 +1,178 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-12-30 08:15+1100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: activity/activity.info:2
+msgid "Polari"
+msgstr ""
+
+#: chat_box.py:101
+msgid "Speak"
+msgstr ""
+
+#: client.py:78
+msgid "== Signed on!"
+msgstr ""
+
+#: client.py:84
+msgid "== Joined: "
+msgstr ""
+
+#: client.py:101
+#, python-format
+msgid "Nickname is already in use: %s"
+msgstr ""
+
+#: client.py:199
+msgid "You have been marked as being away"
+msgstr ""
+
+#: client.py:203
+msgid "You are no longer marked as being away"
+msgstr ""
+
+#: client.py:214
+#, python-brace-format
+msgid "{nickname} changed the topic of {channel} to: {topic}"
+msgstr ""
+
+#: client.py:222
+#, python-brace-format
+msgid "You are now identified for {new_nick}"
+msgstr ""
+
+#: client.py:246
+#, python-brace-format
+msgid "{changer} puts mode {plusminus}{modes} to {args}"
+msgstr ""
+
+#: client.py:319
+#, python-brace-format
+msgid "Connection lost: {reason}"
+msgstr ""
+
+#: client.py:323
+#, python-brace-format
+msgid "Connection failed: {reason}"
+msgstr ""
+
+#: client.py:326
+#, python-brace-format
+msgid "Connecting to {host}:{port}"
+msgstr ""
+
+#: consts.py:49
+msgid " is already in use."
+msgstr ""
+
+#: consts.py:50
+msgid "Lost connection with the server..."
+msgstr ""
+
+#: consts.py:51
+msgid "Error connecting to the server... closing the socket."
+msgstr ""
+
+#: consts.py:52
+msgid ""
+"You already have a session on this host with this channel and with this "
+"nickname."
+msgstr ""
+
+#: consts.py:53
+msgid "Automatically selected session you tried to create."
+msgstr ""
+
+#: new_channel_screen.py:89
+msgid "Nick"
+msgstr ""
+
+#: new_channel_screen.py:96
+msgid "Server"
+msgstr ""
+
+#: new_channel_screen.py:103
+msgid "Port"
+msgstr ""
+
+#: new_channel_screen.py:110
+msgid "Channel"
+msgstr ""
+
+#: new_channel_screen.py:115
+msgid "Cancel"
+msgstr ""
+
+#: new_channel_screen.py:120
+msgid "Connect!"
+msgstr ""
+
+#: polari.py:71
+msgid "Add a channel"
+msgstr ""
+
+#: polari_canvas.py:191
+msgid "Logging in, please wait"
+msgstr ""
+
+#: polari_canvas.py:212
+#, python-format
+msgid "You've already joined %s"
+msgstr ""
+
+#: polari_canvas.py:236
+#, python-format
+msgid "Joined to: %s"
+msgstr ""
+
+#: polari_canvas.py:270
+#, python-brace-format
+msgid "{old_nick} has changed nick to {new_nick}"
+msgstr ""
+
+#: polari_canvas.py:278
+#, python-brace-format
+msgid "{nickname} joined."
+msgstr ""
+
+#: polari_canvas.py:283
+#, python-brace-format
+msgid "{nickname} has left."
+msgstr ""
+
+#: polari_canvas.py:291
+#, python-brace-format
+msgid "{nickname} has quit. {message}"
+msgstr ""
+
+#: polari_canvas.py:315
+#, python-brace-format
+msgid " * {nickname} {message}"
+msgstr ""
+
+#: polari_canvas.py:346
+msgid "Polari for Sugar"
+msgstr ""
+
+#: polari_canvas.py:352
+msgid "Add channel"
+msgstr ""
+
+#: topic_label.py:53
+msgid "Set a topic for this channel"
+msgstr ""

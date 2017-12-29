@@ -188,7 +188,7 @@ class PolariCanvas(Gtk.VBox):
         if channel.strip() != "":
             self.new_channel(channel)
 
-        self.chat_box.add_system_message(STATUS_CHANNEL, "Logging in, please wait")
+        self.chat_box.add_system_message(STATUS_CHANNEL, _("Logging in, please wait"))
         self.factory.start_connection(host, port)
 
     def _new_channel(self, widget, channel):
@@ -209,7 +209,7 @@ class PolariCanvas(Gtk.VBox):
             channel = "#" + channel
 
         if channel in self.chat_box.channels:
-            self.chat_box.add_system_message(channel, "You've already joined %s" % channel)
+            self.chat_box.add_system_message(channel, _("You've already joined %s") % channel)
             return
 
         self.chat_box.add_channel(channel)
@@ -233,7 +233,7 @@ class PolariCanvas(Gtk.VBox):
             channel = channel[1:]  # Isn't a channel, is a user (removing #)
 
         else:
-            self.chat_box.add_system_message(channel, "Joined to: %s" % channel)
+            self.chat_box.add_system_message(channel, _("Joined to: %s") % channel)
 
         self.channels_listbox.change_spinner(channel, False)
 
@@ -267,7 +267,7 @@ class PolariCanvas(Gtk.VBox):
         for channel in self.chat_box.channels:
             nicknames = self.chat_box.nicks[channel]
             if old_nick in nicknames:
-                self.chat_box.add_system_message(channel, "%s has changed nick to %s" % (old_nick, new_nick))
+                self.chat_box.add_system_message(channel, _("{old_nick} has changed nick to {new_nick}").format(old_nick, new_nick))
                 self.chat_box.remove_nickname(channel, old_nick)
                 self.chat_box.add_nickname(channel, new_nick)
 
@@ -275,12 +275,12 @@ class PolariCanvas(Gtk.VBox):
                     self.chat_box.set_nickname(new_nick)
 
     def _user_joined(self, factory, channel, nickname):
-        self.chat_box.add_system_message(channel, "%s joined." % nickname)
+        self.chat_box.add_system_message(channel, _("{nickname} joined.").format(nickname=nickname))
         self.chat_box.add_nickname(channel, nickname)
         self.afk_manager.start_counting(nickname, restart=False)
 
     def _user_left(self, factory, channel, nickname):
-        self.chat_box.add_system_message(channel, "%s has left." % nickname)
+        self.chat_box.add_system_message(channel, _("{nickname} has left.").format(nickname=nickname))
         self.chat_box.remove_nickname(channel, nickname)
         self.afk_manager.remove_nickname(nickname)
 
@@ -288,7 +288,7 @@ class PolariCanvas(Gtk.VBox):
         for channel in self.chat_box.channels:
             nicknames = self.chat_box.nicks[channel]
             if nickname in nicknames:
-                self.chat_box.add_system_message(channel, "%s has quit. [%s]" % (nickname, message))
+                self.chat_box.add_system_message(channel, _("{nickname} has quit. {message}").format(nickname=nickname, message=message))
 
         self.chat_box.remove_nickname_from_all_channels(nickname)
         self.afk_manager.remove_nickname(nickname)
@@ -312,7 +312,7 @@ class PolariCanvas(Gtk.VBox):
             self.afk_manager.start_counting(nickname, restart=False)
 
     def _me_command(self, factory, channel, nickname, message):
-        self.chat_box.add_system_message(channel, " * %s %s" % (nickname, message))
+        self.chat_box.add_system_message(channel, _(" * {nickname} {message}").format(nickname=nickname, message=message))
 
     def _status_message(self, factory, message):
         self.chat_box.add_system_message(STATUS_CHANNEL, message)
@@ -343,13 +343,13 @@ if __name__ == "__main__":
         polari.set_screen(Screen.NEW_CHANNEL)
 
     win = Gtk.Window()
-    win.set_title("Polari for Sugar")
+    win.set_title(_("Polari for Sugar"))
     win.connect("destroy", _quit)
 
     polari = PolariCanvas()
     win.add(polari)
 
-    button = Gtk.Button.new_with_label("Add channel")
+    button = Gtk.Button.new_with_label(_("Add channel"))
     button.connect("clicked", _clicked, polari)
     polari.pack_end(button, False, False, 0)
 

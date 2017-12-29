@@ -1,3 +1,5 @@
 *.pyc
 *~
 *.pyw
+dist
+locale
