@@ -15,13 +15,37 @@
 """
 import weakref
 
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.interface import Interface
 from zope.interface import ro
+from zope.interface.interfaces import IAdapterRegistry
 
 from zope.interface._compat import _normalize_name
+from zope.interface._compat import STRING_TYPES
+from zope.interface._compat import _use_c_impl
 
-_BLANK = ''
+__all__ = [
+    'AdapterRegistry',
+    'VerifyingAdapterRegistry',
+]
+
+# ``tuple`` and ``list`` cooperate so that ``tuple([some list])``
+# directly allocates and iterates at the C level without using a
+# Python iterator. That's not the case for
+# ``tuple(generator_expression)`` or ``tuple(map(func, it))``.
+##
+# 3.8
+# ``tuple([t for t in range(10)])``      -> 610ns
+# ``tuple(t for t in range(10))``        -> 696ns
+# ``tuple(map(lambda t: t, range(10)))`` -> 881ns
+##
+# 2.7
+# ``tuple([t fon t in range(10)])``      -> 625ns
+# ``tuple(t for t in range(10))``        -> 665ns
+# ``tuple(map(lambda t: t, range(10)))`` -> 958ns
+#
+# All three have substantial variance.
 
 class BaseAdapterRegistry(object):
 
@@ -100,11 +124,13 @@ class BaseAdapterRegistry(object):
         self._v_lookup.changed(originally_changed)
 
     def register(self, required, provided, name, value):
+        if not isinstance(name, STRING_TYPES):
+            raise ValueError('name is not a string')
         if value is None:
             self.unregister(required, provided, name, value)
             return
 
-        required = tuple(map(_convert_None_to_Interface, required))
+        required = tuple([_convert_None_to_Interface(r) for r in required])
         name = _normalize_name(name)
         order = len(required)
         byorder = self._adapters
@@ -132,8 +158,8 @@ class BaseAdapterRegistry(object):
 
         self.changed(self)
 
-    def registered(self, required, provided, name=_BLANK):
-        required = tuple(map(_convert_None_to_Interface, required))
+    def registered(self, required, provided, name=u''):
+        required = tuple([_convert_None_to_Interface(r) for r in required])
         name = _normalize_name(name)
         order = len(required)
         byorder = self._adapters
@@ -152,7 +178,7 @@ class BaseAdapterRegistry(object):
         return components.get(name)
 
     def unregister(self, required, provided, name, value=None):
-        required = tuple(map(_convert_None_to_Interface, required))
+        required = tuple([_convert_None_to_Interface(r) for r in required])
         order = len(required)
         byorder = self._adapters
         if order >= len(byorder):
@@ -200,8 +226,8 @@ class BaseAdapterRegistry(object):
         self.changed(self)
 
     def subscribe(self, required, provided, value):
-        required = tuple(map(_convert_None_to_Interface, required))
-        name = _BLANK
+        required = tuple([_convert_None_to_Interface(r) for r in required])
+        name = u''
         order = len(required)
         byorder = self._subscribers
         while len(byorder) <= order:
@@ -227,7 +253,7 @@ class BaseAdapterRegistry(object):
         self.changed(self)
 
     def unsubscribe(self, required, provided, value=None):
-        required = tuple(map(_convert_None_to_Interface, required))
+        required = tuple([_convert_None_to_Interface(r) for r in required])
         order = len(required)
         byorder = self._subscribers
         if order >= len(byorder):
@@ -244,29 +270,29 @@ class BaseAdapterRegistry(object):
             lookups.append((components, k))
             components = d
 
-        old = components.get(_BLANK)
+        old = components.get(u'')
         if not old:
             # this is belt-and-suspenders against the failure of cleanup below
-            return  #pragma NO COVERAGE 
+            return  # pragma: no cover
 
         if value is None:
             new = ()
         else:
-            new = tuple([v for v in old if v is not value])
+            new = tuple([v for v in old if v != value])
 
         if new == old:
             return
 
         if new:
-            components[_BLANK] = new
+            components[u''] = new
         else:
-            # Instead of setting components[_BLANK] = new, we clean out
+            # Instead of setting components[u''] = new, we clean out
             # empty containers, since we don't want our keys to
             # reference global objects (interfaces) unnecessarily.  This
             # is often a problem when an interface is slated for
             # removal; a hold-over entry in the registry can make it
             # difficult to remove such interfaces.
-            del components[_BLANK]
+            del components[u'']
             for comp, k in reversed(lookups):
                 d = comp[k]
                 if d:
@@ -286,14 +312,16 @@ class BaseAdapterRegistry(object):
 
     # XXX hack to fake out twisted's use of a private api.  We need to get them
     # to use the new registed method.
-    def get(self, _): #pragma NO COVER
+    def get(self, _): # pragma: no cover
         class XXXTwistedFakeOut:
             selfImplied = {}
         return XXXTwistedFakeOut
 
 
 _not_in_mapping = object()
-class LookupBaseFallback(object):
+
+@_use_c_impl
+class LookupBase(object):
 
     def __init__(self):
         self._cache = {}
@@ -318,7 +346,9 @@ class LookupBaseFallback(object):
             cache = c
         return cache
 
-    def lookup(self, required, provided, name=_BLANK, default=None):
+    def lookup(self, required, provided, name=u'', default=None):
+        if not isinstance(name, STRING_TYPES):
+            raise ValueError('name is not a string')
         cache = self._getcache(provided, name)
         required = tuple(required)
         if len(required) == 1:
@@ -338,7 +368,9 @@ class LookupBaseFallback(object):
 
         return result
 
-    def lookup1(self, required, provided, name=_BLANK, default=None):
+    def lookup1(self, required, provided, name=u'', default=None):
+        if not isinstance(name, STRING_TYPES):
+            raise ValueError('name is not a string')
         cache = self._getcache(provided, name)
         result = cache.get(required, _not_in_mapping)
         if result is _not_in_mapping:
@@ -349,10 +381,12 @@ class LookupBaseFallback(object):
 
         return result
 
-    def queryAdapter(self, object, provided, name=_BLANK, default=None):
+    def queryAdapter(self, object, provided, name=u'', default=None):
         return self.adapter_hook(provided, object, name, default)
 
-    def adapter_hook(self, provided, object, name=_BLANK, default=None):
+    def adapter_hook(self, provided, object, name=u'', default=None):
+        if not isinstance(name, STRING_TYPES):
+            raise ValueError('name is not a string')
         required = providedBy(object)
         cache = self._getcache(provided, name)
         factory = cache.get(required, _not_in_mapping)
@@ -360,6 +394,8 @@ class LookupBaseFallback(object):
             factory = self.lookup((required, ), provided, name)
 
         if factory is not None:
+            if isinstance(object, super):
+                object = object.__self__
             result = factory(object)
             if result is not None:
                 return result
@@ -395,18 +431,12 @@ class LookupBaseFallback(object):
 
         return result
 
-LookupBasePy = LookupBaseFallback # BBB
 
-try:
-    from _zope_interface_coptimizations import LookupBase
-except ImportError: #pragma NO COVER
-    LookupBase = LookupBaseFallback
-
-
-class VerifyingBaseFallback(LookupBaseFallback):
+@_use_c_impl
+class VerifyingBase(LookupBaseFallback):
     # Mixin for lookups against registries which "chain" upwards, and
     # whose lookups invalidate their own caches whenever a parent registry
-    # bumps its own '_generation' counter.  E.g., used by 
+    # bumps its own '_generation' counter.  E.g., used by
     # zope.component.persistentregistry
 
     def changed(self, originally_changed):
@@ -431,13 +461,6 @@ class VerifyingBaseFallback(LookupBaseFallback):
         self._verify()
         return LookupBaseFallback.subscriptions(self, required, provided)
 
-VerifyingBasePy = VerifyingBaseFallback #BBB
-
-try:
-    from _zope_interface_coptimizations import VerifyingBase
-except ImportError: #pragma NO COVER
-    VerifyingBase = VerifyingBaseFallback
-
 
 class AdapterLookupBase(object):
 
@@ -449,7 +472,7 @@ class AdapterLookupBase(object):
 
     def changed(self, ignored=None):
         super(AdapterLookupBase, self).changed(None)
-        for r in list(self._required.keys()):
+        for r in self._required.keys():
             r = r()
             if r is not None:
                 r.unsubscribe(self)
@@ -468,7 +491,7 @@ class AdapterLookupBase(object):
     # We could separate this by order and name, thus reducing the
     # number of provided interfaces to search at run time.  The tradeoff,
     # however, is that we have to store more information.  For example,
-    # is the same interface is provided for multiple names and if the
+    # if the same interface is provided for multiple names and if the
     # interface extends many interfaces, we'll have to keep track of
     # a fair bit of information for each name.  It's better to
     # be space efficient here and be time efficient in the cache
@@ -510,7 +533,7 @@ class AdapterLookupBase(object):
                 r.subscribe(self)
                 _refs[ref] = 1
 
-    def _uncached_lookup(self, required, provided, name=_BLANK):
+    def _uncached_lookup(self, required, provided, name=u''):
         required = tuple(required)
         result = None
         order = len(required)
@@ -533,12 +556,12 @@ class AdapterLookupBase(object):
 
         return result
 
-    def queryMultiAdapter(self, objects, provided, name=_BLANK, default=None):
-        factory = self.lookup(list(map(providedBy, objects)), provided, name)
+    def queryMultiAdapter(self, objects, provided, name=u'', default=None):
+        factory = self.lookup([providedBy(o) for o in objects], provided, name)
         if factory is None:
             return default
 
-        result = factory(*objects)
+        result = factory(*[o.__self__ if isinstance(o, super) else o for o in objects])
         if result is None:
             return default
 
@@ -581,7 +604,7 @@ class AdapterLookupBase(object):
                 if extendors is None:
                     continue
 
-            _subscriptions(byorder[order], required, extendors, _BLANK,
+            _subscriptions(byorder[order], required, extendors, u'',
                            result, 0, order)
 
         self._subscribe(*required)
@@ -589,7 +612,7 @@ class AdapterLookupBase(object):
         return result
 
     def subscribers(self, objects, provided):
-        subscriptions = self.subscriptions(list(map(providedBy, objects)), provided)
+        subscriptions = self.subscriptions([providedBy(o) for o in objects], provided)
         if provided is None:
             result = ()
             for subscription in subscriptions:
@@ -605,13 +628,14 @@ class AdapterLookupBase(object):
 class AdapterLookup(AdapterLookupBase, LookupBase):
     pass
 
+@implementer(IAdapterRegistry)
 class AdapterRegistry(BaseAdapterRegistry):
 
     LookupClass = AdapterLookup
 
     def __init__(self, bases=()):
         # AdapterRegisties are invalidating registries, so
-        # we need to keep track of out invalidating subregistries.
+        # we need to keep track of our invalidating subregistries.
         self._v_subregistries = weakref.WeakKeyDictionary()
 
         super(AdapterRegistry, self).__init__(bases)
@@ -637,13 +661,14 @@ class AdapterRegistry(BaseAdapterRegistry):
     def changed(self, originally_changed):
         super(AdapterRegistry, self).changed(originally_changed)
 
-        for sub in list(self._v_subregistries.keys()):
+        for sub in self._v_subregistries.keys():
             sub.changed(originally_changed)
 
 
 class VerifyingAdapterLookup(AdapterLookupBase, VerifyingBase):
     pass
 
+@implementer(IAdapterRegistry)
 class VerifyingAdapterRegistry(BaseAdapterRegistry):
 
     LookupClass = VerifyingAdapterLookup
@@ -655,16 +680,21 @@ def _convert_None_to_Interface(x):
         return x
 
 def _lookup(components, specs, provided, name, i, l):
+    # this function is called very often.
+    # The components.get in loops is executed 100 of 1000s times.
+    # by loading get into a local variable the bytecode
+    # "LOAD_FAST 0 (components)" in the loop can be eliminated.
+    components_get = components.get
     if i < l:
         for spec in specs[i].__sro__:
-            comps = components.get(spec)
+            comps = components_get(spec)
             if comps:
                 r = _lookup(comps, specs, provided, name, i+1, l)
                 if r is not None:
                     return r
     else:
         for iface in provided:
-            comps = components.get(iface)
+            comps = components_get(iface)
             if comps:
                 r = comps.get(name)
                 if r is not None:
@@ -673,26 +703,28 @@ def _lookup(components, specs, provided, name, i, l):
     return None
 
 def _lookupAll(components, specs, provided, result, i, l):
+    components_get = components.get  # see _lookup above
     if i < l:
         for spec in reversed(specs[i].__sro__):
-            comps = components.get(spec)
+            comps = components_get(spec)
             if comps:
                 _lookupAll(comps, specs, provided, result, i+1, l)
     else:
         for iface in reversed(provided):
-            comps = components.get(iface)
+            comps = components_get(iface)
             if comps:
                 result.update(comps)
 
 def _subscriptions(components, specs, provided, name, result, i, l):
+    components_get = components.get  # see _lookup above
     if i < l:
         for spec in reversed(specs[i].__sro__):
-            comps = components.get(spec)
+            comps = components_get(spec)
             if comps:
                 _subscriptions(comps, specs, provided, name, result, i+1, l)
     else:
         for iface in reversed(provided):
-            comps = components.get(iface)
+            comps = components_get(iface)
             if comps:
                 comps = comps.get(name)
                 if comps:

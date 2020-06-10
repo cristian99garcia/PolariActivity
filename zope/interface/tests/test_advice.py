@@ -45,8 +45,6 @@ class FrameInfoTest(unittest.TestCase):
     @_skip_under_py3k
     def test_w_ClassicClass(self):
         from zope.interface.tests import advisory_testing
-        if advisory_testing.ClassicClass is None:
-            return
         (kind,
          module,
          f_locals,
@@ -111,18 +109,6 @@ class AdviceTests(unittest.TestCase):
 
         self.assertEqual(log, [(1, Foo), (2, [Foo]), (3, [[Foo]])])
 
-    def TODOtest_outside(self):
-        from zope.interface.tests.advisory_testing import ping
-        # Disabled because the check does not work with doctest tests.
-        try:
-            ping([], 1)
-        except SyntaxError:
-            pass
-        else:
-            raise AssertionError(
-                "Should have detected advice outside class body"
-            )
-
     @_skip_under_py3k
     def test_single_explicit_meta(self):
         from zope.interface.tests.advisory_testing import ping
@@ -130,7 +116,8 @@ class AdviceTests(unittest.TestCase):
         class Metaclass(type):
             pass
 
-        class Concrete(Metaclass, metaclass=Metaclass):
+        class Concrete(Metaclass):
+            __metaclass__ = Metaclass
             ping([],1)
 
         Concrete, = Concrete
@@ -147,25 +134,24 @@ class AdviceTests(unittest.TestCase):
         class Metaclass2(type):
             pass
 
-        class Base1(metaclass=Metaclass1):
-            pass
+        class Base1:
+            __metaclass__ = Metaclass1
 
-        class Base2(metaclass=Metaclass2):
-            pass
+        class Base2:
+            __metaclass__ = Metaclass2
 
         try:
             class Derived(Base1, Base2):
                 ping([], 1)
-
+            self.fail("Should have gotten incompatibility error")
         except TypeError:
             pass
-        else:
-            raise AssertionError("Should have gotten incompatibility error")
 
         class Metaclass3(Metaclass1, Metaclass2):
             pass
 
-        class Derived(Base1, Base2, metaclass=Metaclass3):
+        class Derived(Base1, Base2):
+            __metaclass__ = Metaclass3
             ping([], 1)
 
         self.assertTrue(isinstance(Derived, list))
@@ -175,10 +161,7 @@ class AdviceTests(unittest.TestCase):
     @_skip_under_py3k
     def test_meta_no_bases(self):
         from zope.interface.tests.advisory_testing import ping
-        try:
-            from types import ClassType
-        except ImportError:
-            return
+        from types import ClassType
         class Thing:
             ping([], 1)
         klass, = Thing # unpack list created by pong
@@ -196,12 +179,12 @@ class Test_isClassAdvisor(unittest.TestCase):
 
     def test_w_normal_function(self):
         def foo():
-            pass
+            raise NotImplementedError()
         self.assertEqual(self._callFUT(foo), False)
 
     def test_w_advisor_function(self):
         def bar():
-            pass
+            raise NotImplementedError()
         bar.previousMetaclass = object()
         self.assertEqual(self._callFUT(bar), True)
 
@@ -232,8 +215,8 @@ class Test_determineMetaclass(unittest.TestCase):
         class Metameta(type):
             pass
 
-        class Meta(type, metaclass=Metameta):
-            pass
+        class Meta(type):
+            __metaclass__ = Metameta
 
         self.assertEqual(self._callFUT((Meta, type)), Metameta)
 
@@ -259,10 +242,10 @@ class Test_determineMetaclass(unittest.TestCase):
             pass
         class Meta_B(Meta_A):
             pass
-        class A(type, metaclass=Meta_A):
-            pass
-        class B(type, metaclass=Meta_B):
-            pass
+        class A(type):
+            __metaclass__ = Meta_A
+        class B(type):
+            __metaclass__ = Meta_B
         self.assertEqual(self._callFUT((A, B,)), Meta_B)
 
     @_skip_under_py2
@@ -292,10 +275,10 @@ class Test_determineMetaclass(unittest.TestCase):
             pass
         class Meta_B(type):
             pass
-        class A(type, metaclass=Meta_A):
-            pass
-        class B(type, metaclass=Meta_B):
-            pass
+        class A(type):
+            __metaclass__ = Meta_A
+        class B(type):
+            __metaclass__ = Meta_B
         self.assertRaises(TypeError, self._callFUT, (A, B,))
 
     @_skip_under_py2
@@ -370,14 +353,3 @@ class Test_minimalBases(unittest.TestCase):
         class B(object):
             pass
         self.assertEqual(self._callFUT([A, B, A]), [B, A])
-
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(FrameInfoTest),
-        unittest.makeSuite(AdviceTests),
-        unittest.makeSuite(Test_isClassAdvisor),
-        unittest.makeSuite(Test_determineMetaclass),
-        unittest.makeSuite(Test_minimalBases),
-    ))

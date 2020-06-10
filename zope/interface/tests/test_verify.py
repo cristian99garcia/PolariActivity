@@ -15,12 +15,26 @@
 """
 import unittest
 
+# pylint:disable=inherit-non-class,no-method-argument,no-self-argument
 
 class Test_verifyClass(unittest.TestCase):
 
-    def _callFUT(self, iface, klass):
+    verifier = None
+
+    def setUp(self):
+        self.verifier = self._get_FUT()
+
+    @classmethod
+    def _get_FUT(cls):
         from zope.interface.verify import verifyClass
-        return verifyClass(iface, klass)
+        return verifyClass
+
+    _adjust_object_before_verify = lambda self, x: x
+
+    def _callFUT(self, iface, klass, **kwargs):
+        return self.verifier(iface,
+                             self._adjust_object_before_verify(klass),
+                             **kwargs)
 
     def test_class_doesnt_implement(self):
         from zope.interface import Interface
@@ -54,7 +68,8 @@ class Test_verifyClass(unittest.TestCase):
         from zope.interface.exceptions import BrokenImplementation
 
         class ICurrent(Interface):
-            def method(): pass
+            def method():
+                pass
 
         @implementer(ICurrent)
         class Current(object):
@@ -68,13 +83,14 @@ class Test_verifyClass(unittest.TestCase):
         from zope.interface import implementer
 
         class ICurrent(Interface):
-            def method(): pass
+            def method():
+                pass
 
         @implementer(ICurrent)
         class Current(object):
 
             def method(self):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -112,7 +128,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(IDerived, Current)
 
@@ -130,7 +146,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, b):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -148,7 +164,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -167,7 +183,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -186,7 +202,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -205,7 +221,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, b):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -223,7 +239,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, b=None):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -240,7 +256,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, *args):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -258,7 +274,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, **kw):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -276,7 +292,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, *args):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -293,7 +309,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, *args, **kw):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -311,7 +327,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -329,7 +345,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, *args):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -346,7 +362,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, *args):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -363,7 +379,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, **kw):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -381,7 +397,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a, *args):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -401,7 +417,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current(object):
 
             def method(self, a):
-                pass
+                raise NotImplementedError()
 
         self.assertRaises(BrokenMethodImplementation,
                           self._callFUT, ICurrent, Current)
@@ -419,7 +435,7 @@ class Test_verifyClass(unittest.TestCase):
         class Current:
 
             def attr(self):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
@@ -476,11 +492,11 @@ class Test_verifyClass(unittest.TestCase):
 
         class QuasiMethod(Method):
             def __call__(self, *args, **kw):
-                pass
+                raise NotImplementedError()
 
         class QuasiCallable(object):
             def __call__(self, *args, **kw):
-                pass
+                raise NotImplementedError()
 
         class ICurrent(Interface):
             attr = QuasiMethod('This is callable')
@@ -510,17 +526,75 @@ class Test_verifyClass(unittest.TestCase):
 
             @decorator
             def method(self, a):
-                pass
+                raise NotImplementedError()
 
         self._callFUT(ICurrent, Current)
 
+    def test_dict_IFullMapping(self):
+        # A dict should be an IFullMapping, but this exposes two
+        # issues. First, on CPython, methods of builtin types are
+        # "method_descriptor" objects, and are harder to introspect.
+        # Second, on PyPy, the signatures can be just plain wrong,
+        # specifying as required arguments that are actually optional.
+        # See https://github.com/zopefoundation/zope.interface/issues/118
+        from zope.interface.common.mapping import IFullMapping
+        self._callFUT(IFullMapping, dict, tentative=True)
+
+    def test_list_ISequence(self):
+        # As for test_dict_IFullMapping
+        from zope.interface.common.sequence import ISequence
+        self._callFUT(ISequence, list, tentative=True)
+
+    def test_tuple_IReadSequence(self):
+        # As for test_dict_IFullMapping
+        from zope.interface.common.sequence import IReadSequence
+        self._callFUT(IReadSequence, tuple, tentative=True)
+
+
+    def test_multiple_invalid(self):
+        from zope.interface.exceptions import MultipleInvalid
+        from zope.interface.exceptions import DoesNotImplement
+        from zope.interface.exceptions import BrokenImplementation
+        from zope.interface import Interface
+        from zope.interface import classImplements
+
+        class ISeveralMethods(Interface):
+            def meth1(arg1):
+                "Method 1"
+            def meth2(arg1):
+                "Method 2"
+
+        class SeveralMethods(object):
+            pass
+
+        with self.assertRaises(MultipleInvalid) as exc:
+            self._callFUT(ISeveralMethods, SeveralMethods)
+
+        ex = exc.exception
+        self.assertEqual(3, len(ex.exceptions))
+        self.assertIsInstance(ex.exceptions[0], DoesNotImplement)
+        self.assertIsInstance(ex.exceptions[1], BrokenImplementation)
+        self.assertIsInstance(ex.exceptions[2], BrokenImplementation)
+
+        # If everything else is correct, only the single error is raised without
+        # the wrapper.
+        classImplements(SeveralMethods, ISeveralMethods)
+        SeveralMethods.meth1 = lambda self, arg1: "Hi"
+
+        with self.assertRaises(BrokenImplementation):
+            self._callFUT(ISeveralMethods, SeveralMethods)
+
 class Test_verifyObject(Test_verifyClass):
 
-    def _callFUT(self, iface, target):
+    @classmethod
+    def _get_FUT(cls):
         from zope.interface.verify import verifyObject
+        return verifyObject
+
+    def _adjust_object_before_verify(self, target):
         if isinstance(target, (type, type(OldSkool))):
             target = target()
-        return verifyObject(iface, target)
+        return target
 
     def test_class_misses_attribute_for_attribute(self):
         # This check *fails* for verifyObject
@@ -557,15 +631,26 @@ class Test_verifyObject(Test_verifyClass):
         self.assertRaises(DoesNotImplement,
                           self._callFUT, IDummyModule, dummy)
 
+    def test_staticmethod_hit_on_class(self):
+        from zope.interface import Interface
+        from zope.interface import provider
+        from zope.interface.verify import verifyObject
+
+        class IFoo(Interface):
+
+            def bar(a, b):
+                "The bar method"
+
+        @provider(IFoo)
+        class Foo(object):
+
+            @staticmethod
+            def bar(a, b):
+                raise AssertionError("We're never actually called")
+
+        # Don't use self._callFUT, we don't want to instantiate the
+        # class.
+        verifyObject(IFoo, Foo)
+
 class OldSkool:
     pass
-
-def test_suite():
-    #import doctest
-    return unittest.TestSuite((
-        unittest.makeSuite(Test_verifyClass),
-        unittest.makeSuite(Test_verifyObject),
-    #   This one needs to turn into just docs.
-    #doctest.DocFileSuite('../verify.txt',
-    #                     optionflags=doctest.NORMALIZE_WHITESPACE),
-    ))
