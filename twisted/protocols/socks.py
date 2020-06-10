@@ -207,7 +207,7 @@ class SOCKSv4(protocol.Protocol):
                                         their_peer.host,their_peer.port))
         while data:
             p,data=data[:16],data[16:]
-            f.write(string.join(['%02X'%ord(x) for x in p],' ')+' ')
+            f.write(string.join(map(lambda x:'%02X'%ord(x),p),' ')+' ')
             f.write((16-len(p))*3*' ')
             for c in p:
                 if len(repr(c))>3: f.write('.')

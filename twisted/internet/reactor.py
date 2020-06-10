@@ -31,7 +31,7 @@ this is not currently possible.
 @see: L{IReactorPluggableResolver<twisted.internet.interfaces.IReactorPluggableResolver>}
 """
 
-
+from __future__ import division, absolute_import
 
 import sys
 del sys.modules['twisted.internet.reactor']

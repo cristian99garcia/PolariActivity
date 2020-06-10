@@ -6,7 +6,6 @@ Test ssh/channel.py.
 """
 
 
-
 from zope.interface.verify import verifyObject
 
 try:
@@ -314,7 +313,7 @@ class ChannelTests(unittest.TestCase):
         Test that writeSequence is equivalent to write(''.join(sequece)).
         """
         self.channel.addWindowBytes(20)
-        self.channel.writeSequence(list(map(intToBytes, list(range(10)))))
+        self.channel.writeSequence(map(intToBytes, range(10)))
         self.assertEqual(self.conn.data[self.channel], [b'0123456789'])
 
 

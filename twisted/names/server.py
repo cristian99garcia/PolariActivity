@@ -17,7 +17,6 @@ for resolvers to deal with.  Fix it.
 @author: Jp Calderone
 """
 
-
 import time
 
 from twisted.internet import protocol

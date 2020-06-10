@@ -7,7 +7,6 @@ L{twisted.trial.unittest.TestCase}.
 """
 
 
-
 from twisted.trial.unittest import SynchronousTestCase, TestCase
 
 

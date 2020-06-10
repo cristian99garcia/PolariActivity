@@ -6,7 +6,6 @@ I am a simple test resource.
 """
 
 
-
 from twisted.web import static
 
 

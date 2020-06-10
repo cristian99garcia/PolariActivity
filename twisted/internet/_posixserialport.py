@@ -7,7 +7,6 @@ Serial Port Protocol
 """
 
 
-
 # dependent on pyserial ( http://pyserial.sf.net/ )
 # only tested w/ 1.18 (5 Dec 2002)
 from serial import PARITY_NONE

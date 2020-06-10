@@ -6,7 +6,6 @@ Utilities for dealing with processes.
 """
 
 
-
 import os
 
 
@@ -33,7 +32,7 @@ def which(name, flags=os.X_OK):
     were found.
     """
     result = []
-    exts = list([_f for _f in os.environ.get('PATHEXT', '').split(os.pathsep) if _f])
+    exts = list(filter(None, os.environ.get('PATHEXT', '').split(os.pathsep)))
     path = os.environ.get('PATH', None)
 
     if path is None:

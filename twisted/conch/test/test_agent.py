@@ -5,7 +5,6 @@
 Tests for L{twisted.conch.ssh.agent}.
 """
 
-
 import struct
 
 from twisted.trial import unittest

@@ -67,11 +67,11 @@ class UniversalPicklingErrorTests(unittest.TestCase):
         L{_UniversalPicklingError}.
         """
         try:
-            import pickle
+            import cPickle
         except ImportError:
             raise unittest.SkipTest("cPickle not available.")
         else:
-            self.assertRaises(pickle.PicklingError,
+            self.assertRaises(cPickle.PicklingError,
                               self.raise_UniversalPicklingError)
 
 
@@ -117,12 +117,12 @@ class UnpickleMethodTests(unittest.TestCase):
         self.assertEqual(pickle.dumps(sampleFunction, protocol=0),
                          expected("0"))
         try:
-            import pickle
+            import cPickle
         except:
             pass
         else:
             self.assertEqual(
-                pickle.dumps(sampleFunction, protocol=0),
+                cPickle.dumps(sampleFunction, protocol=0),
                 expected("1")
             )
 
@@ -133,9 +133,9 @@ class UnpickleMethodTests(unittest.TestCase):
         """
         self.assertRaises(pickle.PicklingError, pickle.dumps, lambdaExample)
         try:
-            import pickle
+            import cPickle
         except:
             pass
         else:
-            self.assertRaises(pickle.PicklingError, pickle.dumps,
+            self.assertRaises(cPickle.PicklingError, cPickle.dumps,
                               lambdaExample)

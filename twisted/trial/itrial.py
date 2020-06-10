@@ -8,7 +8,6 @@ Maintainer: Jonathan Lange
 """
 
 
-
 import zope.interface as zi
 from zope.interface import Attribute
 

@@ -9,7 +9,6 @@ implementations of that interface.
 """
 
 
-
 from zope.interface import implementer, Interface
 
 import base64
@@ -23,7 +22,7 @@ from hashlib import md5
 
 from twisted.python.randbytes import secureRandom
 from twisted.python.compat import networkString, nativeString
-from twisted.python.compat import intToBytes, str
+from twisted.python.compat import intToBytes, unicode
 from twisted.cred._digest import calcResponse, calcHA1, calcHA2
 from twisted.cred import error
 
@@ -33,7 +32,7 @@ class ICredentials(Interface):
     """
     I check credentials.
 
-    Implementors _must_ specify which sub-interfaces of ICredentials
+    Implementors I{must} specify the sub-interfaces of ICredentials
     to which it conforms, using L{zope.interface.declarations.implementer}.
     """
 
@@ -121,6 +120,8 @@ class IUsernamePassword(ICredentials):
 class IAnonymous(ICredentials):
     """
     I am an explicitly anonymous request for access.
+
+    @see: L{twisted.cred.checkers.AllowAnonymousAccess}
     """
 
 
@@ -275,7 +276,7 @@ class DigestCredentialFactory(object):
 
         if not clientip:
             clientip = b''
-        elif isinstance(clientip, str):
+        elif isinstance(clientip, unicode):
             clientip = clientip.encode('ascii')
 
         key = b",".join((nonce, clientip, now))
@@ -308,7 +309,7 @@ class DigestCredentialFactory(object):
 
         if not clientip:
             clientip = b''
-        elif isinstance(clientip, str):
+        elif isinstance(clientip, unicode):
             clientip = clientip.encode('ascii')
 
         # Verify the key
@@ -439,7 +440,8 @@ class CramMD5Credentials(object):
 
 
     def checkPassword(self, password):
-        verify = hexlify(hmac.HMAC(password, self.challenge).digest())
+        verify = hexlify(hmac.HMAC(password, self.challenge,
+                         digestmod=md5).digest())
         return verify == self.response
 
 

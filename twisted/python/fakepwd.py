@@ -7,7 +7,6 @@ L{twisted.python.fakepwd} provides a fake implementation of the L{pwd} API.
 """
 
 
-
 __all__ = ['UserDatabase', 'ShadowDatabase']
 
 

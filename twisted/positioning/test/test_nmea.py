@@ -5,7 +5,6 @@ Test cases for using NMEA sentences.
 """
 
 
-
 import datetime
 from operator import attrgetter
 from zope.interface import implementer
@@ -563,7 +562,7 @@ class FixUnitsTests(TestCase):
 
 
 
-class FixerTestMixin:
+class FixerTestMixin(object):
     """
     Mixin for tests for the fixers on L{nmea.NMEAAdapter} that adapt
     from NMEA-specific notations to generic Python objects.
@@ -1061,7 +1060,7 @@ class NMEAReceiverTests(TestCase):
         for sentence in sentences:
             self.protocol.lineReceived(sentence)
 
-        actuallyFired = list(self.receiver.called.keys())
+        actuallyFired = self.receiver.called.keys()
         self.assertEqual(set(actuallyFired), set(expectedFired))
 
         if extraTest is not None:

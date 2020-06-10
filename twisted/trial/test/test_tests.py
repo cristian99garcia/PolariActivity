@@ -22,11 +22,12 @@ of course.
 """
 
 
-
-import gc, sys, weakref
+import gc
+import sys
+import weakref
 import unittest as pyunit
 
-from twisted.python.compat import NativeStringIO, _PY3
+from twisted.python.compat import NativeStringIO, _PYPY
 from twisted.python.reflect import namedAny
 from twisted.internet import defer, reactor
 from twisted.trial import unittest, reporter, util
@@ -631,7 +632,7 @@ class ReactorCleanupTests(unittest.SynchronousTestCase):
 
 class FixtureMixin(object):
     """
-    Tests for broken fixture helper methods (e.g. setUp, tearDown).
+    Tests for fixture helper methods (e.g. setUp, tearDown).
     """
     def setUp(self):
         """
@@ -663,6 +664,25 @@ class FixtureMixin(object):
         self.assertEqual(0, self.reporter.successes)
 
 
+    def test_tearDownRunsOnTestFailure(self):
+        """
+        L{SynchronousTestCase.tearDown} runs when a test method fails.
+        """
+        suite = self.loader.loadTestsFromTestCase(
+            self.TestFailureButTearDownRuns)
+
+        case = list(suite)[0]
+        self.assertFalse(case.tornDown)
+
+        suite.run(self.reporter)
+        errors = self.reporter.errors
+        self.assertTrue(len(errors) > 0)
+        self.assertIsInstance(errors[0][1].value, erroneous.FoolishError)
+        self.assertEqual(0, self.reporter.successes)
+
+        self.assertTrue(case.tornDown)
+
+
 
 class SynchronousFixtureTests(FixtureMixin, unittest.SynchronousTestCase):
     """
@@ -674,6 +694,8 @@ class SynchronousFixtureTests(FixtureMixin, unittest.SynchronousTestCase):
         'twisted.trial.test.erroneous.SynchronousTestFailureInSetUp')
     TestFailureInTearDown = namedAny(
         'twisted.trial.test.erroneous.SynchronousTestFailureInTearDown')
+    TestFailureButTearDownRuns = namedAny(
+        'twisted.trial.test.erroneous.SynchronousTestFailureButTearDownRuns')
 
 
 
@@ -687,6 +709,8 @@ class AsynchronousFixtureTests(FixtureMixin, unittest.TestCase):
         'twisted.trial.test.erroneous.AsynchronousTestFailureInSetUp')
     TestFailureInTearDown = namedAny(
         'twisted.trial.test.erroneous.AsynchronousTestFailureInTearDown')
+    TestFailureButTearDownRuns = namedAny(
+        'twisted.trial.test.erroneous.AsynchronousTestFailureButTearDownRuns')
 
 
 
@@ -708,7 +732,7 @@ class AsynchronousSuppressionTests(SuppressionMixin, unittest.TestCase):
 
 
 
-class GCMixin:
+class GCMixin(object):
     """
     I provide a few mock tests that log setUp, tearDown, test execution and
     garbage collection. I'm used to test whether gc.collect gets called.
@@ -820,6 +844,8 @@ class UnhandledDeferredTests(unittest.SynchronousTestCase):
         self.assertEqual(len(result.errors), 1,
                          'Unhandled deferred passed without notice')
 
+
+    @pyunit.skipIf(_PYPY, "GC works differently on PyPy.")
     def test_doesntBleed(self):
         """
         Forcing garbage collection in the test should mean that there are
@@ -827,17 +853,15 @@ class UnhandledDeferredTests(unittest.SynchronousTestCase):
         """
         result = reporter.TestResult()
         self.test1(result)
-        self.flushLoggedErrors() # test1 logs errors that get caught be us.
+        self.flushLoggedErrors()  # test1 logs errors that get caught be us.
         # test1 created unreachable cycle.
         # it & all others should have been collected by now.
-        if _PY3:
-            n = len(gc.garbage)
-        else:
-            n = gc.collect()
+        n = len(gc.garbage)
         self.assertEqual(n, 0, 'unreachable cycle still existed')
         # check that last gc.collect didn't log more errors
         x = self.flushLoggedErrors()
         self.assertEqual(len(x), 0, 'Errors logged after gc.collect')
+
 
     def tearDown(self):
         """
@@ -1000,7 +1024,6 @@ class SuiteClearingMixin(object):
         This test is important since C{_clearSuite} operates by mutating
         internal variables.
         """
-        pyunit = __import__('unittest')
         suite = pyunit.TestSuite()
         suite.addTest(self.TestCase())
         # Double check that the test suite actually has something in it.

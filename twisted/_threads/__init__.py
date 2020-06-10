@@ -7,7 +7,6 @@ Twisted integration with operating system threads.
 """
 
 
-
 from ._threadworker import ThreadWorker, LockWorker
 from ._ithreads import IWorker, AlreadyQuit
 from ._team import Team

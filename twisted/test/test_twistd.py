@@ -6,77 +6,64 @@ Tests for L{twisted.application.app} and L{twisted.scripts.twistd}.
 """
 
 
-
 import errno
 import inspect
+import pickle
 import signal
 import os
 import sys
 
 try:
-    import pwd
-    import grp
+    import pwd as _pwd
+    import grp as _grp
 except ImportError:
-    pwd = grp = None
+    pwd = None
+    grp = None
+else:
+    pwd = _pwd
+    grp = _grp
 
-try:
-    import pickle as pickle
-except ImportError:
-    import pickle
-
+from io import StringIO
+from unittest import skipIf
 from zope.interface import implementer
 from zope.interface.verify import verifyObject
 
-from twisted.trial import unittest
+from twisted.trial.unittest import TestCase
 from twisted.test.test_process import MockOS
 
-from twisted import plugin, logger
-from twisted.application.service import IServiceMaker
+from twisted import plugin, logger, internet
 from twisted.application import service, app, reactors
-from twisted.scripts import twistd
-from twisted.python.compat import NativeStringIO, _PY3
-from twisted.python.usage import UsageError
+from twisted.application.service import IServiceMaker
+from twisted.internet.defer import Deferred
+from twisted.internet.interfaces import (IReactorDaemonize,
+                                         _ISupportsExitSignalCapturing)
+from twisted.internet.test.modulehelpers import AlternateReactor
+from twisted.logger import globalLogBeginner, globalLogPublisher, ILogObserver
+from twisted.internet.base import ReactorBase
+from twisted.test.proto_helpers import MemoryReactor
+from twisted.python.components import Componentized
+from twisted.python import util
 from twisted.python.log import (ILogObserver as LegacyILogObserver,
                                 textFromEventDict)
-from twisted.python.components import Componentized
-from twisted.internet.defer import Deferred
-from twisted.internet.interfaces import IReactorDaemonize
-from twisted.internet.test.modulehelpers import AlternateReactor
+from twisted.python.reflect import requireModule
+from twisted.python.runtime import platformType
+from twisted.python.usage import UsageError
 from twisted.python.fakepwd import UserDatabase
-from twisted.logger import globalLogBeginner, globalLogPublisher, ILogObserver
+from twisted.scripts import twistd
 
-try:
-    from twisted.scripts import _twistd_unix
-except ImportError:
-    _twistd_unix = None
-else:
+
+
+_twistd_unix = requireModule('twistd.scripts._twistd_unix')
+if _twistd_unix:
     from twisted.scripts._twistd_unix import checkPID
     from twisted.scripts._twistd_unix import UnixApplicationRunner
     from twisted.scripts._twistd_unix import UnixAppLogger
 
 
-try:
-    from twisted.python import syslog
-except ImportError:
-    syslog = None
-
-
-try:
-    import profile
-except ImportError:
-    profile = None
-
-
-try:
-    import pstats
-    import cProfile
-except ImportError:
-    cProfile = None
-
-if getattr(os, 'setuid', None) is None:
-    setuidSkip = "Platform does not support --uid/--gid twistd options."
-else:
-    setuidSkip = None
+syslog = requireModule('twistd.python.syslog')
+profile = requireModule('profile')
+pstats = requireModule('pstats')
+cProfile = requireModule('cProfile')
 
 
 
@@ -110,7 +97,7 @@ def patchUserDatabase(patch, user, uid, group, gid):
 
     database = UserDatabase()
     database.addUser(
-        user, pwent.pw_passwd, uid, pwent.pw_gid,
+        user, pwent.pw_passwd, uid, gid,
         pwent.pw_gecos, pwent.pw_dir, pwent.pw_shell)
 
     def getgrnam(name):
@@ -122,6 +109,7 @@ def patchUserDatabase(patch, user, uid, group, gid):
 
     patch(pwd, "getpwnam", database.getpwnam)
     patch(grp, "getgrnam", getgrnam)
+    patch(pwd, "getpwuid", database.getpwuid)
 
 
 
@@ -169,7 +157,7 @@ class CrippledApplicationRunner(twistd._SomeApplicationRunner):
 
 
 
-class ServerOptionsTests(unittest.TestCase):
+class ServerOptionsTests(TestCase):
     """
     Non-platform-specific tests for the platform-specific ServerOptions class.
     """
@@ -224,6 +212,7 @@ class ServerOptionsTests(unittest.TestCase):
             def __init__(self, name):
                 self.shortName = 'name of ' + name
                 self.description = 'description of ' + name
+                self.moduleName = 'twisted.internet.default'
 
         apple = FakeReactorInstaller('apple')
         banana = FakeReactorInstaller('banana')
@@ -239,7 +228,7 @@ class ServerOptionsTests(unittest.TestCase):
         config = twistd.ServerOptions()
         self.assertEqual(config._getReactorTypes, reactors.getReactorTypes)
         config._getReactorTypes = getReactorTypes
-        config.messageOutput = NativeStringIO()
+        config.messageOutput = StringIO()
 
         self.assertRaises(SystemExit, config.parseOptions, ['--help-reactors'])
         helpOutput = config.messageOutput.getvalue()
@@ -288,6 +277,7 @@ class ServerOptionsTests(unittest.TestCase):
             self.assertIn(profiler, helpOutput)
 
 
+    @skipIf(not _twistd_unix, "twistd unix not available")
     def test_defaultUmask(self):
         """
         The default value for the C{umask} option is L{None}.
@@ -296,6 +286,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertIsNone(config['umask'])
 
 
+    @skipIf(not _twistd_unix, "twistd unix not available")
     def test_umask(self):
         """
         The value given for the C{umask} option is parsed as an octal integer
@@ -308,6 +299,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(config['umask'], 83)
 
 
+    @skipIf(not _twistd_unix, "twistd unix not available")
     def test_invalidUmask(self):
         """
         If a value is given for the C{umask} option which cannot be parsed as
@@ -316,10 +308,6 @@ class ServerOptionsTests(unittest.TestCase):
         config = twistd.ServerOptions()
         self.assertRaises(UsageError, config.parseOptions,
                           ['--umask', 'abcdef'])
-
-    if _twistd_unix is None:
-        msg = "twistd unix not available"
-        test_defaultUmask.skip = test_umask.skip = test_invalidUmask.skip = msg
 
 
     def test_unimportableConfiguredLogObserver(self):
@@ -358,14 +346,32 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertNotIn('\n', e.args[0])
 
 
+    def test_version(self):
+        """
+        C{--version} prints the version.
+        """
+        from twisted import copyright
 
-class CheckPIDTests(unittest.TestCase):
+        if platformType == "win32":
+            name = "(the Twisted Windows runner)"
+        else:
+            name = "(the Twisted daemon)"
+        expectedOutput = ('twistd {} {}\n{}\n'.format(
+            name, copyright.version, copyright.copyright))
+
+        stdout = StringIO()
+        config = twistd.ServerOptions(stdout=stdout)
+        e = self.assertRaises(SystemExit, config.parseOptions, ['--version'])
+        self.assertIs(e.code, None)
+        self.assertEqual(stdout.getvalue(), expectedOutput)
+
+
+
+@skipIf(not _twistd_unix, "twistd unix not available")
+class CheckPIDTests(TestCase):
     """
     Tests for L{checkPID}.
     """
-    if _twistd_unix is None:
-        skip = "twistd unix not available"
-
 
     def test_notExists(self):
         """
@@ -400,7 +406,6 @@ class CheckPIDTests(unittest.TestCase):
         self.assertIn("Another twistd server", e.code)
 
 
-
     def test_stale(self):
         """
         Stale PID file is removed without causing a system exit.
@@ -415,8 +420,24 @@ class CheckPIDTests(unittest.TestCase):
         self.assertFalse(os.path.exists(pidfile))
 
 
+    def test_unexpectedOSError(self):
+        """
+        An unexpected L{OSError} when checking the validity of a
+        PID in a C{pidfile} terminates the process via L{SystemExit}.
+        """
+        pidfile = self.mktemp()
+        with open(pidfile, "w") as f:
+            f.write("3581")
+        def kill(pid, sig):
+            raise OSError(errno.EBADF, "fake")
+        self.patch(os, "kill", kill)
+        e = self.assertRaises(SystemExit, checkPID, pidfile)
+        self.assertIsNot(e.code, None)
+        self.assertTrue(e.args[0].startswith("Can't check status of PID"))
 
-class TapFileTests(unittest.TestCase):
+
+
+class TapFileTests(TestCase):
     """
     Test twistd-related functionality that requires a tap file on disk.
     """
@@ -491,7 +512,7 @@ class TestApplicationRunner(app.ApplicationRunner):
 
 
 
-class ApplicationRunnerTests(unittest.TestCase):
+class ApplicationRunnerTests(TestCase):
     """
     Non-platform-specific tests for the platform-specific ApplicationRunner.
     """
@@ -568,6 +589,9 @@ class ApplicationRunnerTests(unittest.TestCase):
         @implementer(service.IService, service.IProcess)
         class FakeService(object):
 
+            parent = None
+            running = None
+            name = None
             processName = None
             uid = None
             gid = None
@@ -605,6 +629,8 @@ class ApplicationRunnerTests(unittest.TestCase):
              ('privileges', False, uid, gid), 'startService', 'reactor'])
 
 
+    @skipIf(not getattr(os, 'setuid', None),
+            "Platform does not support --uid/--gid twistd options.")
     def test_applicationStartsWithConfiguredNumericIDs(self):
         """
         L{postApplication} should change the UID and GID to the values
@@ -616,9 +642,10 @@ class ApplicationRunnerTests(unittest.TestCase):
         gid = 4321
         self._applicationStartsWithConfiguredID(
             ["--uid", str(uid), "--gid", str(gid)], uid, gid)
-    test_applicationStartsWithConfiguredNumericIDs.skip = setuidSkip
 
 
+    @skipIf(not getattr(os, 'setuid', None),
+            "Platform does not support --uid/--gid twistd options.")
     def test_applicationStartsWithConfiguredNameIDs(self):
         """
         L{postApplication} should change the UID and GID to the values
@@ -633,7 +660,6 @@ class ApplicationRunnerTests(unittest.TestCase):
         patchUserDatabase(self.patch, user, uid, group, gid)
         self._applicationStartsWithConfiguredID(
             ["--uid", user, "--gid", group], uid, gid)
-    test_applicationStartsWithConfiguredNameIDs.skip = setuidSkip
 
 
     def test_startReactorRunsTheReactor(self):
@@ -650,8 +676,88 @@ class ApplicationRunnerTests(unittest.TestCase):
             reactor.called, "startReactor did not call reactor.run()")
 
 
+    def test_applicationRunnerChoosesReactorIfNone(self):
+        """
+        L{ApplicationRunner} chooses a reactor if none is specified.
+        """
+        reactor = DummyReactor()
+        self.patch(internet, 'reactor', reactor)
+        runner = app.ApplicationRunner({
+            "profile": False,
+            "profiler": "profile",
+            "debug": False})
+        runner.startReactor(None, None, None)
+        self.assertTrue(reactor.called)
 
-class UnixApplicationRunnerSetupEnvironmentTests(unittest.TestCase):
+
+    def test_applicationRunnerCapturesSignal(self):
+        """
+        If the reactor exits with a signal, the application runner caches
+        the signal.
+        """
+
+        class DummyReactorWithSignal(ReactorBase):
+            """
+            A dummy reactor, providing a C{run} method, and setting the
+            _exitSignal attribute to a nonzero value.
+            """
+
+            def installWaker(self):
+                """
+                Dummy method, does nothing.
+                """
+
+            def run(self):
+                """
+                A fake run method setting _exitSignal to a nonzero value
+                """
+                self._exitSignal = 2
+
+        reactor = DummyReactorWithSignal()
+        runner = app.ApplicationRunner({
+            "profile": False,
+            "profiler": "profile",
+            "debug": False})
+        runner.startReactor(reactor, None, None)
+        self.assertEquals(2, runner._exitSignal)
+
+
+    def test_applicationRunnerIgnoresNoSignal(self):
+        """
+        The runner sets its _exitSignal instance attribute to None if
+        the reactor does not implement L{_ISupportsExitSignalCapturing}.
+        """
+
+        class DummyReactorWithExitSignalAttribute(object):
+            """
+            A dummy reactor, providing a C{run} method, and setting the
+            _exitSignal attribute to a nonzero value.
+            """
+
+            def installWaker(self):
+                """
+                Dummy method, does nothing.
+                """
+
+            def run(self):
+                """
+                A fake run method setting _exitSignal to a nonzero value
+                that should be ignored.
+                """
+                self._exitSignal = 2
+
+        reactor = DummyReactorWithExitSignalAttribute()
+        runner = app.ApplicationRunner({
+            "profile": False,
+            "profiler": "profile",
+            "debug": False})
+        runner.startReactor(reactor, None, None)
+        self.assertEquals(None, runner._exitSignal)
+
+
+
+@skipIf(not _twistd_unix, "twistd unix not available")
+class UnixApplicationRunnerSetupEnvironmentTests(TestCase):
     """
     Tests for L{UnixApplicationRunner.setupEnvironment}.
 
@@ -671,8 +777,6 @@ class UnixApplicationRunnerSetupEnvironmentTests(unittest.TestCase):
         by a call to L{_twistd_unix.daemonize} (patched for this TestCase with
         L{UnixApplicationRunnerSetupEnvironmentTests}.
     """
-    if _twistd_unix is None:
-        skip = "twistd unix not available"
 
     unset = object()
 
@@ -802,13 +906,11 @@ class UnixApplicationRunnerSetupEnvironmentTests(unittest.TestCase):
 
 
 
-class UnixApplicationRunnerStartApplicationTests(unittest.TestCase):
+@skipIf(not _twistd_unix, "twistd unix not available")
+class UnixApplicationRunnerStartApplicationTests(TestCase):
     """
     Tests for L{UnixApplicationRunner.startApplication}.
     """
-    if _twistd_unix is None:
-        skip = "twistd unix not available"
-
 
     def test_setupEnvironment(self):
         """
@@ -833,24 +935,19 @@ class UnixApplicationRunnerStartApplicationTests(unittest.TestCase):
             args.extend((chroot, rundir, nodaemon, umask, pidfile))
 
         # Sanity check
-        if _PY3:
-            setupEnvironmentParameters = \
-                inspect.signature(self.runner.setupEnvironment).parameters
-            fakeSetupEnvironmentParameters = \
-                inspect.signature(fakeSetupEnvironment).parameters
+        setupEnvironmentParameters = \
+            inspect.signature(self.runner.setupEnvironment).parameters
+        fakeSetupEnvironmentParameters = \
+            inspect.signature(fakeSetupEnvironment).parameters
 
-            # inspect.signature() does not return "self" in the signature of
-            # a class method, so we need to omit  it when comparing the
-            # the signature of a plain method
-            fakeSetupEnvironmentParameters = fakeSetupEnvironmentParameters.copy()
-            fakeSetupEnvironmentParameters.pop("self")
+        # inspect.signature() does not return "self" in the signature of
+        # a class method, so we need to omit  it when comparing the
+        # the signature of a plain method
+        fakeSetupEnvironmentParameters = fakeSetupEnvironmentParameters.copy()
+        fakeSetupEnvironmentParameters.pop("self")
 
-            self.assertEqual(setupEnvironmentParameters,
-                fakeSetupEnvironmentParameters)
-        else:
-            self.assertEqual(
-                inspect.getargspec(self.runner.setupEnvironment),
-                inspect.getargspec(fakeSetupEnvironment))
+        self.assertEqual(setupEnvironmentParameters,
+                         fakeSetupEnvironmentParameters)
 
         self.patch(UnixApplicationRunner, 'setupEnvironment',
                    fakeSetupEnvironment)
@@ -864,14 +961,100 @@ class UnixApplicationRunnerStartApplicationTests(unittest.TestCase):
             ['/foo/chroot', '/foo/rundir', True, 56, '/foo/pidfile'])
 
 
+    def test_shedPrivileges(self):
+        """
+        L{UnixApplicationRunner.shedPrivileges} switches the user ID
+        of the process.
+        """
+        def switchUIDPass(uid, gid, euid):
+            self.assertEqual(uid, 200)
+            self.assertEqual(gid, 54)
+            self.assertEqual(euid, 35)
 
-class UnixApplicationRunnerRemovePIDTests(unittest.TestCase):
+        self.patch(_twistd_unix, 'switchUID', switchUIDPass)
+        runner = UnixApplicationRunner({})
+        runner.shedPrivileges(35, 200, 54)
+
+
+    def test_shedPrivilegesError(self):
+        """
+        An unexpected L{OSError} when calling
+        L{twisted.scripts._twistd_unix.shedPrivileges}
+        terminates the process via L{SystemExit}.
+        """
+        def switchUIDFail(uid, gid, euid):
+            raise OSError(errno.EBADF, "fake")
+
+        runner = UnixApplicationRunner({})
+        self.patch(_twistd_unix, 'switchUID', switchUIDFail)
+        exc = self.assertRaises(SystemExit, runner.shedPrivileges, 35,
+                                200, None)
+        self.assertEqual(exc.code, 1)
+
+
+    def _setUID(self, wantedUser, wantedUid, wantedGroup, wantedGid):
+        """
+        Common code for tests which try to pass the the UID to
+        L{UnixApplicationRunner}.
+        """
+        patchUserDatabase(self.patch, wantedUser, wantedUid, wantedGroup,
+                          wantedGid)
+
+        def initgroups(uid, gid):
+            self.assertEqual(uid, wantedUid)
+            self.assertEqual(gid, wantedGid)
+
+        def setuid(uid):
+            self.assertEqual(uid, wantedUid)
+
+        def setgid(gid):
+            self.assertEqual(gid, wantedGid)
+
+        self.patch(util, "initgroups", initgroups)
+        self.patch(os, "setuid", setuid)
+        self.patch(os, "setgid", setgid)
+
+        options = twistd.ServerOptions()
+        options.parseOptions([
+            '--nodaemon',
+            '--uid', str(wantedUid)])
+        application = service.Application("test_setupEnvironment")
+        self.runner = UnixApplicationRunner(options)
+        runner = UnixApplicationRunner(options)
+        runner.startApplication(application)
+
+
+    def test_setUidWithoutGid(self):
+        """
+        Starting an application with L{UnixApplicationRunner} configured
+        with a UID and no GUID will result in the GUID being
+        set to the default GUID for that UID.
+        """
+        self._setUID("foo", 5151, "bar", 4242)
+
+
+    def test_setUidSameAsCurrentUid(self):
+        """
+        If the specified UID is the same as the current UID of the process,
+        then a warning is displayed.
+        """
+        currentUid = os.getuid()
+        self._setUID("morefoo", currentUid, "morebar", 4343)
+
+        warningsShown = self.flushWarnings()
+        self.assertEqual(1, len(warningsShown))
+        expectedWarning = (
+            'tried to drop privileges and setuid {} but uid is already {}; '
+            'should we be root? Continuing.'.format(currentUid, currentUid))
+        self.assertEqual(expectedWarning, warningsShown[0]["message"])
+
+
+
+@skipIf(not _twistd_unix, "twistd unix not available")
+class UnixApplicationRunnerRemovePIDTests(TestCase):
     """
     Tests for L{UnixApplicationRunner.removePID}.
     """
-    if _twistd_unix is None:
-        skip = "twistd unix not available"
-
 
     def test_removePID(self):
         """
@@ -961,11 +1144,12 @@ class DummyReactor(object):
 
 
 
-class AppProfilingTests(unittest.TestCase):
+class AppProfilingTests(TestCase):
     """
     Tests for L{app.AppProfiler}.
     """
 
+    @skipIf(not profile, "profile module not available")
     def test_profile(self):
         """
         L{app.ProfileRunner.run} should call the C{run} method of the reactor
@@ -985,12 +1169,9 @@ class AppProfilingTests(unittest.TestCase):
         self.assertIn("DummyReactor.run", data)
         self.assertIn("function calls", data)
 
-    if profile is None:
-        test_profile.skip = "profile module not available"
-
 
     def _testStats(self, statsClass, profile):
-        out = NativeStringIO()
+        out = StringIO()
 
         # Patch before creating the pstats, because pstats binds self.stream to
         # sys.stdout early in 2.5 and newer.
@@ -1007,6 +1188,7 @@ class AppProfilingTests(unittest.TestCase):
         self.assertIn("(run)", data)
 
 
+    @skipIf(not profile, "profile module not available")
     def test_profileSaveStats(self):
         """
         With the C{savestats} option specified, L{app.ProfileRunner.run}
@@ -1023,9 +1205,6 @@ class AppProfilingTests(unittest.TestCase):
 
         self.assertTrue(reactor.called)
         self._testStats(pstats.Stats, config['profile'])
-
-    if profile is None:
-        test_profileSaveStats.skip = "profile module not available"
 
 
     def test_withoutProfile(self):
@@ -1047,6 +1226,7 @@ class AppProfilingTests(unittest.TestCase):
             sys.modules.update(savedModules)
 
 
+    @skipIf(not profile, "profile module not available")
     def test_profilePrintStatsError(self):
         """
         When an error happens during the print of the stats, C{sys.stdout}
@@ -1067,10 +1247,8 @@ class AppProfilingTests(unittest.TestCase):
         self.assertRaises(RuntimeError, profiler.run, reactor)
         self.assertIs(sys.stdout, oldStdout)
 
-    if profile is None:
-        test_profilePrintStatsError.skip = "profile module not available"
 
-
+    @skipIf(not cProfile, "cProfile module not available")
     def test_cProfile(self):
         """
         L{app.CProfileRunner.run} should call the C{run} method of the
@@ -1090,10 +1268,8 @@ class AppProfilingTests(unittest.TestCase):
         self.assertIn("run", data)
         self.assertIn("function calls", data)
 
-    if cProfile is None:
-        test_cProfile.skip = "cProfile module not available"
 
-
+    @skipIf(not cProfile, "cProfile module not available")
     def test_cProfileSaveStats(self):
         """
         With the C{savestats} option specified,
@@ -1111,9 +1287,6 @@ class AppProfilingTests(unittest.TestCase):
 
         self.assertTrue(reactor.called)
         self._testStats(pstats.Stats, config['profile'])
-
-    if cProfile is None:
-        test_cProfileSaveStats.skip = "cProfile module not available"
 
 
     def test_withoutCProfile(self):
@@ -1171,7 +1344,7 @@ def _patchTextFileLogObserver(patch):
     Patch L{logger.textFileLogObserver} to record every call and keep a
     reference to the passed log file for tests.
 
-    @param patch: a callback for patching (usually L{unittest.TestCase.patch}).
+    @param patch: a callback for patching (usually L{TestCase.patch}).
 
     @return: the list that keeps track of the log files.
     @rtype: C{list}
@@ -1207,7 +1380,7 @@ def _setupSyslog(testCase):
 
 
 
-class AppLoggerTests(unittest.TestCase):
+class AppLoggerTests(TestCase):
     """
     Tests for L{app.AppLogger}.
 
@@ -1369,6 +1542,8 @@ class AppLoggerTests(unittest.TestCase):
         self.assertEqual(nonlogs, [])
 
 
+    @skipIf(not _twistd_unix, "twistd unix not available")
+    @skipIf(not syslog, "syslog not available")
     def test_configuredLogObserverBeatsSyslog(self):
         """
         C{--logger} takes precedence over a C{--syslog} command line
@@ -1380,11 +1555,6 @@ class AppLoggerTests(unittest.TestCase):
                                                         {"syslog": True},
                                                         UnixAppLogger))
         self.assertEqual(logs, [])
-
-    if _twistd_unix is None or syslog is None:
-        test_configuredLogObserverBeatsSyslog.skip = (
-            "Not on POSIX, or syslog not available."
-        )
 
 
     def test_configuredLogObserverBeatsLogfile(self):
@@ -1513,16 +1683,14 @@ class AppLoggerTests(unittest.TestCase):
 
 
 
-class UnixAppLoggerTests(unittest.TestCase):
+@skipIf(not _twistd_unix, "twistd unix not available")
+class UnixAppLoggerTests(TestCase):
     """
     Tests for L{UnixAppLogger}.
 
     @ivar signals: list of signal handlers installed.
     @type signals: C{list}
     """
-    if _twistd_unix is None:
-        skip = "twistd unix not available"
-
 
     def setUp(self):
         """
@@ -1625,6 +1793,7 @@ class UnixAppLoggerTests(unittest.TestCase):
         self.assertEqual(logFiles[0].path, os.path.abspath("twistd.log"))
 
 
+    @skipIf(not _twistd_unix, "twistd unix not available")
     def test_getLogObserverSyslog(self):
         """
         If C{syslog} is set to C{True}, L{UnixAppLogger._getLogObserver} starts
@@ -1637,12 +1806,10 @@ class UnixAppLoggerTests(unittest.TestCase):
         observer({"a": "b"})
         self.assertEqual(logs, ["test-prefix", {"a": "b"}])
 
-    if syslog is None:
-        test_getLogObserverSyslog.skip = "Syslog not available"
 
 
-
-class DaemonizeTests(unittest.TestCase):
+@skipIf(not _twistd_unix, "twistd unix support not available")
+class DaemonizeTests(TestCase):
     """
     Tests for L{_twistd_unix.UnixApplicationRunner} daemonization.
     """
@@ -1778,7 +1945,7 @@ class DaemonizeTests(unittest.TestCase):
         message is Unicode, the child encodes the message as ascii
         with backslash Unicode code points.
         """
-        self.assertErrorWritten(raised="\u2022",
+        self.assertErrorWritten(raised=u"\u2022",
                                 reported=b'1 RuntimeError: \\u2022')
 
 
@@ -1793,7 +1960,7 @@ class DaemonizeTests(unittest.TestCase):
         """
         self.mockos.child = False
         self.mockos.readData = readData
-        errorIO = NativeStringIO()
+        errorIO = StringIO()
         self.patch(sys, '__stderr__', errorIO)
         with AlternateReactor(FakeDaemonizingReactor()):
             self.assertRaises(SystemError, self.runner.postApplication)
@@ -1880,7 +2047,7 @@ class DaemonizeTests(unittest.TestCase):
         this splits a unicode escape sequence.
         """
         self.assertErrorWritten(
-            raised="\u2022" * 30,
+            raised=u"\u2022" * 30,
             reported=b'1 RuntimeError: ' + b'\\u2022' * 14,
         )
 
@@ -1910,5 +2077,154 @@ class DaemonizeTests(unittest.TestCase):
 
 
 
-if _twistd_unix is None:
-    DaemonizeTests.skip = "twistd unix support not available"
+@implementer(_ISupportsExitSignalCapturing)
+class SignalCapturingMemoryReactor(MemoryReactor):
+    """
+    MemoryReactor that implements the _ISupportsExitSignalCapturing interface,
+    all other operations identical to MemoryReactor.
+    """
+
+
+
+class StubApplicationRunnerWithSignal(twistd._SomeApplicationRunner):
+    """
+    An application runner that uses a SignalCapturingMemoryReactor and
+    has a _signalValue attribute that it will set in the reactor.
+
+    @ivar _signalValue: The signal value to set on the reactor's _exitSignal
+        attribute.
+    """
+    loggerFactory = CrippledAppLogger
+
+    def __init__(self, config):
+        super(StubApplicationRunnerWithSignal, self).__init__(config)
+        self._signalValue = None
+
+
+    def preApplication(self):
+        """
+        Does nothing.
+        """
+
+    def postApplication(self):
+        """
+        Instantiate a SignalCapturingMemoryReactor and start it
+        in the runner.
+        """
+        reactor = SignalCapturingMemoryReactor()
+        reactor._exitSignal = self._signalValue
+        self.startReactor(reactor, sys.stdout, sys.stderr)
+
+
+
+def stubApplicationRunnerFactoryCreator(signum):
+    """
+    Create a factory function to instantiate a
+    StubApplicationRunnerWithSignal that will report signum as the captured
+    signal..
+
+    @param signum: The integer signal number or None
+    @type signum: C{int} or C{None}
+
+    @return: A factory function to create stub runners.
+    @rtype: stubApplicationRunnerFactory
+    """
+
+    def stubApplicationRunnerFactory(config):
+        """
+        Create a StubApplicationRunnerWithSignal using a reactor that
+        implements _ISupportsExitSignalCapturing and whose _exitSignal
+        attribute is set to signum.
+
+        @param config: The runner configuration, platform dependent.
+        @type config: L{twisted.scripts.twistd.ServerOptions}
+
+        @return: A runner to use for the test.
+        @rtype: twisted.test.test_twistd.StubApplicationRunnerWithSignal
+        """
+        runner = StubApplicationRunnerWithSignal(config)
+        runner._signalValue = signum
+        return runner
+
+    return stubApplicationRunnerFactory
+
+
+
+class ExitWithSignalTests(TestCase):
+
+    """
+    Tests for L{twisted.application.app._exitWithSignal}.
+    """
+
+    def setUp(self):
+        """
+        Set up the server options and a fake for use by test cases.
+        """
+        self.config = twistd.ServerOptions()
+        self.config.loadedPlugins = {'test_command': MockServiceMaker()}
+        self.config.subOptions = object()
+        self.config.subCommand = 'test_command'
+        self.fakeKillArgs = [None, None]
+
+        def fakeKill(pid, sig):
+            """
+            Fake method to capture arguments passed to os.kill.
+
+            @param pid: The pid of the process being killed.
+
+            @param sig: The signal sent to the process.
+            """
+            self.fakeKillArgs[0] = pid
+            self.fakeKillArgs[1] = sig
+
+        self.patch(os, 'kill', fakeKill)
+
+
+    def test_exitWithSignal(self):
+        """
+        exitWithSignal replaces the existing signal handler with the default
+        handler and sends the replaced signal to the current process.
+        """
+
+        fakeSignalArgs = [None, None]
+
+        def fake_signal(sig, handler):
+            fakeSignalArgs[0] = sig
+            fakeSignalArgs[1] = handler
+
+        self.patch(signal, 'signal', fake_signal)
+        app._exitWithSignal(signal.SIGINT)
+
+        self.assertEquals(fakeSignalArgs[0], signal.SIGINT)
+        self.assertEquals(fakeSignalArgs[1], signal.SIG_DFL)
+        self.assertEquals(self.fakeKillArgs[0], os.getpid())
+        self.assertEquals(self.fakeKillArgs[1], signal.SIGINT)
+
+
+    def test_normalExit(self):
+        """
+        _exitWithSignal is not called if the runner does not exit with a
+        signal.
+        """
+        self.patch(
+            twistd,
+            '_SomeApplicationRunner',
+            stubApplicationRunnerFactoryCreator(None)
+        )
+        twistd.runApp(self.config)
+        self.assertIsNone(self.fakeKillArgs[0])
+        self.assertIsNone(self.fakeKillArgs[1])
+
+
+    def test_runnerExitsWithSignal(self):
+        """
+        _exitWithSignal is called when the runner exits with a signal.
+        """
+        self.patch(
+            twistd,
+            '_SomeApplicationRunner',
+            stubApplicationRunnerFactoryCreator(signal.SIGINT)
+        )
+        twistd.runApp(self.config)
+        self.assertEquals(self.fakeKillArgs[0], os.getpid())
+        self.assertEquals(self.fakeKillArgs[1], signal.SIGINT)

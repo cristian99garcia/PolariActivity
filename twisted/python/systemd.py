@@ -10,7 +10,6 @@ feature are supported.
 """
 
 
-
 __all__ = ['ListenFDs']
 
 from os import getpid
@@ -76,7 +75,7 @@ class ListenFDs(object):
                 except (KeyError, ValueError):
                     pass
                 else:
-                    descriptors = list(range(start, start + count))
+                    descriptors = range(start, start + count)
                     del environ['LISTEN_PID'], environ['LISTEN_FDS']
 
         return cls(descriptors)

@@ -7,7 +7,6 @@ I am a virtual hosts implementation.
 """
 
 
-
 # Twisted Imports
 from twisted.python import roots
 from twisted.web import resource
@@ -24,7 +23,7 @@ class VirtualHostCollection(roots.Homogenous):
         self.nvh = nvh
 
     def listStaticEntities(self):
-        return list(self.nvh.hosts.items())
+        return self.nvh.hosts.items()
 
     def getStaticEntity(self, name):
         return self.nvh.hosts.get(self)

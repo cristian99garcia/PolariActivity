@@ -6,7 +6,6 @@ Tests for the internal implementation details of L{twisted.internet.udp}.
 """
 
 
-
 import socket
 
 from twisted.trial import unittest

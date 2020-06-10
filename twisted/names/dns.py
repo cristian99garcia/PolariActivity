@@ -9,6 +9,26 @@ Future Plans:
     - Get rid of some toplevels, maybe.
 """
 
+# System imports
+import inspect
+import random
+import socket
+import struct
+from itertools import chain
+
+from io import BytesIO
+
+from zope.interface import implementer, Interface, Attribute
+
+
+# Twisted imports
+from twisted.internet import protocol, defer
+from twisted.internet.error import CannotListenError
+from twisted.python import log, failure
+from twisted.python import util as tputil
+from twisted.python import randbytes
+from twisted.python.compat import comparable, cmp, nativeString
+
 
 
 __all__ = [
@@ -17,19 +37,22 @@ __all__ = [
     'A', 'A6', 'AAAA', 'AFSDB', 'CNAME', 'DNAME', 'HINFO',
     'MAILA', 'MAILB', 'MB', 'MD', 'MF', 'MG', 'MINFO', 'MR', 'MX',
     'NAPTR', 'NS', 'NULL', 'OPT', 'PTR', 'RP', 'SOA', 'SPF', 'SRV', 'TXT',
-    'WKS',
+    'SSHFP', 'TSIG', 'WKS',
 
     'ANY', 'CH', 'CS', 'HS', 'IN',
 
     'ALL_RECORDS', 'AXFR', 'IXFR',
 
     'EFORMAT', 'ENAME', 'ENOTIMP', 'EREFUSED', 'ESERVER', 'EBADVERSION',
+    'EBADSIG', 'EBADKEY', 'EBADTIME',
 
     'Record_A', 'Record_A6', 'Record_AAAA', 'Record_AFSDB', 'Record_CNAME',
     'Record_DNAME', 'Record_HINFO', 'Record_MB', 'Record_MD', 'Record_MF',
     'Record_MG', 'Record_MINFO', 'Record_MR', 'Record_MX', 'Record_NAPTR',
     'Record_NS', 'Record_NULL', 'Record_PTR', 'Record_RP', 'Record_SOA',
-    'Record_SPF', 'Record_SRV', 'Record_TXT', 'Record_WKS', 'UnknownRecord',
+    'Record_SPF', 'Record_SRV', 'Record_SSHFP', 'Record_TSIG', 'Record_TXT',
+    'Record_WKS',
+    'UnknownRecord',
 
     'QUERY_CLASSES', 'QUERY_TYPES', 'REV_CLASSES', 'REV_TYPES', 'EXT_QUERIES',
 
@@ -43,69 +66,53 @@ __all__ = [
     ]
 
 
-# System imports
-import inspect, struct, random, socket
-from itertools import chain
-
-from io import BytesIO
-
 AF_INET6 = socket.AF_INET6
 
-from zope.interface import implementer, Interface, Attribute
 
 
-# Twisted imports
-from twisted.internet import protocol, defer
-from twisted.internet.error import CannotListenError
-from twisted.python import log, failure
-from twisted.python import util as tputil
-from twisted.python import randbytes
-from twisted.python.compat import _PY3, str, comparable, cmp, nativeString
+def _ord2bytes(ordinal):
+    """
+    Construct a bytes object representing a single byte with the given
+    ordinal value.
+
+    @type ordinal: L{int}
+    @rtype: L{bytes}
+    """
+    return bytes([ordinal])
 
 
-if _PY3:
-    def _ord2bytes(ordinal):
-        """
-        Construct a bytes object representing a single byte with the given
-        ordinal value.
 
-        @type ordinal: L{int}
-        @rtype: L{bytes}
-        """
-        return bytes([ordinal])
+def _nicebytes(bytes):
+    """
+    Represent a mostly textful bytes object in a way suitable for
+    presentation to an end user.
 
-
-    def _nicebytes(bytes):
-        """
-        Represent a mostly textful bytes object in a way suitable for presentation
-        to an end user.
-
-        @param bytes: The bytes to represent.
-        @rtype: L{str}
-        """
-        return repr(bytes)[1:]
+    @param bytes: The bytes to represent.
+    @rtype: L{str}
+    """
+    return repr(bytes)[1:]
 
 
-    def _nicebyteslist(list):
-        """
-        Represent a list of mostly textful bytes objects in a way suitable for
-        presentation to an end user.
 
-        @param list: The list of bytes to represent.
-        @rtype: L{str}
-        """
-        return '[%s]' % (
-            ', '.join([_nicebytes(b) for b in list]),)
-else:
-    _ord2bytes = chr
-    _nicebytes = _nicebyteslist = repr
+def _nicebyteslist(list):
+    """
+    Represent a list of mostly textful bytes objects in a way suitable for
+    presentation to an end user.
+
+    @param list: The list of bytes to represent.
+    @rtype: L{str}
+    """
+    return '[%s]' % (
+        ', '.join([_nicebytes(b) for b in list]),)
 
 
 
 def randomSource():
     """
-    Wrapper around L{twisted.python.randbytes.RandomFactory.secureRandom} to return
-    2 random chars.
+    Wrapper around L{twisted.python.randbytes.RandomFactory.secureRandom} to
+    return 2 random bytes.
+
+    @rtype: L{bytes}
     """
     return struct.unpack('H', randbytes.secureRandom(2, fallback=True))[0]
 
@@ -113,14 +120,20 @@ def randomSource():
 PORT = 53
 
 (A, NS, MD, MF, CNAME, SOA, MB, MG, MR, NULL, WKS, PTR, HINFO, MINFO, MX, TXT,
- RP, AFSDB) = list(range(1, 19))
+ RP, AFSDB) = range(1, 19)
 AAAA = 28
 SRV = 33
 NAPTR = 35
 A6 = 38
 DNAME = 39
 OPT = 41
+SSHFP = 44
 SPF = 99
+
+# These record types do not exist in zones, but are transferred in
+# messages the same way normal RRs are.
+TKEY = 249
+TSIG = 250
 
 QUERY_TYPES = {
     A: 'A',
@@ -150,10 +163,14 @@ QUERY_TYPES = {
     A6: 'A6',
     DNAME: 'DNAME',
     OPT: 'OPT',
-    SPF: 'SPF'
+    SSHFP: 'SSHFP',
+    SPF: 'SPF',
+
+    TKEY: 'TKEY',
+    TSIG: 'TSIG',
 }
 
-IXFR, AXFR, MAILB, MAILA, ALL_RECORDS = list(range(251, 256))
+IXFR, AXFR, MAILB, MAILA, ALL_RECORDS = range(251, 256)
 
 # "Extended" queries (Hey, half of these are deprecated, good job)
 EXT_QUERIES = {
@@ -165,10 +182,10 @@ EXT_QUERIES = {
 }
 
 REV_TYPES = dict([
-    (v, k) for (k, v) in chain(list(QUERY_TYPES.items()), list(EXT_QUERIES.items()))
+    (v, k) for (k, v) in chain(QUERY_TYPES.items(), EXT_QUERIES.items())
 ])
 
-IN, CS, CH, HS = list(range(1, 5))
+IN, CS, CH, HS = range(1, 5)
 ANY = 255
 
 QUERY_CLASSES = {
@@ -179,20 +196,24 @@ QUERY_CLASSES = {
     ANY: 'ANY'
 }
 REV_CLASSES = dict([
-    (v, k) for (k, v) in list(QUERY_CLASSES.items())
+    (v, k) for (k, v) in QUERY_CLASSES.items()
 ])
 
 
 # Opcodes
-OP_QUERY, OP_INVERSE, OP_STATUS = list(range(3))
+OP_QUERY, OP_INVERSE, OP_STATUS = range(3)
 OP_NOTIFY = 4 # RFC 1996
 OP_UPDATE = 5 # RFC 2136
 
 
 # Response Codes
-OK, EFORMAT, ESERVER, ENAME, ENOTIMP, EREFUSED = list(range(6))
+OK, EFORMAT, ESERVER, ENAME, ENOTIMP, EREFUSED = range(6)
 # https://tools.ietf.org/html/rfc6891#section-9
 EBADVERSION = 16
+# RFC 2845
+EBADSIG, EBADKEY, EBADTIME = range(16, 19)
+
+
 
 class IRecord(Interface):
     """
@@ -219,6 +240,7 @@ def _nameToLabels(name):
 
     @return: A L{list} of labels ending with an empty label
         representing the DNS root zone.
+    @rtype: L{list} of L{bytes}
     """
     if name in (b'', b'.'):
         return [b'']
@@ -226,6 +248,38 @@ def _nameToLabels(name):
     if labels[-1] != b'':
         labels.append(b'')
     return labels
+
+
+
+def domainString(domain):
+    """
+    Coerce a domain name string to bytes.
+
+    L{twisted.names} represents domain names as L{bytes}, but many interfaces
+    accept L{bytes} or a text string (L{unicode} on Python 2, L{str} on Python
+    3). This function coerces text strings using IDNA encoding --- see
+    L{encodings.idna}.
+
+    Note that DNS is I{case insensitive} but I{case preserving}. This function
+    doesn't normalize case, so you'll still need to do that whenever comparing
+    the strings it returns.
+
+    @param domain: A domain name.  If passed as a text string it will be
+        C{idna} encoded.
+    @type domain: L{bytes} or L{str}
+
+    @returns: L{bytes} suitable for network transmission.
+    @rtype: L{bytes}
+
+    @since: Twisted 20.3.0
+    """
+    if isinstance(domain, str):
+        domain = domain.encode('idna')
+    if not isinstance(domain, bytes):
+        raise TypeError('Expected {} or {} but found {!r} of type {}'.format(
+                        type(b'').__name__, type(u'').__name__,
+                        domain, type(domain)))
+    return domain
 
 
 
@@ -271,7 +325,7 @@ def str2time(s):
         (years).  For example: C{"3S"} indicates an interval of three seconds;
         C{"5D"} indicates an interval of five days.  Alternatively, C{s} may be
         any non-string and it will be returned unmodified.
-    @type s: text string (L{bytes} or L{unicode}) for parsing; anything else
+    @type s: text string (L{bytes} or L{str}) for parsing; anything else
         for passthrough.
 
     @return: an L{int} giving the interval represented by the string C{s}, or
@@ -281,7 +335,7 @@ def str2time(s):
         ('S', 1), ('M', 60), ('H', 60 * 60), ('D', 60 * 60 * 24),
         ('W', 60 * 60 * 24 * 7), ('Y', 60 * 60 * 24 * 365)
     )
-    if _PY3 and isinstance(s, bytes):
+    if isinstance(s, bytes):
         s = s.decode('ascii')
 
     if isinstance(s, str):
@@ -296,6 +350,7 @@ def str2time(s):
     return s
 
 
+
 def readPrecisely(file, l):
     buff = file.read(l)
     if len(buff) < l:
@@ -303,33 +358,38 @@ def readPrecisely(file, l):
     return buff
 
 
+
 class IEncodable(Interface):
     """
     Interface for something which can be encoded to and decoded
-    from a file object.
+    to the DNS wire format.
+
+    A binary-mode file object (such as L{io.BytesIO}) is used as a buffer when
+    encoding or decoding.
     """
 
-    def encode(strio, compDict = None):
+    def encode(strio, compDict=None):
         """
         Write a representation of this object to the given
         file object.
 
         @type strio: File-like object
-        @param strio: The stream to which to write bytes
+        @param strio: The buffer to write to. It must have a C{tell()} method.
 
-        @type compDict: C{dict} or L{None}
-        @param compDict: A dictionary of backreference addresses that have
-        already been written to this stream and that may be used for
-        compression.
+        @type compDict: L{dict} of L{bytes} to L{int} r L{None}
+        @param compDict: A mapping of names to byte offsets that have already
+        been written to the buffer, which may be used for compression (see RFC
+        1035 section 4.1.4). When L{None}, encode without compression.
         """
 
-    def decode(strio, length = None):
+
+    def decode(strio, length=None):
         """
         Reconstruct an object from data read from the given
         file object.
 
         @type strio: File-like object
-        @param strio: The stream from which bytes may be read
+        @param strio: A seekable buffer from which bytes may be read.
 
         @type length: L{int} or L{None}
         @param length: The number of bytes in this RDATA field.  Most
@@ -415,13 +475,9 @@ class Name:
     def __init__(self, name=b''):
         """
         @param name: A name.
-        @type name: L{unicode} or L{bytes}
+        @type name: L{bytes} or L{str}
         """
-        if isinstance(name, str):
-            name = name.encode('idna')
-        if not isinstance(name, bytes):
-            raise TypeError("%r is not a byte string" % (name,))
-        self.name = name
+        self.name = domainString(name)
 
 
     def encode(self, strio, compDict=None):
@@ -543,7 +599,7 @@ class Query:
 
     def __init__(self, name=b'', type=A, cls=IN):
         """
-        @type name: L{bytes} or L{unicode}
+        @type name: L{bytes} or L{str}
         @param name: See L{Query.name}
 
         @type type: L{int}
@@ -569,14 +625,14 @@ class Query:
 
 
     def __hash__(self):
-        return hash((str(self.name).lower(), self.type, self.cls))
+        return hash((self.name.name.lower(), self.type, self.cls))
 
 
     def __cmp__(self, other):
         if isinstance(other, Query):
             return cmp(
-                (str(self.name).lower(), self.type, self.cls),
-                (str(other.name).lower(), other.type, other.cls))
+                (self.name.name.lower(), self.type, self.cls),
+                (other.name.name.lower(), other.type, other.cls))
         return NotImplemented
 
 
@@ -587,7 +643,7 @@ class Query:
 
 
     def __repr__(self):
-        return 'Query(%r, %r, %r)' % (str(self.name), self.type, self.cls)
+        return 'Query(%r, %r, %r)' % (self.name.name, self.type, self.cls)
 
 
 
@@ -871,7 +927,7 @@ class RRHeader(tputil.FancyEqMixin):
     def __init__(self, name=b'', type=A, cls=IN, ttl=0, payload=None,
                  auth=False):
         """
-        @type name: L{bytes} or L{unicode}
+        @type name: L{bytes} or L{str}
         @param name: See L{RRHeader.name}
 
         @type type: L{int}
@@ -881,22 +937,26 @@ class RRHeader(tputil.FancyEqMixin):
         @param cls: The query class.
 
         @type ttl: L{int}
-        @param ttl: Time to live for this record.
+        @param ttl: Time to live for this record.  This will be
+            converted to an L{int}.
 
         @type payload: An object implementing C{IEncodable}
         @param payload: A Query Type specific data object.
 
+        @raises TypeError: if the ttl cannot be converted to an L{int}.
         @raises ValueError: if the ttl is negative.
         """
         assert (payload is None) or isinstance(payload, UnknownRecord) or (payload.TYPE == type)
 
-        if ttl < 0:
+        integralTTL = int(ttl)
+
+        if integralTTL < 0:
             raise ValueError("TTL cannot be negative")
 
         self.name = Name(name)
         self.type = type
         self.cls = cls
-        self.ttl = ttl
+        self.ttl = integralTTL
         self.payload = payload
         self.auth = auth
 
@@ -956,7 +1016,7 @@ class SimpleRecord(tputil.FancyStrMixin, tputil.FancyEqMixin):
     def __init__(self, name=b'', ttl=None):
         """
         @param name: See L{SimpleRecord.name}
-        @type name: L{bytes} or L{unicode}
+        @type name: L{bytes} or L{str}
         """
         self.name = Name(name)
         self.ttl = str2time(ttl)
@@ -1098,12 +1158,12 @@ class Record_A(tputil.FancyEqMixin):
 
     def __init__(self, address='0.0.0.0', ttl=None):
         """
-        @type address: L{bytes} or L{unicode}
+        @type address: L{bytes} or L{str}
         @param address: The IPv4 address associated with this record, in
             quad-dotted notation.
         """
-        if _PY3 and isinstance(address, bytes):
-            address = address.decode('idna')
+        if isinstance(address, bytes):
+            address = address.decode('ascii')
 
         address = socket.inet_aton(address)
         self.address = address
@@ -1182,10 +1242,10 @@ class Record_SOA(tputil.FancyEqMixin, tputil.FancyStrMixin):
                  expire=0, minimum=0, ttl=None):
         """
         @param mname: See L{Record_SOA.mname}
-        @type mname: L{bytes} or L{unicode}
+        @type mname: L{bytes} or L{str}
 
         @param rname: See L{Record_SOA.rname}
-        @type rname: L{bytes} or L{unicode}
+        @type rname: L{bytes} or L{str}
         """
         self.mname, self.rname = Name(mname), Name(rname)
         self.serial, self.refresh = str2time(serial), str2time(refresh)
@@ -1290,11 +1350,11 @@ class Record_WKS(tputil.FancyEqMixin, tputil.FancyStrMixin):
 
     def __init__(self, address='0.0.0.0', protocol=0, map=b'', ttl=None):
         """
-        @type address: L{bytes} or L{unicode}
+        @type address: L{bytes} or L{str}
         @param address: The IPv4 address associated with this record, in
             quad-dotted notation.
         """
-        if _PY3 and isinstance(address, bytes):
+        if isinstance(address, bytes):
             address = address.decode('idna')
 
         self.address = socket.inet_aton(address)
@@ -1344,10 +1404,10 @@ class Record_AAAA(tputil.FancyEqMixin, tputil.FancyStrMixin):
 
     def __init__(self, address='::', ttl=None):
         """
-        @type address: L{bytes} or L{unicode}
+        @type address: L{bytes} or L{str}
         @param address: The IPv6 address for this host, in RFC 2373 format.
         """
-        if _PY3 and isinstance(address, bytes):
+        if isinstance(address, bytes):
             address = address.decode('idna')
 
         self.address = socket.inet_pton(AF_INET6, address)
@@ -1406,12 +1466,12 @@ class Record_A6(tputil.FancyStrMixin, tputil.FancyEqMixin):
     def __init__(self, prefixLen=0, suffix='::', prefix=b'', ttl=None):
         """
         @param suffix: An IPv6 address suffix in in RFC 2373 format.
-        @type suffix: L{bytes} or L{unicode}
+        @type suffix: L{bytes} or L{str}
 
         @param prefix: An IPv6 address prefix for other A6 records.
-        @type prefix: L{bytes} or L{unicode}
+        @type prefix: L{bytes} or L{str}
         """
-        if _PY3 and isinstance(suffix, bytes):
+        if isinstance(suffix, bytes):
             suffix = suffix.decode('idna')
 
         self.prefixLen = prefixLen
@@ -1505,7 +1565,7 @@ class Record_SRV(tputil.FancyEqMixin, tputil.FancyStrMixin):
     def __init__(self, priority=0, weight=0, port=0, target=b'', ttl=None):
         """
         @param target: See L{Record_SRV.target}
-        @type target: L{bytes} or L{unicode}
+        @type target: L{bytes} or L{str}
         """
         self.priority = int(priority)
         self.weight = int(weight)
@@ -1591,7 +1651,7 @@ class Record_NAPTR(tputil.FancyEqMixin, tputil.FancyStrMixin):
                  regexp=b'', replacement=b'', ttl=None):
         """
         @param replacement: See L{Record_NAPTR.replacement}
-        @type replacement: L{bytes} or L{unicode}
+        @type replacement: L{bytes} or L{str}
         """
         self.order = int(order)
         self.preference = int(preference)
@@ -1661,7 +1721,7 @@ class Record_AFSDB(tputil.FancyStrMixin, tputil.FancyEqMixin):
     def __init__(self, subtype=0, hostname=b'', ttl=None):
         """
         @param hostname: See L{Record_AFSDB.hostname}
-        @type hostname: L{bytes} or L{unicode}
+        @type hostname: L{bytes} or L{str}
         """
         self.subtype = int(subtype)
         self.hostname = Name(hostname)
@@ -1712,10 +1772,10 @@ class Record_RP(tputil.FancyEqMixin, tputil.FancyStrMixin):
     def __init__(self, mbox=b'', txt=b'', ttl=None):
         """
         @param mbox: See L{Record_RP.mbox}.
-        @type mbox: L{bytes} or L{unicode}
+        @type mbox: L{bytes} or L{str}
 
         @param txt: See L{Record_RP.txt}
-        @type txt: L{bytes} or L{unicode}
+        @type txt: L{bytes} or L{str}
         """
         self.mbox = Name(mbox)
         self.txt = Name(txt)
@@ -1826,10 +1886,10 @@ class Record_MINFO(tputil.FancyEqMixin, tputil.FancyStrMixin):
     def __init__(self, rmailbx=b'', emailbx=b'', ttl=None):
         """
         @param rmailbx: See L{Record_MINFO.rmailbx}.
-        @type rmailbx: L{bytes} or L{unicode}
+        @type rmailbx: L{bytes} or L{str}
 
         @param emailbx: See L{Record_MINFO.rmailbx}.
-        @type emailbx: L{bytes} or L{unicode}
+        @type emailbx: L{bytes} or L{str}
         """
         self.rmailbx, self.emailbx = Name(rmailbx), Name(emailbx)
         self.ttl = str2time(ttl)
@@ -1877,7 +1937,7 @@ class Record_MX(tputil.FancyStrMixin, tputil.FancyEqMixin):
     def __init__(self, preference=0, name=b'', ttl=None, **kwargs):
         """
         @param name: See L{Record_MX.name}.
-        @type name: L{bytes} or L{unicode}
+        @type name: L{bytes} or L{str}
         """
         self.preference = int(preference)
         self.name = Name(kwargs.get('exchange', name))
@@ -1895,6 +1955,74 @@ class Record_MX(tputil.FancyStrMixin, tputil.FancyEqMixin):
 
     def __hash__(self):
         return hash((self.preference, self.name))
+
+
+
+@implementer(IEncodable, IRecord)
+class Record_SSHFP(tputil.FancyEqMixin, tputil.FancyStrMixin):
+    """
+    A record containing the fingerprint of an SSH key.
+
+    @type algorithm: L{int}
+    @ivar algorithm: The SSH key's algorithm, such as L{ALGORITHM_RSA}.
+        Note that the numbering used for SSH key algorithms is specific
+        to the SSHFP record, and is not the same as the numbering
+        used for KEY or SIG records.
+
+    @type fingerprintType: L{int}
+    @ivar fingerprintType: The fingerprint type,
+        such as L{FINGERPRINT_TYPE_SHA256}.
+
+    @type fingerprint: L{bytes}
+    @ivar fingerprint: The key's fingerprint, e.g. a 32-byte SHA-256 digest.
+
+    @cvar ALGORITHM_RSA: The algorithm value for C{ssh-rsa} keys.
+    @cvar ALGORITHM_DSS: The algorithm value for C{ssh-dss} keys.
+    @cvar ALGORITHM_ECDSA: The algorithm value for C{ecdsa-sha2-*} keys.
+    @cvar ALGORITHM_Ed25519: The algorithm value for C{ed25519} keys.
+
+    @cvar FINGERPRINT_TYPE_SHA1: The type for SHA-1 fingerprints.
+    @cvar FINGERPRINT_TYPE_SHA256: The type for SHA-256 fingerprints.
+
+    @see: U{RFC 4255 <https://tools.ietf.org/html/rfc4255>}
+          and
+          U{RFC 6594 <https://tools.ietf.org/html/rfc6594>}
+    """
+    fancybasename = "SSHFP"
+    compareAttributes = ('algorithm', 'fingerprintType', 'fingerprint', 'ttl')
+    showAttributes = ('algorithm', 'fingerprintType', 'fingerprint')
+
+    TYPE = SSHFP
+
+    ALGORITHM_RSA = 1
+    ALGORITHM_DSS = 2
+    ALGORITHM_ECDSA = 3
+    ALGORITHM_Ed25519 = 4
+
+    FINGERPRINT_TYPE_SHA1 = 1
+    FINGERPRINT_TYPE_SHA256 = 2
+
+    def __init__(self, algorithm=0, fingerprintType=0, fingerprint=b'', ttl=0):
+        self.algorithm = algorithm
+        self.fingerprintType = fingerprintType
+        self.fingerprint = fingerprint
+        self.ttl = ttl
+
+
+    def encode(self, strio, compDict=None):
+        strio.write(struct.pack('!BB',
+                                self.algorithm, self.fingerprintType))
+        strio.write(self.fingerprint)
+
+
+    def decode(self, strio, length=None):
+        r = struct.unpack('!BB', readPrecisely(strio, 2))
+        (self.algorithm, self.fingerprintType) = r
+        self.fingerprint = readPrecisely(strio, length - 2)
+
+
+    def __hash__(self):
+        return hash((self.algorithm, self.fingerprintType, self.fingerprint))
 
 
 
@@ -2001,10 +2129,95 @@ class Record_SPF(Record_TXT):
     @ivar data: Freeform text which makes up this record.
 
     @type ttl: L{int}
-    @ivar ttl: The maximum number of seconds which this record should be cached.
+    @ivar ttl: The maximum number of seconds
+               which this record should be cached.
     """
     TYPE = SPF
     fancybasename = 'SPF'
+
+
+
+@implementer(IEncodable, IRecord)
+class Record_TSIG(tputil.FancyEqMixin, tputil.FancyStrMixin):
+    """
+    A transaction signature, encapsulated in a RR, as described
+    in U{RFC 2845 <https://tools.ietf.org/html/rfc2845>}.
+
+    @type algorithm: L{Name}
+    @ivar algorithm: The name of the signature or MAC algorithm.
+
+    @type timeSigned: L{int}
+    @ivar timeSigned: Signing time, as seconds from the POSIX epoch.
+
+    @type fudge: L{int}
+    @ivar fudge: Allowable time skew, in seconds.
+
+    @type MAC: L{bytes}
+    @ivar MAC: The message digest or signature.
+
+    @type originalID: L{int}
+    @ivar originalID: A message ID.
+
+    @type error: L{int}
+    @ivar error: An error code (extended C{RCODE}) carried
+          in exceptional cases.
+
+    @type otherData: L{bytes}
+    @ivar otherData: Other data carried in exceptional cases.
+
+    """
+    fancybasename = "TSIG"
+    compareAttributes = ('algorithm', 'timeSigned', 'fudge',
+                         'MAC', 'originalID', 'error', 'otherData',
+                         'ttl')
+    showAttributes = ['algorithm', 'timeSigned', 'MAC', 'error', 'otherData']
+
+    TYPE = TSIG
+
+    def __init__(self, algorithm=None, timeSigned=None,
+                 fudge=5, MAC=None, originalID=0,
+                 error=OK, otherData=b'', ttl=0):
+        # All of our init arguments have to have defaults, because of
+        # the way IEncodable and Message.parseRecords() work, but for
+        # some of our arguments there is no reasonable default; we use
+        # invalid values here to prevent a user of this class from
+        # relying on what's really an internal implementation detail.
+        self.algorithm = None if algorithm is None else Name(algorithm)
+        self.timeSigned = timeSigned
+        self.fudge = str2time(fudge)
+        self.MAC = MAC
+        self.originalID = originalID
+        self.error = error
+        self.otherData = otherData
+        self.ttl = ttl
+
+
+    def encode(self, strio, compDict=None):
+        self.algorithm.encode(strio, compDict)
+        strio.write(struct.pack('!Q', self.timeSigned)[2:])  # 48-bit number
+        strio.write(struct.pack('!HH', self.fudge, len(self.MAC)))
+        strio.write(self.MAC)
+        strio.write(struct.pack('!HHH',
+                                self.originalID, self.error,
+                                len(self.otherData)))
+        strio.write(self.otherData)
+
+
+    def decode(self, strio, length=None):
+        algorithm = Name()
+        algorithm.decode(strio)
+        self.algorithm = algorithm
+        fields = struct.unpack('!QHH', b'\x00\x00' + readPrecisely(strio, 10))
+        self.timeSigned, self.fudge, macLength = fields
+        self.MAC = readPrecisely(strio, macLength)
+        fields = struct.unpack('!HHH', readPrecisely(strio, 6))
+        self.originalID, self.error, otherLength = fields
+        self.otherData = readPrecisely(strio, otherLength)
+
+
+    def __hash__(self):
+        return hash((self.algorithm, self.timeSigned,
+                     self.MAC, self.originalID))
 
 
 
@@ -2049,25 +2262,13 @@ def _getDisplayableArguments(obj, alwaysShow, fieldNames):
     @return: A L{list} of displayable arguments.
     """
     displayableArgs = []
-    if _PY3:
-        # Get the argument names and values from the constructor.
-        signature = inspect.signature(obj.__class__.__init__)
-        for name in fieldNames:
-            defaultValue = signature.parameters[name].default
-            fieldValue = getattr(obj, name, defaultValue)
-            if (name in alwaysShow) or (fieldValue != defaultValue):
-                displayableArgs.append(' %s=%r' % (name, fieldValue))
-    else:
-        # Get the argument names and values from the constructor.
-        argspec = inspect.getargspec(obj.__class__.__init__)
-        # Reverse the args and defaults to avoid mapping positional arguments
-        # which don't have a default.
-        defaults = dict(list(zip(reversed(argspec.args), reversed(argspec.defaults))))
-        for name in fieldNames:
-            defaultValue = defaults.get(name)
-            fieldValue = getattr(obj, name, defaultValue)
-            if (name in alwaysShow) or (fieldValue != defaultValue):
-                displayableArgs.append(' %s=%r' % (name, fieldValue))
+    # Get the argument names and values from the constructor.
+    signature = inspect.signature(obj.__class__.__init__)
+    for name in fieldNames:
+        defaultValue = signature.parameters[name].default
+        fieldValue = getattr(obj, name, defaultValue)
+        if (name in alwaysShow) or (fieldValue != defaultValue):
+            displayableArgs.append(' %s=%r' % (name, fieldValue))
 
     return displayableArgs
 

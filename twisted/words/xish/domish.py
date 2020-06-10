@@ -11,11 +11,12 @@ for use in streaming XML applications.
 """
 
 
-
 from zope.interface import implementer, Interface, Attribute
 
-from twisted.python.compat import (_PY3, StringType, _coercedUnicode,
-                                   iteritems, itervalues, str)
+from twisted.python.compat import (StringType, _coercedUnicode,
+                                   iteritems, itervalues)
+
+
 
 def _splitPrefix(name):
     """ Internal method for splitting a prefixed Element name into its
@@ -39,11 +40,11 @@ class _ListSerializer:
         if prefixes:
             self.prefixes.update(prefixes)
         self.prefixes.update(G_PREFIXES)
-        self.prefixStack = [list(G_PREFIXES.values())] + (prefixesInScope or [])
+        self.prefixStack = [G_PREFIXES.values()] + (prefixesInScope or [])
         self.prefixCounter = 0
 
     def getValue(self):
-        return "".join(self.writelist)
+        return u"".join(self.writelist)
 
     def getPrefix(self, uri):
         if uri not in self.prefixes:
@@ -113,7 +114,7 @@ class _ListSerializer:
             write(" xmlns:%s='%s'" % (p, u))
 
         # Serialize attributes
-        for k,v in list(elem.attributes.items()):
+        for k,v in elem.attributes.items():
             # If the attribute name is a tuple, it's a qualified attribute
             if isinstance(k, tuple):
                 attr_uri, attr_name = k
@@ -199,6 +200,7 @@ def generateElementsNamed(list, name):
             yield n
 
 
+
 class SerializedXML(str):
     """ Marker class for pre-serialized XML in the DOM. """
     pass
@@ -248,14 +250,14 @@ class IElement(Interface):
             for partial rendering, where the logical parent element (of which
             the starttag was already serialized) declares a default namespace
             that should be inherited.
-        @type defaultUri: L{unicode}
+        @type defaultUri: L{str}
 
         @param prefixesInScope: list of prefixes that are assumed to be
             declared by ancestors.
-        @type prefixesInScope: C{list}
+        @type prefixesInScope: L{list}
 
         @return: (partial) serialized XML
-        @rtype: C{unicode}
+        @rtype: L{str}
         """
 
     def addElement(name, defaultUri=None, content=None):
@@ -265,18 +267,18 @@ class IElement(Interface):
         The new element is added to this element as a child, and will have
         this element as its parent.
 
-        @param name: element name. This can be either a L{unicode} object that
+        @param name: element name. This can be either a L{str} object that
             contains the local name, or a tuple of (uri, local_name) for a
             fully qualified name. In the former case, the namespace URI is
             inherited from this element.
-        @type name: L{unicode} or L{tuple} of (L{unicode}, L{unicode})
+        @type name: L{str} or L{tuple} of (L{stre}, L{str})
 
         @param defaultUri: default namespace URI for child elements. If
             L{None}, this is inherited from this element.
-        @type defaultUri: L{unicode}
+        @type defaultUri: L{str}
 
         @param content: text contained by the new element.
-        @type content: L{unicode}
+        @type content: L{str}
 
         @return: the created element
         @rtype: object providing L{IElement}
@@ -288,12 +290,12 @@ class IElement(Interface):
 
         The C{node} will be added to the list of childs of this element, and
         will have this element set as its parent when C{node} provides
-        L{IElement}. If C{node} is a L{unicode} and the current last child is
-        character data (L{unicode}), the text from C{node} is appended to the
+        L{IElement}. If C{node} is a L{str} and the current last child is
+        character data (L{str}), the text from C{node} is appended to the
         existing last child.
 
         @param node: the child node.
-        @type node: L{unicode} or object implementing L{IElement}
+        @type node: L{str} or object implementing L{IElement}
         """
 
     def addContent(text):
@@ -305,7 +307,7 @@ class IElement(Interface):
         child.
 
         @param text: The character data to be added to this element.
-        @type text: L{unicode}
+        @type text: L{str}
         """
 
 
@@ -385,16 +387,16 @@ class Element(object):
     As, you can see, the <presence/> element is now in the empty namespace, not
     in the default namespace of the parent or the streams'.
 
-    @type uri: C{unicode} or None
+    @type uri: L{str} or None
     @ivar uri: URI of this Element's name
 
-    @type name: C{unicode}
+    @type name: L{str}
     @ivar name: Name of this Element
 
-    @type defaultUri: C{unicode} or None
+    @type defaultUri: L{str} or None
     @ivar defaultUri: URI this Element exists within
 
-    @type children: C{list}
+    @type children: L{list}
     @ivar children: List of child Elements and content
 
     @type parent: L{Element}
@@ -470,10 +472,7 @@ class Element(object):
         """
         return str(self).encode('utf-8')
 
-    if _PY3:
-        __str__ = __unicode__
-    else:
-        __str__ = __bytes__
+    __str__ = __unicode__
 
     def _dqa(self, attr):
         """ Dequalify an attribute key as needed """
@@ -559,9 +558,9 @@ class Element(object):
         on elements matching the qualified name.
 
         @param uri: Optional element URI.
-        @type uri: C{unicode}
+        @type uri: L{str}
         @param name: Optional element name.
-        @type name: C{unicode}
+        @type name: L{str}
         @return: Iterator that yields objects implementing L{IElement}.
         """
         if name is None:
@@ -671,7 +670,7 @@ else:
                 uri = self.findUri(prefix)
 
             # Pass 2 - Fix up and escape attributes
-            for k, v in list(attributes.items()):
+            for k, v in attributes.items():
                 p, n = _splitPrefix(k)
                 if p is None:
                     attribs[n] = v
@@ -807,11 +806,18 @@ class ExpatElementStream:
             qname = ('', name)
 
         # Process attributes
-        for k, v in list(attrs.items()):
+        newAttrs = {}
+        toDelete = []
+        for k, v in attrs.items():
             if " " in k:
                 aqname = k.rsplit(" ", 1)
-                attrs[(aqname[0], aqname[1])] = v
-                del attrs[k]
+                newAttrs[(aqname[0], aqname[1])] = v
+                toDelete.append(k)
+
+        attrs.update(newAttrs)
+
+        for k in toDelete:
+            del attrs[k]
 
         # Construct the new element
         e = Element(qname, self.defaultNsStack[-1], attrs, self.localPrefixes)

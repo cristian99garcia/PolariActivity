@@ -13,7 +13,7 @@ from twisted.internet.address import UNIXAddress
 import os
 
 try:
-    import pickle as pickle
+    import cPickle as pickle
 except ImportError:
     import pickle
 
@@ -45,8 +45,8 @@ class DomainQueuer:
         """
         if self.willRelay(user.dest, user.protocol):
             # The most cursor form of verification of the addresses
-            orig = [_f for _f in str(user.orig).split('@', 1) if _f]
-            dest = [_f for _f in str(user.dest).split('@', 1) if _f]
+            orig = filter(None, str(user.orig).split('@', 1))
+            dest = filter(None, str(user.dest).split('@', 1))
             if len(orig) == 2 and len(dest) == 2:
                 return lambda: self.startMessage(user)
         raise smtp.SMTPBadRcpt(user)

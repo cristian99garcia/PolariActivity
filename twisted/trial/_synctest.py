@@ -9,16 +9,22 @@ Maintainer: Jonathan Lange
 """
 
 
-
 import inspect
-import os, warnings, sys, tempfile, types
+import os
+import sys
+import tempfile
+import types
+import warnings
 from dis import findlinestarts as _findlinestarts
+from typing import Optional, Tuple
 
 from twisted.python import failure, log, monkey
 from twisted.python.reflect import fullyQualifiedName
 from twisted.python.util import runWithWarningsSuppressed
 from twisted.python.deprecate import (
-    getDeprecationWarningString, warnAboutFunction)
+    getDeprecationWarningString, warnAboutFunction
+)
+from twisted.internet.defer import ensureDeferred
 
 from twisted.trial import itrial, util
 
@@ -30,7 +36,9 @@ SkipTest = pyunit.SkipTest
 
 
 class FailTest(AssertionError):
-    """Raised to indicate the current test has failed to pass."""
+    """
+    Raised to indicate the current test has failed to pass.
+    """
 
 
 
@@ -55,8 +63,10 @@ class Todo(object):
         self.reason = reason
         self.errors = errors
 
+
     def __repr__(self):
         return "<Todo reason=%r errors=%r>" % (self.reason, self.errors)
+
 
     def expected(self, failure):
         """
@@ -70,6 +80,7 @@ class Todo(object):
             if failure.check(error):
                 return True
         return False
+
 
 
 def makeTodo(value):
@@ -128,6 +139,7 @@ class _Warning(object):
         self.lineno = lineno
 
 
+
 def _setWarningRegistryToNone(modules):
     """
     Disable the per-module cache for every module found in C{modules}, typically
@@ -146,6 +158,7 @@ def _setWarningRegistryToNone(modules):
                 pass
 
 
+
 def _collectWarnings(observeWarning, f, *args, **kwargs):
     """
     Call C{f} with C{args} positional arguments and C{kwargs} keyword arguments
@@ -159,7 +172,7 @@ def _collectWarnings(observeWarning, f, *args, **kwargs):
     def showWarning(message, category, filename, lineno, file=None, line=None):
         assert isinstance(message, Warning)
         observeWarning(_Warning(
-                message.args[0], category, filename, lineno))
+                str(message), category, filename, lineno))
 
     # Disable the per-module cache for every module otherwise if the warning
     # which the caller is expecting us to collect was already emitted it won't
@@ -376,7 +389,9 @@ class _Assertions(pyunit.TestCase, object):
         """
         super(_Assertions, self).assertFalse(condition, msg)
         return condition
-    assertNot = failUnlessFalse = failIf = assertFalse
+    assertNot = assertFalse
+    failUnlessFalse = assertFalse
+    failIf = assertFalse
 
 
     def assertTrue(self, condition, msg=None):
@@ -387,7 +402,9 @@ class _Assertions(pyunit.TestCase, object):
         """
         super(_Assertions, self).assertTrue(condition, msg)
         return condition
-    assert_ = failUnlessTrue = failUnless = assertTrue
+    assert_ = assertTrue
+    failUnlessTrue = assertTrue
+    failUnless = assertTrue
 
 
     def assertRaises(self, exception, f=None, *args, **kwargs):
@@ -424,7 +441,9 @@ class _Assertions(pyunit.TestCase, object):
         """
         super(_Assertions, self).assertEqual(first, second, msg)
         return first
-    failUnlessEqual = failUnlessEquals = assertEquals = assertEqual
+    failUnlessEqual = assertEqual
+    failUnlessEquals = assertEqual
+    assertEquals = assertEqual
 
 
     def assertIs(self, first, second, msg=None):
@@ -437,9 +456,11 @@ class _Assertions(pyunit.TestCase, object):
         '%r is not %r' % (first, second)
         """
         if first is not second:
-            raise self.failureException(msg or '%r is not %r' % (first, second))
+            raise self.failureException(
+                msg or '%r is not %r' % (first, second))
         return first
-    failUnlessIdentical = assertIdentical = assertIs
+    failUnlessIdentical = assertIs
+    assertIdentical = assertIs
 
 
     def assertIsNot(self, first, second, msg=None):
@@ -454,7 +475,8 @@ class _Assertions(pyunit.TestCase, object):
         if first is second:
             raise self.failureException(msg or '%r is %r' % (first, second))
         return first
-    failIfIdentical = assertNotIdentical = assertIsNot
+    failIfIdentical = assertIsNot
+    assertNotIdentical = assertIsNot
 
 
     def assertNotEqual(self, first, second, msg=None):
@@ -467,7 +489,9 @@ class _Assertions(pyunit.TestCase, object):
         if not first != second:
             raise self.failureException(msg or '%r == %r' % (first, second))
         return first
-    assertNotEquals = failIfEquals = failIfEqual = assertNotEqual
+    assertNotEquals = assertNotEqual
+    failIfEquals = assertNotEqual
+    failIfEqual = assertNotEqual
 
 
     def assertIn(self, containee, container, msg=None):
@@ -520,7 +544,8 @@ class _Assertions(pyunit.TestCase, object):
             raise self.failureException(msg or '%r == %r within %r places'
                                         % (first, second, places))
         return first
-    assertNotAlmostEquals = failIfAlmostEqual = assertNotAlmostEqual
+    assertNotAlmostEquals = assertNotAlmostEqual
+    failIfAlmostEqual = assertNotAlmostEqual
     failIfAlmostEquals = assertNotAlmostEqual
 
 
@@ -540,8 +565,8 @@ class _Assertions(pyunit.TestCase, object):
             raise self.failureException(msg or '%r != %r within %r places'
                                         % (first, second, places))
         return first
-    assertAlmostEquals = failUnlessAlmostEqual = assertAlmostEqual
-    failUnlessAlmostEquals = assertAlmostEqual
+    assertAlmostEquals = assertAlmostEqual
+    failUnlessAlmostEqual = assertAlmostEqual
 
 
     def assertApproximates(self, first, second, tolerance, msg=None):
@@ -679,20 +704,26 @@ class _Assertions(pyunit.TestCase, object):
 
         @return: The result of C{deferred}.
         """
+        deferred = ensureDeferred(deferred)
         result = []
         deferred.addBoth(result.append)
+
         if not result:
             self.fail(
-                "Success result expected on %r, found no result instead" % (
-                    deferred,))
-        elif isinstance(result[0], failure.Failure):
-            self.fail(
-                "Success result expected on %r, "
-                "found failure result instead:\n%s" % (
-                    deferred, result[0].getTraceback()))
-        else:
-            return result[0]
+                "Success result expected on {!r}, found no result instead"
+                .format(deferred)
+            )
 
+        result = result[0]
+
+        if isinstance(result, failure.Failure):
+            self.fail(
+                "Success result expected on {!r}, "
+                "found failure result instead:\n{}"
+                .format(deferred, result.getTraceback())
+            )
+
+        return result
 
 
     def failureResultOf(self, deferred, *expectedExceptionTypes):
@@ -720,30 +751,44 @@ class _Assertions(pyunit.TestCase, object):
         @return: The failure result of C{deferred}.
         @rtype: L{failure.Failure}
         """
+        deferred = ensureDeferred(deferred)
         result = []
         deferred.addBoth(result.append)
+
         if not result:
             self.fail(
-                "Failure result expected on %r, found no result instead" % (
-                    deferred,))
-        elif not isinstance(result[0], failure.Failure):
+                "Failure result expected on {!r}, found no result instead"
+                .format(deferred)
+            )
+
+        result = result[0]
+
+        if not isinstance(result, failure.Failure):
             self.fail(
-                "Failure result expected on %r, "
-                "found success result (%r) instead" % (deferred, result[0]))
-        elif (expectedExceptionTypes and
-              not result[0].check(*expectedExceptionTypes)):
+                "Failure result expected on {!r}, "
+                "found success result ({!r}) instead"
+                .format(deferred, result)
+            )
+
+        if (
+            expectedExceptionTypes and
+            not result.check(*expectedExceptionTypes)
+        ):
             expectedString = " or ".join([
-                '.'.join((t.__module__, t.__name__)) for t in
-                expectedExceptionTypes])
+                ".".join((t.__module__, t.__name__))
+                for t in expectedExceptionTypes
+            ])
 
             self.fail(
-                "Failure of type (%s) expected on %r, "
-                "found type %r instead: %s" % (
-                    expectedString, deferred, result[0].type,
-                    result[0].getTraceback()))
-        else:
-            return result[0]
+                "Failure of type ({}) expected on {!r}, "
+                "found type {!r} instead: {}"
+                .format(
+                    expectedString, deferred, result.type,
+                    result.getTraceback()
+                )
+            )
 
+        return result
 
 
     def assertNoResult(self, deferred):
@@ -765,19 +810,23 @@ class _Assertions(pyunit.TestCase, object):
         @raise SynchronousTestCase.failureException: If the
             L{Deferred<twisted.internet.defer.Deferred>} has a result.
         """
+        deferred = ensureDeferred(deferred)
         result = []
+
         def cb(res):
             result.append(res)
             return res
+
         deferred.addBoth(cb)
+
         if result:
             # If there is already a failure, the self.fail below will
             # report it, so swallow it in the deferred
             deferred.addErrback(lambda _: None)
             self.fail(
-                "No result expected on %r, found %r instead" % (
-                    deferred, result[0]))
-
+                "No result expected on {!r}, found {!r} instead"
+                .format(deferred, result[0])
+            )
 
 
     def assertRegex(self, text, regex, msg=None):
@@ -799,7 +848,7 @@ class _Assertions(pyunit.TestCase, object):
         else:
             # Python 2.7 has unittest.assertRegexpMatches() which was
             # renamed to unittest.assertRegex() in Python 3.2
-            super(_Assertions, self).assertRegex(text, regex, msg)
+            super(_Assertions, self).assertRegexpMatches(text, regex, msg)
 
 
 
@@ -947,17 +996,21 @@ class SynchronousTestCase(_Assertions):
             testMethod, self, sys.modules.get(self.__class__.__module__)]
 
 
-    # Override the comparison defined by the base TestCase which considers
-    # instances of the same class with the same _testMethodName to be
-    # equal.  Since trial puts TestCase instances into a set, that
-    # definition of comparison makes it impossible to run the same test
-    # method twice.  Most likely, trial should stop using a set to hold
-    # tests, but until it does, this is necessary on Python 2.6. -exarkun
     def __eq__(self, other):
+        """
+        Override the comparison defined by the base TestCase which considers
+        instances of the same class with the same _testMethodName to be
+        equal.  Since trial puts TestCase instances into a set, that
+        definition of comparison makes it impossible to run the same test
+        method twice.  Most likely, trial should stop using a set to hold
+        tests, but until it does, this is necessary on Python 2.6. -exarkun
+        """
         return self is other
+
 
     def __ne__(self, other):
         return self is not other
+
 
     def __hash__(self):
         return hash((self.__class__, self._testMethodName))
@@ -970,15 +1023,25 @@ class SynchronousTestCase(_Assertions):
         return desc
 
 
-    def getSkip(self):
+    def getSkip(self) -> Tuple[bool, Optional[str]]:
         """
         Return the skip reason set on this test, if any is set. Checks on the
         instance first, then the class, then the module, then packages. As
-        soon as it finds something with a C{skip} attribute, returns that.
-        Returns L{None} if it cannot find anything. See L{TestCase} docstring
-        for more details.
+        soon as it finds something with a C{skip} attribute, returns that in
+        a tuple (L{True}, L{str}).
+        If the C{skip} attribute does not exist, look for C{__unittest_skip__}
+        and C{__unittest_skip_why__} attributes which are set by the standard
+        library L{unittest.skip} function.
+        Returns (L{False}, L{None}) if it cannot find anything.
+        See L{TestCase} docstring for more details.
         """
-        return util.acquireAttribute(self._parents, 'skip', None)
+        skipReason = util.acquireAttribute(self._parents, 'skip', None)
+        doSkip = skipReason is not None
+        if skipReason is None:
+            doSkip = getattr(self, "__unittest_skip__", False)
+            if doSkip:
+                skipReason = getattr(self, "__unittest_skip_why__", "")
+        return (doSkip, skipReason)
 
 
     def getTodo(self):
@@ -1021,8 +1084,9 @@ class SynchronousTestCase(_Assertions):
         else:
             result = new_result
         result.startTest(self)
-        if self.getSkip(): # don't run test methods that are marked as .skip
-            result.addSkip(self, self.getSkip())
+        (doSkip, skipReason) = self.getSkip()
+        if doSkip:  # don't run test methods that are marked as .skip
+            result.addSkip(self, skipReason)
             result.stopTest(self)
             return
 
@@ -1337,25 +1401,23 @@ class SynchronousTestCase(_Assertions):
 
             todo = self.getTodo()
             method = getattr(self, self._testMethodName)
-            if self._run(suppress, todo, method, result):
-                return
+            failed = self._run(suppress, todo, method, result)
         finally:
             self._runCleanups(result)
 
-        if todo:
+        if todo and not failed:
             result.addUnexpectedSuccess(self, todo)
 
         if self._run(suppress, None, self.tearDown, result):
-            return
+            failed = True
 
-        passed = True
         for error in self._observer.getErrors():
             result.addError(self, error)
-            passed = False
+            failed = True
         self._observer.flushErrors()
         self._removeObserver()
 
-        if passed and not todo:
+        if not (failed or todo):
             result.addSuccess(self)
 
 

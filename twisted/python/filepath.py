@@ -7,13 +7,10 @@ Object-oriented filesystem path representation.
 """
 
 
-
 import os
 import sys
 import errno
 import base64
-
-from hashlib import sha1
 
 from os.path import isabs, exists, normpath, abspath, splitext
 from os.path import basename, dirname, join as joinpath
@@ -30,7 +27,7 @@ from zope.interface import Interface, Attribute, implementer
 # things import this module, and it would be good if it could easily be
 # modified for inclusion in the standard library.  --glyph
 
-from twisted.python.compat import comparable, cmp, str
+from twisted.python.compat import comparable, cmp, unicode
 from twisted.python.deprecate import deprecated
 from twisted.python.runtime import platform
 from incremental import Version
@@ -271,7 +268,7 @@ def _secureEnoughString(path):
     @return: A pseudorandom, 16 byte string for use in secure filenames.
     @rtype: the type of C{path}
     """
-    secureishString = armor(sha1(randomBytes(64)).digest())[:16]
+    secureishString = armor(randomBytes(16))[:16]
     return _coerceToFilesystemEncoding(path, secureishString)
 
 
@@ -378,7 +375,7 @@ class AbstractFilePath(object):
                 # sort of thing which should be handled normally. -glyph
                 raise
             raise UnlistableError(ose)
-        return list(map(self.child, subnames))
+        return [self.child(name) for name in subnames]
 
     def walk(self, descend=None):
         """
@@ -643,7 +640,7 @@ def _asFilesystemText(path, encoding=None):
 
     @return: L{unicode}
     """
-    if type(path) == str:
+    if type(path) == unicode:
         return path
     else:
         if encoding is None:
@@ -794,7 +791,7 @@ class FilePath(AbstractFilePath):
 
         @return: L{bytes} mode L{FilePath}
         """
-        if type(self.path) == str:
+        if type(self.path) == unicode:
             return self.clonePath(self._asBytesPath(encoding=encoding))
         return self
 
@@ -1453,7 +1450,7 @@ class FilePath(AbstractFilePath):
         import glob
         path = ourPath[-1] == sep and ourPath + pattern \
                or sep.join([ourPath, pattern])
-        return list(map(self.clonePath, glob.glob(path)))
+        return [self.clonePath(p) for p in glob.glob(path)]
 
 
     def basename(self):

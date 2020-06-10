@@ -8,15 +8,20 @@ complex or arbitrarily nested, as strings.
 """
 
 
-
 from io import BytesIO
 
 from sys import exc_info
 from types import GeneratorType
 from traceback import extract_tb
 
-from twisted.internet.defer import Deferred
-from twisted.python.compat import str, nativeString, iteritems
+try:
+    from inspect import iscoroutine
+except ImportError:
+    def iscoroutine(*args, **kwargs):
+        return False
+
+from twisted.python.compat import unicode, nativeString, iteritems
+from twisted.internet.defer import Deferred, ensureDeferred
 from twisted.web._stan import Tag, slot, voidElements, Comment, CDATA, CharRef
 from twisted.web.error import UnfilledSlot, UnsupportedType, FlattenerError
 from twisted.web.iweb import IRenderable
@@ -38,7 +43,7 @@ def escapeForContent(data):
     @return: The quoted form of C{data}.  If C{data} is unicode, return a utf-8
         encoded string.
     """
-    if isinstance(data, str):
+    if isinstance(data, unicode):
         data = data.encode('utf-8')
     data = data.replace(b'&', b'&amp;'
         ).replace(b'<', b'&lt;'
@@ -63,7 +68,7 @@ def attributeEscapingDoneOutside(data):
     @return: The string, unchanged, except for encoding.
     @rtype: C{bytes}
     """
-    if isinstance(data, str):
+    if isinstance(data, unicode):
         return data.encode("utf-8")
     return data
 
@@ -124,7 +129,7 @@ def escapedCDATA(data):
     @return: The quoted form of C{data}. If C{data} is unicode, return a utf-8
         encoded string.
     """
-    if isinstance(data, str):
+    if isinstance(data, unicode):
         data = data.encode('utf-8')
     return data.replace(b']]>', b']]]]><![CDATA[>')
 
@@ -141,7 +146,7 @@ def escapedComment(data):
     @return: The quoted form of C{data}. If C{data} is unicode, return a utf-8
         encoded string.
     """
-    if isinstance(data, str):
+    if isinstance(data, unicode):
         data = data.encode('utf-8')
     data = data.replace(b'--', b'- - ').replace(b'>', b'&gt;')
     if data and data[-1:] == b'-':
@@ -208,7 +213,7 @@ def _flattenElement(request, root, write, slotData, renderFactory,
                   renderFactory=renderFactory, write=write):
         return _flattenElement(request, newRoot, write, slotData,
                                renderFactory, dataEscaper)
-    if isinstance(root, (bytes, str)):
+    if isinstance(root, (bytes, unicode)):
         write(dataEscaper(root))
     elif isinstance(root, slot):
         slotValue = _getSlotValue(root.name, slotData, root.default)
@@ -238,13 +243,13 @@ def _flattenElement(request, root, write, slotData, renderFactory,
             return
 
         write(b'<')
-        if isinstance(root.tagName, str):
+        if isinstance(root.tagName, unicode):
             tagName = root.tagName.encode('ascii')
         else:
             tagName = root.tagName
         write(tagName)
         for k, v in iteritems(root.attributes):
-            if isinstance(k, str):
+            if isinstance(k, unicode):
                 k = k.encode('ascii')
             write(b' ' + k + b'="')
             # Serialize the contents of the attribute, wrapping the results of
@@ -276,6 +281,9 @@ def _flattenElement(request, root, write, slotData, renderFactory,
         write(escaped.encode('ascii'))
     elif isinstance(root, Deferred):
         yield root.addCallback(lambda result: (result, keepGoing(result)))
+    elif iscoroutine(root):
+        d = ensureDeferred(root)
+        yield d.addCallback(lambda result: (result, keepGoing(result)))
     elif IRenderable.providedBy(root):
         result = root.render(request)
         yield keepGoing(result, renderFactory=root)
@@ -398,7 +406,7 @@ def flattenString(request, root):
     """
     Collate a string representation of C{root} into a single string.
 
-    This is basically gluing L{flatten} to a L{NativeStringIO} and returning
+    This is basically gluing L{flatten} to an L{io.BytesIO} and returning
     the results. See L{flatten} for the exact meanings of C{request} and
     C{root}.
 

@@ -12,7 +12,7 @@ from inspect import getsourcefile
 
 from zope.interface.verify import verifyObject, BrokenMethodImplementation
 
-from twisted.python.compat import _PY3, currentframe
+from twisted.python.compat import currentframe
 from twisted.python.failure import Failure
 from twisted.trial import unittest
 
@@ -111,7 +111,7 @@ class STDLibLogObserverTests(unittest.TestCase):
 
         # Build a set of events for each log level
         events = []
-        for level, pyLevel in list(levelMapping.items()):
+        for level, pyLevel in levelMapping.items():
             event = {}
 
             # Set the log level on the event, except for default
@@ -158,7 +158,7 @@ class STDLibLogObserverTests(unittest.TestCase):
         records, output = self.logEvent(event)
 
         self.assertEqual(len(records), 1)
-        self.assertEqual(str(records[0].msg), "Hello, dude!")
+        self.assertEqual(str(records[0].msg), u"Hello, dude!")
         self.assertEqual(records[0].args, ())
 
 
@@ -170,7 +170,7 @@ class STDLibLogObserverTests(unittest.TestCase):
         records, output = self.logEvent(event)
 
         self.assertEqual(len(records), 1)
-        self.assertTrue(output.endswith(":Hello, dude!\n"),
+        self.assertTrue(output.endswith(u":Hello, dude!\n"),
                         repr(output))
 
 
@@ -197,9 +197,9 @@ class STDLibLogObserverTests(unittest.TestCase):
         event = dict(log_format='Hi mom', who='me', log_failure=failure)
         records, output = self.logEvent(event)
         self.assertEqual(len(records), 1)
-        self.assertIn('Hi mom', output)
-        self.assertIn('in failing_func', output)
-        self.assertIn('ZeroDivisionError', output)
+        self.assertIn(u'Hi mom', output)
+        self.assertIn(u'in failing_func', output)
+        self.assertIn(u'ZeroDivisionError', output)
 
 
     def test_cleanedFailure(self):
@@ -218,9 +218,9 @@ class STDLibLogObserverTests(unittest.TestCase):
         event = dict(log_format='Hi mom', who='me', log_failure=failure)
         records, output = self.logEvent(event)
         self.assertEqual(len(records), 1)
-        self.assertIn('Hi mom', output)
-        self.assertIn('in failing_func', output)
-        self.assertIn('ZeroDivisionError', output)
+        self.assertIn(u'Hi mom', output)
+        self.assertIn(u'in failing_func', output)
+        self.assertIn(u'ZeroDivisionError', output)
 
 
 
@@ -275,8 +275,7 @@ def handlerAndBytesIO():
     output = BytesIO()
     stream = output
     template = py_logging.BASIC_FORMAT
-    if _PY3:
-        stream = TextIOWrapper(output, encoding="utf-8", newline="\n")
+    stream = TextIOWrapper(output, encoding="utf-8", newline="\n")
     formatter = py_logging.Formatter(template)
     handler = py_logging.StreamHandler(stream)
     handler.setFormatter(formatter)

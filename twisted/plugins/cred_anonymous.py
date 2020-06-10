@@ -8,7 +8,6 @@ Cred plugin for anonymous logins.
 """
 
 
-
 from zope.interface import implementer
 
 from twisted import plugin

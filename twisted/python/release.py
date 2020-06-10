@@ -10,8 +10,9 @@ Maintainer: Christopher Armstrong
 """
 
 
-
 import os
+
+from twisted.python.compat import raw_input
 
 
 # errors
@@ -48,7 +49,7 @@ def sh(command, null=True, prompt=False):
     print("--$", command)
 
     if prompt:
-        if input("run ?? ").startswith('n'):
+        if raw_input("run ?? ").startswith('n'):
             return
     if null:
         command = "%s > /dev/null" % command

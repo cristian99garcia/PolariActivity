@@ -6,7 +6,6 @@ Tests for Deferred handling by L{twisted.trial.unittest.TestCase}.
 """
 
 
-
 from twisted.trial import unittest
 from twisted.internet import defer, threads, reactor
 from twisted.trial.util import suppress as SUPPRESS
@@ -185,7 +184,7 @@ class TimeoutTests(unittest.TestCase):
     def test_skip(self):
         return defer.Deferred()
     test_skip.timeout = 0.1
-    test_skip.skip = "i will get it right, eventually"
+    test_skip.skip = "i will get it right, eventually"  # type: ignore[attr-defined]  # noqa
 
     def test_errorPropagation(self):
         def timedOut(err):

@@ -9,7 +9,6 @@ Telnet protocol implementation.
 """
 
 
-
 import struct
 
 from zope.interface import implementer
@@ -637,7 +636,7 @@ class Telnet(protocol.Protocol):
 
 
     def connectionLost(self, reason):
-        for state in list(self.options.values()):
+        for state in self.options.values():
             if state.us.onResult is not None:
                 d = state.us.onResult
                 state.us.onResult = None
@@ -1077,7 +1076,7 @@ class TelnetBootstrapProtocol(TelnetProtocol, ProtocolTransportMixin):
 
 
     def linemode_SLC(self, data):
-        chunks = list(zip(*[iter(data)]*3))
+        chunks = zip(*[iter(data)]*3)
         for slcFunction, slcValue, slcWhat in chunks:
             # Later, we should parse stuff.
             'SLC', ord(slcFunction), ord(slcValue), ord(slcWhat)

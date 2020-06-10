@@ -34,19 +34,28 @@ Test coverage needs to be better.
 <http://www.irchelp.org/irchelp/rfc/ctcpspec.html>}
 """
 
-import errno, os, random, re, stat, struct, sys, time, traceback
+import errno
 import operator
-import string, socket
-import textwrap
+import os
+import random
+import re
 import shlex
+import socket
+import stat
+import string
+import struct
+import sys
+import textwrap
+import time
+import traceback
 from functools import reduce
 from os import path
 
-from twisted.internet import reactor, protocol, task
+from twisted.internet import protocol, reactor, task
 from twisted.persisted import styles
 from twisted.protocols import basic
-from twisted.python import log, reflect, _textattributes
-from twisted.python.compat import str, xrange
+from twisted.python import _textattributes, log, reflect
+from twisted.python.compat import range, unicode
 
 NUL = chr(0)
 CR = chr(0o15)
@@ -263,7 +272,7 @@ class IRC(protocol.Protocol):
 
     def sendLine(self, line):
         line = line + CR + LF
-        if isinstance(line, str):
+        if isinstance(line, unicode):
             useEncoding = self.encoding if self.encoding else "utf-8"
             line = line.encode(useEncoding)
         self.transport.write(line)
@@ -357,7 +366,7 @@ class IRC(protocol.Protocol):
         """
         self._validateTags(tags)
         tagStrings = []
-        for tag, value in list(tags.items()):
+        for tag, value in tags.items():
             if value:
                 tagStrings.append("%s=%s" % (tag, self._escapeTagValue(value)))
             else:
@@ -372,7 +381,7 @@ class IRC(protocol.Protocol):
 
         @param tags: The tag dict passed to sendMsg.
         """
-        for tag, value in list(tags.items()):
+        for tag, value in tags.items():
             if not tag:
                 raise ValueError("A tag name is required.")
             for char in tag:
@@ -867,9 +876,9 @@ class ServerSupportedFeatures(_CommandDispatcherMixin):
         if prefix[0] != '(' and ')' not in prefix:
             raise ValueError('Malformed PREFIX parameter')
         modes, symbols = prefix.split(')', 1)
-        symbols = list(zip(symbols, list(range(len(symbols)))))
+        symbols = zip(symbols, range(len(symbols)))
         modes = modes[1:]
-        return dict(list(zip(modes, symbols)))
+        return dict(zip(modes, symbols))
 
 
     @classmethod
@@ -884,7 +893,7 @@ class ServerSupportedFeatures(_CommandDispatcherMixin):
             raise ValueError(
                 'Expecting a maximum of %d channel mode parameters, got %d' % (
                     len(names), len(params)))
-        items = list(map(lambda key, value: (key, value or ''), names, params))
+        items = map(lambda key, value: (key, value or ''), names, params)
         return dict(items)
 
 
@@ -1219,7 +1228,7 @@ class IRCClient(basic.LineReceiver):
 
     def _reallySendLine(self, line):
         quoteLine = lowQuote(line)
-        if isinstance(quoteLine, str):
+        if isinstance(quoteLine, unicode):
             quoteLine = quoteLine.encode("utf-8")
         quoteLine += b'\r'
         return basic.LineReceiver.sendLine(self, quoteLine)
@@ -1859,7 +1868,7 @@ class IRCClient(basic.LineReceiver):
             self._pings = {}
 
         if text is None:
-            chars = string.letters + string.digits + string.punctuation
+            chars = string.ascii_letters + string.digits + string.punctuation
             key = ''.join([random.choice(chars) for i in range(12)])
         else:
             key = str(text)
@@ -1868,9 +1877,9 @@ class IRCClient(basic.LineReceiver):
 
         if len(self._pings) > self._MAX_PINGRING:
             # Remove some of the oldest entries.
-            byValue = [(v, k) for (k, v) in list(self._pings.items())]
+            byValue = [(v, k) for (k, v) in self._pings.items()]
             byValue.sort()
-            excess = self._MAX_PINGRING - len(self._pings)
+            excess = len(self._pings) - self._MAX_PINGRING
             for i in range(excess):
                 del self._pings[byValue[i][1]]
 
@@ -2017,11 +2026,11 @@ class IRCClient(basic.LineReceiver):
                           'MODE message: MODE %s' % (' '.join(params),))
         else:
             if added:
-                modes, params = list(zip(*added))
+                modes, params = zip(*added)
                 self.modeChanged(user, channel, True, ''.join(modes), params)
 
             if removed:
-                modes, params = list(zip(*removed))
+                modes, params = zip(*removed)
                 self.modeChanged(user, channel, False, ''.join(modes), params)
 
 
@@ -2625,7 +2634,7 @@ class IRCClient(basic.LineReceiver):
             self.register(self.nickname)
 
     def dataReceived(self, data):
-        if isinstance(data, str):
+        if isinstance(data, unicode):
             data = data.encode("utf-8")
         data = data.replace(b'\r', b'')
         basic.LineReceiver.dataReceived(self, data)
@@ -2667,7 +2676,7 @@ class IRCClient(basic.LineReceiver):
         # parameter.
         params = ['', '']
         prefixes = self.supported.getFeature('PREFIX', {})
-        params[0] = params[1] = ''.join(list(prefixes.keys()))
+        params[0] = params[1] = ''.join(prefixes.keys())
 
         chanmodes = self.supported.getFeature('CHANMODES')
         if chanmodes is not None:
@@ -2853,7 +2862,7 @@ def fileSize(file):
     I'll try my damndest to determine the size of this file object.
 
     @param file: The file object to determine the size of.
-    @type file: L{file}
+    @type file: L{io.IOBase}
 
     @rtype: L{int} or L{None}
     @return: The size of the file object as an integer if it can be determined,
@@ -3214,12 +3223,12 @@ _UNDERLINE = '\x1f'
 
 # Mapping of IRC color names to their color values.
 _IRC_COLORS = dict(
-    list(zip(['white', 'black', 'blue', 'green', 'lightRed', 'red', 'magenta',
+    zip(['white', 'black', 'blue', 'green', 'lightRed', 'red', 'magenta',
          'orange', 'yellow', 'lightGreen', 'cyan', 'lightCyan', 'lightBlue',
-         'lightMagenta', 'gray', 'lightGray'], list(range(16)))))
+         'lightMagenta', 'gray', 'lightGray'], range(16)))
 
 # Mapping of IRC color values to their color names.
-_IRC_COLOR_NAMES = dict((code, name) for name, code in list(_IRC_COLORS.items()))
+_IRC_COLOR_NAMES = dict((code, name) for name, code in _IRC_COLORS.items())
 
 
 
@@ -3446,7 +3455,7 @@ class _FormattingParser(_CommandDispatcherMixin):
         """
         if self._buffer:
             attrs = [getattr(attributes, name) for name in self._attrs]
-            attrs.extend([_f for _f in [self.foreground, self.background] if _f])
+            attrs.extend(filter(None, [self.foreground, self.background]))
             if not attrs:
                 attrs.append(attributes.normal)
             attrs.append(self._buffer)
@@ -3672,10 +3681,10 @@ def ctcpExtract(message):
             normal_messages.append(messages.pop(0))
         odd = not odd
 
-    extended_messages[:] = [_f for _f in extended_messages if _f]
-    normal_messages[:] = [_f for _f in normal_messages if _f]
+    extended_messages[:] = filter(None, extended_messages)
+    normal_messages[:] = filter(None, normal_messages)
 
-    extended_messages[:] = list(map(ctcpDequote, extended_messages))
+    extended_messages[:] = map(ctcpDequote, extended_messages)
     for i in range(len(extended_messages)):
         m = extended_messages[i].split(SPC, 1)
         tag = m[0]
@@ -3700,7 +3709,7 @@ mQuoteTable = {
     }
 
 mDequoteTable = {}
-for k, v in list(mQuoteTable.items()):
+for k, v in mQuoteTable.items():
     mDequoteTable[v[-1]] = k
 del k, v
 
@@ -3731,7 +3740,7 @@ xQuoteTable = {
 
 xDequoteTable = {}
 
-for k, v in list(xQuoteTable.items()):
+for k, v in xQuoteTable.items():
     xDequoteTable[v[-1]] = k
 
 xEscape_re = re.compile('%s.' % (re.escape(X_QUOTE),), re.DOTALL)
@@ -4070,5 +4079,5 @@ symbolic_to_numeric = {
 }
 
 numeric_to_symbolic = {}
-for k, v in list(symbolic_to_numeric.items()):
+for k, v in symbolic_to_numeric.items():
     numeric_to_symbolic[v] = k

@@ -10,7 +10,6 @@ L{twisted.internet.stdio.StandardIO} has finished.
 """
 
 
-
 import sys
 
 from twisted.internet.protocol import Protocol

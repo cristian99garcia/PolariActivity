@@ -7,7 +7,6 @@ Infrastructure for test running and suites.
 """
 
 
-
 import doctest
 import gc
 
@@ -79,6 +78,7 @@ def _clearSuite(suite):
     C{_tests}.
     """
     suite._tests = []
+
 
 
 def decorate(test, decorator):
@@ -167,6 +167,7 @@ _docTestCase = getattr(doctest, 'DocTestCase', None)
 if _docTestCase:
     components.registerAdapter(
         _BrokenIDTestCaseAdapter, _docTestCase, itrial.ITestCase)
+
 
 
 def _iterateTests(testSuiteOrCase):

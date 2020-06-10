@@ -13,6 +13,7 @@ import socket
 import time
 import warnings
 
+from typing import Dict
 from zope.interface import implementer, Interface
 from collections import OrderedDict
 
@@ -20,7 +21,7 @@ from twisted import cred
 from twisted.internet import protocol, defer, reactor
 from twisted.protocols import basic
 from twisted.python import log
-from twisted.python.compat import _PY3, iteritems, str
+from twisted.python.compat import iteritems, unicode
 
 PORT = 5060
 
@@ -37,7 +38,7 @@ shortHeaders = {"call-id": "i",
                 }
 
 longHeaders = {}
-for k, v in list(shortHeaders.items()):
+for k, v in shortHeaders.items():
     longHeaders[v] = k
 del k, v
 
@@ -347,7 +348,7 @@ class URL:
             w(";%s" % v)
         if self.headers:
             w("?")
-            w("&".join([("%s=%s" % (specialCases.get(h) or dashCapitalize(h), v)) for (h, v) in list(self.headers.items())]))
+            w("&".join([("%s=%s" % (specialCases.get(h) or dashCapitalize(h), v)) for (h, v) in self.headers.items()]))
         return "".join(l)
 
 
@@ -513,7 +514,7 @@ class Message:
 
     def toString(self):
         s = "%s\r\n" % self._getHeaderLine()
-        for n, vs in list(self.headers.items()):
+        for n, vs in self.headers.items():
             for v in vs:
                 s += "%s: %s\r\n" % (specialCases.get(n) or dashCapitalize(n), v)
         s += "\r\n"
@@ -629,7 +630,7 @@ class MessagesParser(basic.LineReceiver):
 
     def dataReceived(self, data):
         try:
-            if isinstance(data, str):
+            if isinstance(data, unicode):
                 data = data.encode("utf-8")
             basic.LineReceiver.dataReceived(self, data)
         except:
@@ -649,7 +650,7 @@ class MessagesParser(basic.LineReceiver):
 
 
     def lineReceived(self, line):
-        if _PY3 and isinstance(line, bytes):
+        if isinstance(line, bytes):
             line = line.decode("utf-8")
 
         if self.state == "firstline":
@@ -725,7 +726,7 @@ class MessagesParser(basic.LineReceiver):
 
     def rawDataReceived(self, data):
         assert self.state in ("body", "invalid")
-        if _PY3 and isinstance(data, bytes):
+        if isinstance(data, bytes):
             data = data.decode("utf-8")
         if self.state == "invalid":
             return
@@ -829,7 +830,7 @@ class Base(protocol.DatagramProtocol):
         if self.debug:
             log.msg("Sending %r to %r" % (message.toString(), destURL))
         data = message.toString()
-        if isinstance(data, str):
+        if isinstance(data, unicode):
             data = data.encode("utf-8")
         self.transport.write(data, (destURL.host, destURL.port or self.PORT))
 
@@ -1081,9 +1082,9 @@ class RegisterProxy(Proxy):
 
     portal = None
 
-    registry = None # Should implement IRegistry
+    registry = None  # Should implement IRegistry
 
-    authorizers = {}
+    authorizers = {}  # type: Dict[str, IAuthorizer]
 
     def __init__(self, *args, **kw):
         Proxy.__init__(self, *args, **kw)

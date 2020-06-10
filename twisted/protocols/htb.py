@@ -20,6 +20,7 @@ shaper for the Linux kernel<http://luxik.cdi.cz/~devik/qos/htb/>}.
 # time.time.  time.time, it has been pointed out, can go backwards.  Is
 # the same true of os.times?
 from time import time
+from typing import Optional
 from zope.interface import implementer, Interface
 
 from twisted.protocols import pcp
@@ -41,8 +42,8 @@ class Bucket:
     @type rate: C{int}
     """
 
-    maxburst = None
-    rate = None
+    maxburst = None  # type: Optional[int]
+    rate = None  # type: Optional[int]
 
     _refcount = 0
 
@@ -128,7 +129,7 @@ class HierarchicalBucketFilter:
     @type sweepInterval: C{int}
     """
     bucketFactory = Bucket
-    sweepInterval = None
+    sweepInterval = None  # type: Optional[int]
 
     def __init__(self, parentFilter=None):
         self.buckets = {}
@@ -175,7 +176,7 @@ class HierarchicalBucketFilter:
         """
         Remove empty buckets.
         """
-        for key, bucket in list(self.buckets.items()):
+        for key, bucket in self.buckets.items():
             bucket_is_empty = bucket.drip()
             if (bucket._refcount == 0) and bucket_is_empty:
                 del self.buckets[key]

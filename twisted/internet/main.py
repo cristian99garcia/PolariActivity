@@ -11,7 +11,6 @@ who need to use the 'installReactor' method.
 """
 
 
-
 from twisted.internet import error
 
 CONNECTION_DONE = error.ConnectionDone('Connection done')

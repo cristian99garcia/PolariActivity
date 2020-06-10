@@ -8,7 +8,6 @@ Event Dispatching and Callback utilities.
 """
 
 
-
 from twisted.python import log
 from twisted.python.compat import iteritems
 from twisted.words.xish import xpath

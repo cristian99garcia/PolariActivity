@@ -13,14 +13,14 @@ for more details.
 """
 
 
-
-import copy, struct
+import copy
+import struct
 from io import BytesIO
 
 from twisted.internet import protocol
 from twisted.persisted import styles
 from twisted.python import log
-from twisted.python.compat import iterbytes, int, _bytesChr as chr
+from twisted.python.compat import iterbytes, long, _bytesChr as chr
 from twisted.python.reflect import fullyQualifiedName
 
 class BananaError(Exception):
@@ -296,7 +296,7 @@ class Banana(protocol.Protocol, styles.Ephemeral):
         }
 
     incomingVocabulary = {}
-    for k, v in list(outgoingVocabulary.items()):
+    for k, v in outgoingVocabulary.items():
         incomingVocabulary[v] = k
 
 
@@ -333,7 +333,7 @@ class Banana(protocol.Protocol, styles.Ephemeral):
             write(LIST)
             for elem in obj:
                 self._encode(elem, write)
-        elif isinstance(obj, int):
+        elif isinstance(obj, (int, long)):
             if obj < self._smallestLongInt or obj > self._largestLongInt:
                 raise BananaError(
                     "int/long is too large to send (%d)" % (obj,))

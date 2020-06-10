@@ -10,7 +10,6 @@ the query, or someway to specify (authority|ttl|cache behavior|more?)
 """
 
 
-
 from zope.interface import implementer
 
 from twisted.internet import defer, interfaces

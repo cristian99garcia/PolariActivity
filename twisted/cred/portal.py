@@ -8,7 +8,6 @@ The point of integration of application and authentication.
 """
 
 
-
 from twisted.internet import defer
 from twisted.internet.defer import maybeDeferred
 from twisted.python import failure, reflect

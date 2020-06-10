@@ -8,7 +8,6 @@ workers.
 """
 
 
-
 from collections import deque
 from zope.interface import implementer
 

@@ -7,8 +7,9 @@ monitoring API.
 """
 
 
-
-import os, signal, errno
+import errno
+import os
+import signal
 
 from twisted.python.runtime import platformType
 from twisted.python.log import msg

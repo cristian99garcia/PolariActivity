@@ -8,7 +8,6 @@ numeric, and bit flag values.
 """
 
 
-
 # Import and re-export Constantly
 from constantly import (NamedConstant, ValueConstant, FlagConstant, Names,
                         Values, Flags)

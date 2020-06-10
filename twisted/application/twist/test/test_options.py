@@ -7,6 +7,7 @@ Tests for L{twisted.application.twist._options}.
 
 from sys import stdout, stderr
 
+from twisted.internet import reactor
 from twisted.copyright import version
 from twisted.python.usage import UsageError
 from twisted.logger import LogLevel, textFileLogObserver, jsonFileLogObserver
@@ -90,29 +91,34 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         options = TwistOptions()
         options.opt_version()
 
-        self.assertEqual(self.exit.status, ExitStatus.EX_OK)
-        self.assertEqual(self.exit.message, version)
+        self.assertEquals(self.exit.status, ExitStatus.EX_OK)
+        self.assertEquals(self.exit.message, version)
 
 
     def test_reactor(self):
         """
-        L{TwistOptions.opt_reactor} sets the reactor name.
-        """
-        options = TwistOptions()
-        options.opt_reactor("fission")
-
-        self.assertEqual(options["reactorName"], "fission")
-
-
-    def test_installReactor(self):
-        """
-        L{TwistOptions.installReactor} installs the chosen reactor.
+        L{TwistOptions.installReactor} installs the chosen reactor and sets
+        the reactor name.
         """
         self.patchInstallReactor()
 
         options = TwistOptions()
         options.opt_reactor("fusion")
-        options.installReactor()
+
+        self.assertEqual(set(self.installedReactors), set(["fusion"]))
+        self.assertEquals(options["reactorName"], "fusion")
+
+
+    def test_installCorrectReactor(self):
+        """
+        L{TwistOptions.installReactor} installs the chosen reactor after the
+        command line options have been parsed.
+        """
+        self.patchInstallReactor()
+
+        options = TwistOptions()
+        options.subCommand = "test-subcommand"
+        options.parseOptions(["--reactor=fusion"])
 
         self.assertEqual(set(self.installedReactors), set(["fusion"]))
 
@@ -125,9 +131,16 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         self.patchInstallReactor()
 
         options = TwistOptions()
-        options.opt_reactor("coal")
+        self.assertRaises(UsageError, options.opt_reactor, "coal")
 
-        self.assertRaises(UsageError, options.installReactor)
+
+    def test_installReactorDefault(self):
+        """
+        L{TwistOptions.installReactor} returns the currently installed reactor
+        when the default reactor name is specified.
+        """
+        options = TwistOptions()
+        self.assertIdentical(reactor, options.installReactor('default'))
 
 
     def test_logLevelValid(self):
@@ -200,7 +213,7 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         options = TwistOptions()
         options.opt_log_file("nocanopen")
 
-        self.assertEqual(self.exit.status, ExitStatus.EX_IOERR)
+        self.assertEquals(self.exit.status, ExitStatus.EX_IOERR)
         self.assertTrue(
             self.exit.message.startswith(
                 "Unable to open log file 'nocanopen': "
@@ -365,6 +378,8 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         L{TwistOptions.postOptions} raises L{UsageError} is it has no
         sub-command.
         """
+        self.patchInstallReactor()
+
         options = TwistOptions()
 
         self.assertRaises(UsageError, options.postOptions)

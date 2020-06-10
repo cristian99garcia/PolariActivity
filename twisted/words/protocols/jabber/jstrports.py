@@ -7,7 +7,6 @@
 sufficient use cases get identified """
 
 
-
 from twisted.internet.endpoints import _parse
 
 def _parseTCPSSL(factory, domain, port):

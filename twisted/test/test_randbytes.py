@@ -6,7 +6,6 @@ Test cases for L{twisted.python.randbytes}.
 """
 
 
-
 from twisted.trial import unittest
 from twisted.python import randbytes
 

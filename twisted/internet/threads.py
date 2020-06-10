@@ -8,13 +8,7 @@ For basic support see reactor threading API docs.
 """
 
 
-
-from twisted.python.compat import _PY3
-if not _PY3:
-    import queue
-else:
-    import queue as Queue
-
+import queue as Queue
 from twisted.python import failure
 from twisted.internet import defer
 
@@ -112,7 +106,7 @@ def blockingCallFromThread(reactor, f, *a, **kw):
         C{blockingCallFromThread} will raise that failure's exception (see
         L{Failure.raiseException}).
     """
-    queue = queue.Queue()
+    queue = Queue.Queue()
     def _callFromThread():
         result = defer.maybeDeferred(f, *a, **kw)
         result.addBoth(queue.put)

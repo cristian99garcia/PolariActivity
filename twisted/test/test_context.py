@@ -6,7 +6,6 @@ Tests for L{twisted.python.context}.
 """
 
 
-
 from twisted.trial.unittest import SynchronousTestCase
 
 from twisted.python import context

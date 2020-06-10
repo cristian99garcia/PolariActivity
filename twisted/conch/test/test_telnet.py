@@ -7,7 +7,6 @@ Tests for L{twisted.conch.telnet}.
 """
 
 
-
 from zope.interface import implementer
 from zope.interface.verify import verifyObject
 

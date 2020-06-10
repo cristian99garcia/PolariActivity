@@ -12,7 +12,6 @@ or glib2reactor or gtk2reactor for applications using legacy static bindings.
 """
 
 
-
 import sys
 
 from zope.interface import implementer

@@ -6,7 +6,6 @@
 # This is not a docstring to avoid changing the string output of twist.
 
 
-
 import sys
 from pkg_resources import load_entry_point
 

@@ -11,7 +11,7 @@ examination.
 from string import Formatter
 from collections import defaultdict
 
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 
 aFormatter = Formatter()
 
@@ -73,7 +73,7 @@ def flattenEvent(event):
     @param event: A logging event.
     @type event: L{dict}
     """
-    if "log_format" not in event:
+    if event.get("log_format", None) is None:
         return
 
     if "log_flattened" in event:
@@ -99,7 +99,7 @@ def flattenEvent(event):
             # We've already seen and handled this key
             continue
 
-        if fieldName.endswith("()"):
+        if fieldName.endswith(u"()"):
             fieldName = fieldName[:-2]
             callit = True
         else:
@@ -111,7 +111,7 @@ def flattenEvent(event):
         if conversion == "r":
             conversionFunction = repr
         else:  # Above: if conversion is not "r", it's "s"
-            conversionFunction = str
+            conversionFunction = unicode
 
         if callit:
             fieldValue = fieldValue()
@@ -174,5 +174,5 @@ def flatFormat(event):
         if fieldName is not None:
             key = keyFlattener.flatKey(
                     fieldName, formatSpec, conversion or "s")
-            s.append(str(fieldValues[key]))
-    return "".join(s)
+            s.append(unicode(fieldValues[key]))
+    return u"".join(s)

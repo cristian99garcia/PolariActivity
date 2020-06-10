@@ -8,7 +8,6 @@ them.
 """
 
 
-
 from zope.interface import Interface, Attribute, implementer
 
 from twisted.plugin import IPlugin, getPlugins

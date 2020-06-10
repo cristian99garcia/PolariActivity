@@ -5,7 +5,6 @@
 
 
 
-
 class MonkeyPatcher(object):
     """
     Cover up attributes with new objects. Neat for monkey-patching things for

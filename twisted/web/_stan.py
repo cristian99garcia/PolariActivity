@@ -22,7 +22,6 @@ cumbersome.
 """
 
 
-
 from twisted.python.compat import iteritems
 
 
@@ -229,7 +228,7 @@ class Tag(object):
         else:
             newchildren = self.children[:]
         newattrs = self.attributes.copy()
-        for key in list(newattrs.keys()):
+        for key in newattrs.keys():
             newattrs[key] = self._clone(newattrs[key], True)
 
         newslotdata = None

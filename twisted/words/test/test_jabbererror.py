@@ -6,8 +6,7 @@ Tests for L{twisted.words.protocols.jabber.error}.
 """
 
 
-
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from twisted.trial import unittest
 
 from twisted.words.protocols.jabber import error
@@ -33,20 +32,20 @@ class BaseErrorTests(unittest.TestCase):
         """
         Test getting an element for an error with a text.
         """
-        e = error.BaseError('feature-not-implemented', 'text')
+        e = error.BaseError('feature-not-implemented', u'text')
         element = e.getElement()
         self.assertEqual(len(element.children), 2)
-        self.assertEqual(str(element.text), 'text')
+        self.assertEqual(unicode(element.text), 'text')
         self.assertEqual(element.text.getAttribute((NS_XML, 'lang')), None)
 
     def test_getElementTextLang(self):
         """
         Test getting an element for an error with a text and language.
         """
-        e = error.BaseError('feature-not-implemented', 'text', 'en_US')
+        e = error.BaseError('feature-not-implemented', u'text', 'en_US')
         element = e.getElement()
         self.assertEqual(len(element.children), 2)
-        self.assertEqual(str(element.text), 'text')
+        self.assertEqual(unicode(element.text), 'text')
         self.assertEqual(element.text[(NS_XML, 'lang')], 'en_US')
 
     def test_getElementAppCondition(self):
@@ -81,7 +80,7 @@ class StreamErrorTests(unittest.TestCase):
         """
         Test that the error text element has the correct namespace.
         """
-        e = error.StreamError('feature-not-implemented', 'text')
+        e = error.StreamError('feature-not-implemented', u'text')
         element = e.getElement()
         self.assertEqual(NS_XMPP_STREAMS, element.text.uri)
 
@@ -137,7 +136,7 @@ class StanzaErrorTests(unittest.TestCase):
         """
         Test that the error text element has the correct namespace.
         """
-        e = error.StanzaError('feature-not-implemented', text='text')
+        e = error.StanzaError('feature-not-implemented', text=u'text')
         element = e.getElement()
         self.assertEqual(NS_XMPP_STANZAS, element.text.uri)
 
@@ -202,7 +201,7 @@ class ParseErrorTests(unittest.TestCase):
         Test parsing of an error element with a text.
         """
         text = self.error.addElement(('errorns', 'text'))
-        text.addContent('test')
+        text.addContent(u'test')
         result = error._parseError(self.error, 'errorns')
         self.assertEqual('test', result['text'])
         self.assertEqual(None, result['textLang'])
@@ -214,7 +213,7 @@ class ParseErrorTests(unittest.TestCase):
         """
         text = self.error.addElement(('errorns', 'text'))
         text[NS_XML, 'lang'] = 'en_US'
-        text.addContent('test')
+        text.addContent(u'test')
         result = error._parseError(self.error, 'errorns')
         self.assertEqual('en_US', result['textLang'])
 
@@ -299,8 +298,8 @@ class ExceptionFromStanzaTests(unittest.TestCase):
           </message>
         """
         stanza = domish.Element((None, 'stanza'))
-        p = stanza.addElement('body', content='Are you there?')
-        e = stanza.addElement('error', content='Unable to resolve hostname.')
+        p = stanza.addElement('body', content=u'Are you there?')
+        e = stanza.addElement('error', content=u'Unable to resolve hostname.')
         e['code'] = '502'
 
         result = error.exceptionFromStanza(stanza)

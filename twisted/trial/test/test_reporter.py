@@ -7,7 +7,6 @@
 Tests for L{twisted.trial.reporter}.
 """
 
-
 import errno
 import os
 import re
@@ -19,20 +18,16 @@ from unittest import TestCase as StdlibTestCase
 
 from twisted.python import log, reflect
 from twisted.python.failure import Failure
+from twisted.python.reflect import qual
 from twisted.trial import itrial, unittest, runner, reporter, util
 from twisted.trial.reporter import _ExitWrapper, UncleanWarningsReporterWrapper
 from twisted.trial.test import erroneous
 from twisted.trial.unittest import makeTodo, SkipTest, Todo
 from twisted.trial.test import sample
 
-from twisted.python.compat import NativeStringIO, _PY3
+from twisted.python.compat import NativeStringIO
 
-if _PY3:
-    from io import BytesIO
-else:
-    # On Python 2, we want regular old StringIO, because otherwise subunit
-    # complains
-    from io import StringIO as BytesIO
+from io import BytesIO
 
 
 
@@ -62,7 +57,7 @@ class BrokenStream(object):
 
 class StringTest(unittest.SynchronousTestCase):
     def stringComparison(self, expect, output):
-        output = list([_f for _f in output if _f])
+        output = list(filter(None, output))
         self.assertTrue(len(expect) <= len(output),
                         "Must have more observed than expected"
                         "lines %d < %d" % (len(output), len(expect)))
@@ -214,10 +209,7 @@ class ErrorReportingTests(StringTest):
 
         test = erroneous.DelayedCall('testHiddenException')
         output = self.getOutput(test).splitlines()
-        if _PY3:
-            errorQual = RuntimeError.__qualname__
-        else:
-            errorQual = "exceptions.RuntimeError"
+        errorQual = qual(RuntimeError)
         match = [
             self.doubleSeparator,
             '[FAIL]',
@@ -832,7 +824,7 @@ class UncleanWarningTodoTests(TodoTests):
 
 
 
-class MockColorizer:
+class MockColorizer(object):
     """
     Used by TreeReporterTests to make sure that output is colored correctly.
     """

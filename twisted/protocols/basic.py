@@ -8,7 +8,6 @@ Basic protocols, such as line-oriented, netstring, and int prefixed strings.
 """
 
 
-
 # System imports
 import re
 from struct import pack, unpack, calcsize
@@ -18,19 +17,18 @@ import math
 from zope.interface import implementer
 
 # Twisted imports
-from twisted.python.compat import _PY3
-from twisted.internet import protocol, defer, interfaces, error
+from twisted.internet import protocol, defer, interfaces
 from twisted.python import log
+
 
 
 # Unfortunately we cannot use regular string formatting on Python 3; see
 # http://bugs.python.org/issue3982 for details.
-if _PY3:
-    def _formatNetstring(data):
-        return b''.join([str(len(data)).encode("ascii"), b':', data, b','])
-else:
-    def _formatNetstring(data):
-        return b'%d:%s,' % (len(data), data)
+def _formatNetstring(data):
+    return b''.join([str(len(data)).encode("ascii"), b':', data, b','])
+
+
+
 _formatNetstring.__doc__ = """
 Convert some C{bytes} into netstring format.
 
@@ -118,9 +116,9 @@ class NetstringReceiver(protocol.Protocol):
     @type _expectedPayloadSize: C{int}
     """
     MAX_LENGTH = 99999
-    _LENGTH = re.compile(b'(0|[1-9]\d*)(:)')
+    _LENGTH = re.compile(br'(0|[1-9]\d*)(:)')
 
-    _LENGTH_PREFIX = re.compile(b'(0|[1-9]\d*)$')
+    _LENGTH_PREFIX = re.compile(br'(0|[1-9]\d*)$')
 
     # Some error information for NetstringParseError instances.
     _MISSING_LENGTH = ("The received netstring does not start with a "
@@ -134,7 +132,7 @@ class NetstringReceiver(protocol.Protocol):
 
     # The following constants are used for determining if the NetstringReceiver
     # is parsing the length portion of a netstring, or the payload.
-    _PARSING_LENGTH, _PARSING_PAYLOAD = list(range(2))
+    _PARSING_LENGTH, _PARSING_PAYLOAD = range(2)
 
     def makeConnection(self, transport):
         """
@@ -481,7 +479,7 @@ class LineOnlyReceiver(protocol.Protocol):
         Called when the maximum line length has been reached.
         Override if it needs to be dealt with in some special way.
         """
-        return error.ConnectionLost('Line length exceeded')
+        return self.transport.loseConnection()
 
 
 
@@ -558,7 +556,8 @@ class LineReceiver(protocol.Protocol, _PauseableMixin):
                         line, self._buffer = self._buffer.split(
                             self.delimiter, 1)
                     except ValueError:
-                        if len(self._buffer) > self.MAX_LENGTH:
+                        if len(self._buffer) >= (self.MAX_LENGTH
+                                                 + len(self.delimiter)):
                             line, self._buffer = self._buffer, b''
                             return self.lineLengthExceeded(line)
                         return

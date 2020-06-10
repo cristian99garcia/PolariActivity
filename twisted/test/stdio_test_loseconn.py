@@ -9,7 +9,6 @@ test that ITransport.loseConnection() works for process transports.
 """
 
 
-
 import sys
 
 from twisted.internet.error import ConnectionDone

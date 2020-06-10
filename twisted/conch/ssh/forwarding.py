@@ -9,12 +9,12 @@ Maintainer: Paul Swartz
 """
 
 
-
 import struct
 
 from twisted.internet import protocol, reactor
 from twisted.internet.endpoints import HostnameEndpoint, connectProtocol
 from twisted.python import log
+from twisted.python.compat import unicode
 
 from twisted.conch.ssh import common, channel
 
@@ -199,6 +199,10 @@ def packOpen_direct_tcpip(destination, source):
     """
     (connHost, connPort) = destination
     (origHost, origPort) = source
+    if isinstance(connHost, unicode):
+        connHost = connHost.encode("utf-8")
+    if isinstance(origHost, unicode):
+        origHost = origHost.encode("utf-8")
     conn = common.NS(connHost) + struct.pack('>L', connPort)
     orig = common.NS(origHost) + struct.pack('>L', origPort)
     return conn + orig
@@ -209,8 +213,12 @@ def unpackOpen_direct_tcpip(data):
     """Unpack the data to a usable format.
     """
     connHost, rest = common.getNS(data)
+    if isinstance(connHost, bytes):
+        connHost = connHost.decode("utf-8")
     connPort = int(struct.unpack('>L', rest[:4])[0])
     origHost, rest = common.getNS(rest[4:])
+    if isinstance(origHost, bytes):
+        origHost = origHost.decode("utf-8")
     origPort = int(struct.unpack('>L', rest[:4])[0])
     return (connHost, connPort), (origHost, origPort)
 
@@ -232,6 +240,8 @@ def packGlobal_tcpip_forward(peer):
 
 def unpackGlobal_tcpip_forward(data):
     host, rest = common.getNS(data)
+    if isinstance(host, bytes):
+        host = host.decode("utf-8")
     port = int(struct.unpack('>L', rest[:4])[0])
     return host, port
 

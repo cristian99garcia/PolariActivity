@@ -234,4 +234,4 @@ class StringTransportTests(unittest.TestCase):
         Test that L{proto_helpers.StringTransport} doesn't accept unicode data.
         """
         s = proto_helpers.StringTransport()
-        self.assertRaises(TypeError, s.write, 'foo')
+        self.assertRaises(TypeError, s.write, u'foo')

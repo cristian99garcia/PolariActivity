@@ -33,7 +33,6 @@ registered with C{SA_RESTART}.
 """
 
 
-
 import signal
 
 

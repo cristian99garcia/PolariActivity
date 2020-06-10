@@ -8,10 +8,9 @@ select() - this is pretty much only useful on Windows.
 """
 
 
-
 from zope.interface import implementer
 from twisted.internet.interfaces import IConsumer, IPushProducer
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 
 
 MIN_TIMEOUT = 0.000000001
@@ -244,7 +243,7 @@ class _PollableWritePipe(_PollableResource):
 
         @raise TypeError: If C{seq} contains C{unicode}.
         """
-        if str in list(map(type, seq)):
+        if unicode in map(type, seq):
             raise TypeError("Unicode not allowed in output buffer.")
         self.outQueue.extend(seq)
 
@@ -258,7 +257,7 @@ class _PollableWritePipe(_PollableResource):
 
         @raise TypeError: If C{data} is C{unicode} instead of C{str}.
         """
-        if isinstance(data, str):
+        if isinstance(data, unicode):
             raise TypeError("Unicode not allowed in output buffer.")
         if self.disconnecting:
             return

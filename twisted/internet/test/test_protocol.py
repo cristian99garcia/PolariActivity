@@ -6,20 +6,21 @@ Tests for L{twisted.internet.protocol}.
 """
 
 
+from io import BytesIO
 
-from zope.interface.verify import verifyObject
 from zope.interface import implementer
+from zope.interface.verify import verifyObject
 
-from twisted.python.failure import Failure
+from twisted.internet.defer import CancelledError
 from twisted.internet.interfaces import (
     IProtocol, ILoggingContext, IProtocolFactory, IConsumer)
-from twisted.internet.defer import CancelledError
 from twisted.internet.protocol import (
     Protocol, ClientCreator, Factory, ProtocolToConsumerAdapter,
-    ConsumerToProtocolAdapter)
-from twisted.trial.unittest import TestCase
-from twisted.test.proto_helpers import MemoryReactorClock, StringTransport
+    ConsumerToProtocolAdapter, FileWrapper)
 from twisted.logger import LogLevel, globalLogPublisher
+from twisted.python.failure import Failure
+from twisted.test.proto_helpers import MemoryReactorClock, StringTransport
+from twisted.trial.unittest import TestCase
 
 
 
@@ -470,3 +471,40 @@ class AdapterTests(TestCase):
         protocol.dataReceived(b"hello")
         self.assertEqual(result, [b"hello"])
         self.assertIsInstance(protocol, ConsumerToProtocolAdapter)
+
+
+
+class FileWrapperTests(TestCase):
+    """
+    L{twisted.internet.protocol.FileWrapper}
+    """
+
+    def test_write(self):
+        """
+        L{twisted.internet.protocol.FileWrapper.write}
+        """
+        wrapper = FileWrapper(BytesIO())
+        wrapper.write(b"test1")
+        self.assertEqual(wrapper.file.getvalue(), b"test1")
+
+        wrapper = FileWrapper(BytesIO())
+        # BytesIO() cannot accept unicode, so this will
+        # cause an exception to be thrown which will be
+        # handled by FileWrapper.handle_exception().
+        wrapper.write(u"stuff")
+        self.assertNotEqual(wrapper.file.getvalue(), u"stuff")
+
+
+    def test_writeSequence(self):
+        """
+        L{twisted.internet.protocol.FileWrapper.writeSequence}
+        """
+        wrapper = FileWrapper(BytesIO())
+        wrapper.writeSequence([b"test1", b"test2"])
+        self.assertEqual(wrapper.file.getvalue(), b"test1test2")
+
+        wrapper = FileWrapper(BytesIO())
+        # In Python 3, b"".join([u"a", u"b"]) will raise a TypeError
+        self.assertRaises(TypeError,
+                          wrapper.writeSequence,
+                          [u"test3", u"test4"])

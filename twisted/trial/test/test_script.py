@@ -2,26 +2,22 @@
 # See LICENSE for details.
 
 
-
 import gc
 import re
 import sys
 import textwrap
 import types
 
-from twisted.trial import unittest
-from twisted.trial.runner import TrialRunner, TestSuite, DestructiveTestSuite
-from twisted.trial.runner import TestLoader
-from twisted.scripts import trial
 from twisted.python import util
-from twisted.python.usage import UsageError
+from twisted.python.compat import NativeStringIO
 from twisted.python.filepath import FilePath
-from twisted.python.compat import NativeStringIO, _PY3
-
+from twisted.python.usage import UsageError
+from twisted.scripts import trial
+from twisted.trial import unittest
+from twisted.trial._dist.disttrial import DistTrialRunner
+from twisted.trial.runner import TestLoader
+from twisted.trial.runner import TrialRunner, TestSuite, DestructiveTestSuite
 from twisted.trial.test.test_loader import testNames
-
-if not _PY3:
-    from twisted.trial._dist.disttrial import DistTrialRunner
 
 pyunit = __import__('unittest')
 
@@ -142,7 +138,7 @@ class TestModuleTests(unittest.SynchronousTestCase):
     def assertSuitesEqual(self, test1, names):
         loader = TestLoader()
         names1 = testNames(test1)
-        names2 = testNames(TestSuite(list(map(loader.loadByName, names))))
+        names2 = testNames(TestSuite(map(loader.loadByName, names)))
         names1.sort()
         names2.sort()
         self.assertEqual(names1, names2)
@@ -575,8 +571,6 @@ class MakeRunnerTests(unittest.TestCase):
         self.assertEqual(4, runner._workerNumber)
         self.assertEqual(["--force-gc"], runner._workerArguments)
 
-    if _PY3:
-        test_jobs.skip = "DistTrialRunner is not yet ported to Python 3"
 
     def test_dryRunWithJobs(self):
         """
@@ -669,7 +663,7 @@ class TestArgumentOrderTests(unittest.TestCase):
         suite = trial._getSuite(self.config)
         names = testNames(suite)
 
-        expectedSuite = TestSuite(list(map(self.loader.loadByName, tests)))
+        expectedSuite = TestSuite(map(self.loader.loadByName, tests))
         expectedNames = testNames(expectedSuite)
 
         self.assertEqual(names, expectedNames)
@@ -864,7 +858,7 @@ class HelpOrderTests(unittest.TestCase):
         output = sys.stdout.getvalue()
 
         msg = "%r with its description not properly described in %r"
-        for orderName, (orderDesc, _) in list(trial._runOrders.items()):
+        for orderName, (orderDesc, _) in trial._runOrders.items():
             match = re.search(
                 "%s.*%s" % (re.escape(orderName), re.escape(orderDesc)),
                 output,

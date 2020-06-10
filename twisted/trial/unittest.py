@@ -7,7 +7,6 @@ Things likely to be used by writers of unit tests.
 """
 
 
-
 # Define the public API from the two implementation modules
 from twisted.trial._synctest import (
     FailTest, SkipTest, SynchronousTestCase, PyUnitResultAdapter, Todo,

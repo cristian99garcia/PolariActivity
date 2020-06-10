@@ -12,7 +12,7 @@ from zope.interface.verify import verifyObject, BrokenMethodImplementation
 from twisted.trial.unittest import TestCase
 
 from twisted.python.failure import Failure
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from .._observer import ILogObserver
 from .._file import FileLogObserver
 from .._file import textFileLogObserver
@@ -29,7 +29,7 @@ class FileLogObserverTests(TestCase):
         L{FileLogObserver} is an L{ILogObserver}.
         """
         with StringIO() as fileHandle:
-            observer = FileLogObserver(fileHandle, lambda e: str(e))
+            observer = FileLogObserver(fileHandle, lambda e: unicode(e))
             try:
                 verifyObject(ILogObserver, observer)
             except BrokenMethodImplementation as e:
@@ -41,10 +41,10 @@ class FileLogObserverTests(TestCase):
         L{FileLogObserver} writes to the given file when it observes events.
         """
         with StringIO() as fileHandle:
-            observer = FileLogObserver(fileHandle, lambda e: str(e))
+            observer = FileLogObserver(fileHandle, lambda e: unicode(e))
             event = dict(x=1)
             observer(event)
-            self.assertEqual(fileHandle.getvalue(), str(event))
+            self.assertEqual(fileHandle.getvalue(), unicode(event))
 
 
     def _test_observeWrites(self, what, count):
@@ -78,7 +78,7 @@ class FileLogObserverTests(TestCase):
         L{FileLogObserver} does not write to the given file when it observes
         events and C{formatEvent} returns C{u""}.
         """
-        self._test_observeWrites("", 0)
+        self._test_observeWrites(u"", 0)
 
 
     def test_observeFlushes(self):
@@ -87,7 +87,7 @@ class FileLogObserverTests(TestCase):
         observes an event.
         """
         with DummyFile() as fileHandle:
-            observer = FileLogObserver(fileHandle, lambda e: str(e))
+            observer = FileLogObserver(fileHandle, lambda e: unicode(e))
             event = dict(x=1)
             observer(event)
             self.assertEqual(fileHandle.flushes, 1)
@@ -121,9 +121,9 @@ class TextFileLogObserverTests(TestCase):
         Returned L{FileLogObserver} has the correct outFile.
         """
         with StringIO() as fileHandle:
-            observer = textFileLogObserver(fileHandle, timeFormat="%f")
-            observer(dict(log_format="XYZZY", log_time=1.23456))
-            self.assertEqual(fileHandle.getvalue(), "234560 [-#-] XYZZY\n")
+            observer = textFileLogObserver(fileHandle, timeFormat=u"%f")
+            observer(dict(log_format=u"XYZZY", log_time=112345.6))
+            self.assertEqual(fileHandle.getvalue(), u"600000 [-#-] XYZZY\n")
 
 
     def test_observeFailure(self):

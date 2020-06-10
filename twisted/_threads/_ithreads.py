@@ -7,7 +7,6 @@ Interfaces related to threads.
 """
 
 
-
 from zope.interface import Interface
 
 

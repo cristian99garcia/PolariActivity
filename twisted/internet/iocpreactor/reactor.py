@@ -37,7 +37,7 @@ MAX_TIMEOUT = 2000 # 2 seconds, see doIteration for explanation
 EVENTS_PER_LOOP = 1000 # XXX: what's a good value here?
 
 # keys to associate with normal and waker events
-KEY_NORMAL, KEY_WAKEUP = list(range(2))
+KEY_NORMAL, KEY_WAKEUP = range(2)
 
 _NO_GETHANDLE = error.ConnectionFdescWentAway(
                     'Handler has no getFileHandle method')

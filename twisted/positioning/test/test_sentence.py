@@ -5,7 +5,6 @@ Tests for positioning sentences.
 """
 
 
-
 import itertools
 
 from twisted.positioning import _sentence
@@ -154,5 +153,5 @@ class MixinTests(TestCase, SentenceTestsMixin):
         self.assertNotIn(None, sentenceAttributes)
 
         sentenceContents = self.protocol._SENTENCE_CONTENTS
-        sentenceSpecAttributes = itertools.chain(*list(sentenceContents.values()))
+        sentenceSpecAttributes = itertools.chain(*sentenceContents.values())
         self.assertIn(None, sentenceSpecAttributes)

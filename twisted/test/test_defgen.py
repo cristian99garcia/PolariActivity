@@ -6,7 +6,6 @@ Tests for L{twisted.internet.defer.deferredGenerator} and related APIs.
 """
 
 
-
 from twisted.internet import reactor
 
 from twisted.trial import unittest

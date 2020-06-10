@@ -11,6 +11,9 @@ to format methods.
 """
 
 import calendar
+from typing import Any, Optional, Tuple
+
+
 
 class FormException(Exception):
     """An error occurred calling the form method.
@@ -20,17 +23,19 @@ class FormException(Exception):
         self.descriptions = kwargs
 
 
+
 class InputError(FormException):
     """
     An error occurred with some input.
     """
 
 
+
 class Argument:
     """Base class for form arguments."""
 
     # default value for argument, if no other default is given
-    defaultDefault = None
+    defaultDefault = None  # type: Any
 
     def __init__(self, name, default=None, shortDesc=None,
                  longDesc=None, hints=None, allowNone=1):
@@ -62,20 +67,21 @@ class Argument:
         raise NotImplementedError("implement in subclass")
 
 
+
 class String(Argument):
     """A single string.
     """
-    defaultDefault = ''
+    defaultDefault = ''  # type: str
     min = 0
     max = None
-    
+
     def __init__(self, name, default=None, shortDesc=None,
                  longDesc=None, hints=None, allowNone=1, min=0, max=None):
         Argument.__init__(self, name, default=default, shortDesc=shortDesc,
                           longDesc=longDesc, hints=hints, allowNone=allowNone)
         self.min = min
         self.max = max
-    
+
     def coerce(self, val):
         s = str(val)
         if len(s) < self.min:
@@ -85,9 +91,11 @@ class String(Argument):
         return str(val)
 
 
+
 class Text(String):
     """A long string.
     """
+
 
 
 class Password(String):
@@ -95,9 +103,10 @@ class Password(String):
     """
 
 
+
 class VerifiedPassword(String):
     """A string that should be obscured when input and needs verification."""
-    
+
     def coerce(self, vals):
         if len(vals) != 2 or vals[0] != vals[1]:
             raise InputError("Please enter the same password twice.")
@@ -109,6 +118,7 @@ class VerifiedPassword(String):
         return s
 
 
+
 class Hidden(String):
     """A string which is not displayed.
 
@@ -116,10 +126,11 @@ class Hidden(String):
     """
 
 
+
 class Integer(Argument):
     """A single integer.
     """
-    defaultDefault = None
+    defaultDefault = None  # type: Optional[int]
 
     def __init__(self, name, allowNone=1, default=None, shortDesc=None,
                  longDesc=None, hints=None):
@@ -137,7 +148,10 @@ class Integer(Argument):
         try:
             return int(val)
         except ValueError:
-            raise InputError("%s is not valid, please enter a whole number, e.g. 10" % val)
+            raise InputError(
+                "{} is not valid, please enter "
+                "a whole number, e.g. 10".format(val))
+
 
 
 class IntegerRange(Integer):
@@ -160,9 +174,10 @@ class IntegerRange(Integer):
         return result
 
 
+
 class Float(Argument):
 
-    defaultDefault = None
+    defaultDefault = None  # type: Optional[float]
 
     def __init__(self, name, allowNone=1, default=None, shortDesc=None,
                  longDesc=None, hints=None):
@@ -182,6 +197,7 @@ class Float(Argument):
             return float(val)
         except ValueError:
             raise InputError("Invalid float: %s" % val)
+
 
 
 class Choice(Argument):
@@ -207,6 +223,7 @@ class Choice(Argument):
                 return val
         else:
             raise InputError("Invalid Choice: %s" % inIdent)
+
 
 
 class Flags(Argument):
@@ -238,12 +255,15 @@ class Flags(Argument):
         return outFlags
 
 
+
 class CheckGroup(Flags):
     pass
 
 
+
 class RadioGroup(Choice):
     pass
+
 
 
 class Boolean(Argument):
@@ -254,6 +274,8 @@ class Boolean(Argument):
         if lInVal in ('no', 'n', 'f', 'false', '0'):
             return 0
         return 1
+
+
 
 class File(Argument):
     def __init__(self, name, allowNone=1, shortDesc=None, longDesc=None,
@@ -269,15 +291,20 @@ class File(Argument):
         else:
             raise InputError("Invalid File")
 
+
+
 def positiveInt(x):
     x = int(x)
-    if x <= 0: raise ValueError
+    if x <= 0:
+        raise ValueError
     return x
+
+
 
 class Date(Argument):
     """A date -- (year, month, day) tuple."""
 
-    defaultDefault = None
+    defaultDefault = None  # type: Optional[Tuple[int, int, int]]
 
     def __init__(self, name, allowNone=1, default=None, shortDesc=None,
                  longDesc=None, hints=None):
@@ -285,14 +312,14 @@ class Date(Argument):
         self.allowNone = allowNone
         if not allowNone:
             self.defaultDefault = (1970, 1, 1)
-    
+
     def coerce(self, args):
         """Return tuple of ints (year, month, day)."""
         if tuple(args) == ("", "", "") and self.allowNone:
             return None
-        
+
         try:
-            year, month, day = list(map(positiveInt, args))
+            year, month, day = map(positiveInt, args)
         except ValueError:
             raise InputError("Invalid date")
         if (month, day) == (2, 29):
@@ -326,13 +353,18 @@ class Submit(Choice):
             return Choice.coerce(self, value)
 
 
+
 class PresentationHint:
     """
     A hint to a particular system.
     """
 
 
+
 class MethodSignature:
+    """
+    A signature of a callable.
+    """
 
     def __init__(self, *sigList):
         """
@@ -346,6 +378,7 @@ class MethodSignature:
 
     def method(self, callable, takesRequest=False):
         return FormMethod(self, callable, takesRequest)
+
 
 
 class FormMethod:

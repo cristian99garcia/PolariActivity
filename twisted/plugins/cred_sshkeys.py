@@ -8,7 +8,6 @@ Cred plugin for ssh key login.
 """
 
 
-
 from zope.interface import implementer
 
 from twisted import plugin

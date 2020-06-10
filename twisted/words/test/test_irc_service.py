@@ -24,7 +24,7 @@ class IRCUserTests(IRCTestCase):
         self.realm = InMemoryWordsRealm("example.com")
         self.checker = checkers.InMemoryUsernamePasswordDatabaseDontUse()
         self.portal = portal.Portal(self.realm, [self.checker])
-        self.checker.addUser("john", "pass")
+        self.checker.addUser(u"john", u"pass")
         self.factory = IRCFactory(self.realm, self.portal)
         self.ircUser = self.factory.buildProtocol(None)
         self.stringTransport = proto_helpers.StringTransport()
@@ -48,12 +48,12 @@ class IRCUserTests(IRCTestCase):
         has a UTF8 nick and is set to UTF8 encoding, the message will be
         written to the transport.
         """
-        expectedResult = (":example.com \u0442\u0435\u0441\u0442 "
-                          "\u043d\u0438\u043a\r\n").encode('utf-8')
+        expectedResult = (u":example.com \u0442\u0435\u0441\u0442 "
+                          u"\u043d\u0438\u043a\r\n").encode('utf-8')
 
-        self.ircUser.irc_NICK("", ["\u043d\u0438\u043a".encode('utf-8')])
+        self.ircUser.irc_NICK("", [u"\u043d\u0438\u043a".encode('utf-8')])
         self.stringTransport.clear()
-        self.ircUser.sendMessage("\u0442\u0435\u0441\u0442".encode('utf-8'))
+        self.ircUser.sendMessage(u"\u0442\u0435\u0441\u0442".encode('utf-8'))
         self.assertEqualBufferValue(self.stringTransport.value(), expectedResult)
 
 
@@ -154,7 +154,7 @@ class IRCUserTests(IRCTestCase):
         response = self.response()
         self.ircUser.transport.clear()
         self.assertEqual(response[0][1], irc.ERR_NOTONCHANNEL)
-        self.ircUser.irc_PART("testuser", ["somechannel", "booga"])
+        self.ircUser.irc_PART("testuser", [u"somechannel", u"booga"])
         response = self.response()
         self.ircUser.transport.clear()
         self.assertEqual(response[0][1], irc.ERR_NOTONCHANNEL)

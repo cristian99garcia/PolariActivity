@@ -57,7 +57,6 @@ the modules outside the standard library's python-files directory::
 """
 
 
-
 __metaclass__ = type
 
 # let's try to keep path imports to a minimum...
@@ -474,7 +473,7 @@ class IPathImportMapper(Interface):
     This is an internal interface, used to map importers to factories for
     FilePath-like objects.
     """
-    def mapPath(self, pathLikeString):
+    def mapPath(pathLikeString):
         """
         Return a FilePath-like object.
 

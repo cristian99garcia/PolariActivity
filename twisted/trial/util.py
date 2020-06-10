@@ -19,7 +19,6 @@ Maintainer: Jonathan Lange
 """
 
 
-
 from random import randrange
 
 from twisted.internet import defer, utils, interfaces
@@ -50,6 +49,7 @@ class DirtyReactorAggregateError(Exception):
     def __init__(self, delayedCalls, selectables=None):
         self.delayedCalls = delayedCalls
         self.selectables = selectables
+
 
     def __str__(self):
         """
@@ -160,6 +160,7 @@ class _Janitor(object):
                 # post class cleanup hook, so it's only isolating classes
                 # from each other, not methods from each other).
                 reactor._stopThreadPool()
+
 
     def _cleanReactor(self):
         """

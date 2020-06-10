@@ -7,7 +7,6 @@ Positioning interfaces.
 """
 
 
-
 from zope.interface import Attribute, Interface
 
 

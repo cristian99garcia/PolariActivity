@@ -28,7 +28,7 @@ class ReverseProxyResourceTests(TestCase):
         """
         root = Resource()
         reactor = MemoryReactor()
-        resource = ReverseProxyResource("127.0.0.1", 1234, b"/path", reactor)
+        resource = ReverseProxyResource(u"127.0.0.1", 1234, b"/path", reactor)
         root.putChild(b'index', resource)
         site = Site(root)
 
@@ -42,13 +42,12 @@ class ReverseProxyResourceTests(TestCase):
                              uri +
                              b" HTTP/1.1\r\nAccept: text/html\r\n\r\n")
 
+        [(host, port, factory, _timeout, _bind_addr)] = reactor.tcpClients
         # Check that one connection has been created, to the good host/port
-        self.assertEqual(len(reactor.tcpClients), 1)
-        self.assertEqual(reactor.tcpClients[0][0], "127.0.0.1")
-        self.assertEqual(reactor.tcpClients[0][1], 1234)
+        self.assertEqual(host, u"127.0.0.1")
+        self.assertEqual(port, 1234)
 
         # Check the factory passed to the connect, and its given path
-        factory = reactor.tcpClients[0][2]
         self.assertIsInstance(factory, ProxyClientFactory)
         self.assertEqual(factory.rest, expectedURI)
         self.assertEqual(factory.headers[b"host"], b"127.0.0.1:1234")
@@ -60,6 +59,15 @@ class ReverseProxyResourceTests(TestCase):
         given server with a L{ProxyClientFactory} as parameter.
         """
         return self._testRender(b"/index", b"/path")
+
+
+    def test_render_subpage(self):
+        """
+        Test that L{ReverseProxyResource.render} will instantiate a child
+        resource that will initiate a connection to the given server
+        requesting the apropiate url subpath.
+        """
+        return self._testRender(b"/index/page1", b"/path/page1")
 
 
     def test_renderWithQuery(self):
@@ -78,13 +86,13 @@ class ReverseProxyResourceTests(TestCase):
         value passed.
         """
         reactor = MemoryReactor()
-        resource = ReverseProxyResource("127.0.0.1", 1234, b"/path", reactor)
+        resource = ReverseProxyResource(u"127.0.0.1", 1234, b"/path", reactor)
         child = resource.getChild(b'foo', None)
         # The child should keep the same class
         self.assertIsInstance(child, ReverseProxyResource)
         self.assertEqual(child.path, b"/path/foo")
         self.assertEqual(child.port, 1234)
-        self.assertEqual(child.host, "127.0.0.1")
+        self.assertEqual(child.host, u"127.0.0.1")
         self.assertIdentical(child.reactor, resource.reactor)
 
 
@@ -93,7 +101,7 @@ class ReverseProxyResourceTests(TestCase):
         The L{ReverseProxyResource} return by C{getChild} has a path which has
         already been quoted.
         """
-        resource = ReverseProxyResource("127.0.0.1", 1234, b"/path")
+        resource = ReverseProxyResource(u"127.0.0.1", 1234, b"/path")
         child = resource.getChild(b' /%', None)
         self.assertEqual(child.path, b"/path/%20%2F%25")
 
@@ -389,7 +397,7 @@ class ProxyClientTests(TestCase):
             b'Content-Type': [b'application/x-baz'],
             }
         client.dataReceived(
-            self.makeResponseBytes(200, b"OK", list(headers.items()), b''))
+            self.makeResponseBytes(200, b"OK", headers.items(), b''))
         self.assertForwardsResponse(
             request, 200, b'OK', list(headers.items()), b'')
 
@@ -459,7 +467,7 @@ class ProxyRequestTests(TestCase):
                                 b'HTTP/1.0')
 
         self.assertEqual(len(reactor.tcpClients), 1)
-        self.assertEqual(reactor.tcpClients[0][0], "example.com")
+        self.assertEqual(reactor.tcpClients[0][0], u"example.com")
         self.assertEqual(reactor.tcpClients[0][1], 80)
 
         factory = reactor.tcpClients[0][2]
@@ -518,7 +526,7 @@ class ProxyRequestTests(TestCase):
 
         # That should create one connection, with the port parsed from the URL
         self.assertEqual(len(reactor.tcpClients), 1)
-        self.assertEqual(reactor.tcpClients[0][0], "example.com")
+        self.assertEqual(reactor.tcpClients[0][0], u"example.com")
         self.assertEqual(reactor.tcpClients[0][1], 1234)
 
 
@@ -550,13 +558,13 @@ class ReverseProxyRequestTests(TestCase):
         channel = DummyChannel(transport)
         reactor = MemoryReactor()
         request = ReverseProxyRequest(channel, False, reactor)
-        request.factory = DummyFactory("example.com", 1234)
+        request.factory = DummyFactory(u"example.com", 1234)
         request.gotLength(0)
         request.requestReceived(b'GET', b'/foo/bar', b'HTTP/1.0')
 
         # Check that one connection has been created, to the good host/port
         self.assertEqual(len(reactor.tcpClients), 1)
-        self.assertEqual(reactor.tcpClients[0][0], "example.com")
+        self.assertEqual(reactor.tcpClients[0][0], u"example.com")
         self.assertEqual(reactor.tcpClients[0][1], 1234)
 
         # Check the factory passed to the connect, and its headers

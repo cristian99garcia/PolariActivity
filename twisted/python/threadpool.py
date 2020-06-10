@@ -10,7 +10,6 @@ instead of creating a thread pool directly.
 """
 
 
-
 import threading
 
 from twisted._threads import pool as _pool
@@ -19,6 +18,8 @@ from twisted.python.failure import Failure
 
 
 WorkerStop = object()
+
+
 
 class ThreadPool:
     """
@@ -314,4 +315,3 @@ class ThreadPool:
         log.msg('waiters: %s' % (self.waiters,))
         log.msg('workers: %s' % (self.working,))
         log.msg('total: %s'   % (self.threads,))
-

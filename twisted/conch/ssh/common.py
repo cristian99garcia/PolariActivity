@@ -9,12 +9,11 @@ Maintainer: Paul Swartz
 """
 
 
-
 import struct
 
-from twisted.conch.ssh._cryptography_backports import (
-    intFromBytes as int_from_bytes, intToBytes as int_to_bytes)
+from cryptography.utils import int_from_bytes, int_to_bytes
 
+from twisted.python.compat import unicode
 from twisted.python.deprecate import deprecated
 from twisted.python.versions import Version
 
@@ -26,6 +25,8 @@ def NS(t):
     """
     net string
     """
+    if isinstance(t, unicode):
+        t = t.encode("utf-8")
     return struct.pack('!L', len(t)) + t
 
 
@@ -70,14 +71,6 @@ def getMP(data, count=1):
         mp.append(int_from_bytes(data[c + 4:c + 4 + length], 'big'))
         c += 4 + length
     return tuple(mp) + (data[c:],)
-
-
-
-def _MPpow(x, y, z):
-    """
-    Return the MP version of C{(x ** y) % z}.
-    """
-    return MP(pow(x, y, z))
 
 
 

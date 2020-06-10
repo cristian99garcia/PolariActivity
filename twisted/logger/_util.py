@@ -23,9 +23,9 @@ def formatTrace(trace):
     """
     def formatWithName(obj):
         if hasattr(obj, "name"):
-            return "{0} ({1})".format(obj, obj.name)
+            return u"{0} ({1})".format(obj, obj.name)
         else:
-            return "{0}".format(obj)
+            return u"{0}".format(obj)
 
     result = []
     lineage = []
@@ -38,11 +38,11 @@ def formatTrace(trace):
 
             else:
                 if not lineage:
-                    result.append("{0}\n".format(formatWithName(parent)))
+                    result.append(u"{0}\n".format(formatWithName(parent)))
 
                 lineage.append(parent)
 
-        result.append("  " * len(lineage))
-        result.append("-> {0}\n".format(formatWithName(child)))
+        result.append(u"  " * len(lineage))
+        result.append(u"-> {0}\n".format(formatWithName(child)))
 
-    return "".join(result)
+    return u"".join(result)

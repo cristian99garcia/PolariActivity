@@ -7,7 +7,6 @@
 I am a support module for making SOCKSv4 servers with twistd.
 """
 
-
 from twisted.protocols import socks
 from twisted.python import usage
 from twisted.application import internet

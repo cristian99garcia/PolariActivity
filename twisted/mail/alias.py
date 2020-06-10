@@ -47,7 +47,7 @@ def handle(result, line, filename, lineNo):
         log.err(fmt % arg)
     else:
         user, alias = parts
-        result.setdefault(user.strip(), []).extend(list(map(str.strip, alias.split(','))))
+        result.setdefault(user.strip(), []).extend(map(str.strip, alias.split(',')))
 
 
 
@@ -118,7 +118,7 @@ def loadAliasFile(domains, filename=None, fp=None):
             fp.close()
     if prev:
         handle(result, prev, filename, i)
-    for (u, a) in list(result.items()):
+    for (u, a) in result.items():
         result[u] = AliasGroup(a, domains, u)
     return result
 
@@ -686,7 +686,7 @@ class MultiWrapper:
         @rtype: L{bytes}
         @return: A string containing a list of the message receivers.
         """
-        return '<GroupWrapper %r>' % (list(map(str, self.objs)),)
+        return '<GroupWrapper %r>' % (map(str, self.objs),)
 
 
 
@@ -796,4 +796,4 @@ class AliasGroup(AliasBase):
         r = []
         for a in self.aliases:
             r.append(a.resolve(aliasmap, memo))
-        return MultiWrapper([_f for _f in r if _f])
+        return MultiWrapper(filter(None, r))

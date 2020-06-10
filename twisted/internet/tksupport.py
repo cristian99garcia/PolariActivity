@@ -20,7 +20,7 @@ stop Twisted::
 
     | root.protocol('WM_DELETE_WINDOW', reactor.stop)
 
-When using Aqua Tcl/Tk on Mac OS X the standard Quit menu item in
+When using Aqua Tcl/Tk on macOS the standard Quit menu item in
 your application might become unresponsive without the additional
 fix::
 
@@ -29,9 +29,11 @@ fix::
 @see: U{Tcl/TkAqua FAQ for more info<http://wiki.tcl.tk/12987>}
 """
 
-import tkinter.simpledialog, tkinter.messagebox
-
 from twisted.internet import task
+
+import tkinter.simpledialog as tkSimpleDialog
+import tkinter.messagebox as tkMessageBox
+
 
 
 _task = None
@@ -60,13 +62,13 @@ def installTkFunctions():
 
 def getPassword(prompt = '', confirm = 0):
     while 1:
-        try1 = tkinter.simpledialog.askstring('Password Dialog', prompt, show='*')
+        try1 = tkSimpleDialog.askstring('Password Dialog', prompt, show='*')
         if not confirm:
             return try1
-        try2 = tkinter.simpledialog.askstring('Password Dialog', 'Confirm Password', show='*')
+        try2 = tkSimpleDialog.askstring('Password Dialog', 'Confirm Password', show='*')
         if try1 == try2:
             return try1
         else:
-            tkinter.messagebox.showerror('Password Mismatch', 'Passwords did not match, starting over')
+            tkMessageBox.showerror('Password Mismatch', 'Passwords did not match, starting over')
 
 __all__ = ["install", "uninstall"]

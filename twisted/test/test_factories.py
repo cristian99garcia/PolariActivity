@@ -6,7 +6,6 @@ Test code for basic Factory classes.
 """
 
 
-
 import pickle
 
 from twisted.trial.unittest import TestCase

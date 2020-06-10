@@ -6,16 +6,13 @@ Tests for L{twisted.python.log}.
 """
 
 
-
-from twisted.python.compat import _PY3, NativeStringIO as StringIO
-
 import os
 import sys
 import time
 import logging
 import warnings
 import calendar
-from io import IOBase
+from io import IOBase, StringIO
 
 from twisted.trial import unittest
 
@@ -26,7 +23,6 @@ from twisted.logger import (
     LoggingFile, LogLevel as NewLogLevel, LogBeginner,
     LogPublisher as NewLogPublisher
 )
-import importlib
 
 
 class FakeWarning(Warning):
@@ -347,15 +343,9 @@ class LogPublisherTestCaseMixin:
         try:
             str('\N{VULGAR FRACTION ONE HALF}')
         except UnicodeEncodeError:
-            # This is the behavior we want - don't change anything.
-            self._origEncoding = None
-        else:
-            if _PY3:
-                self._origEncoding = None
-                return
-            importlib.reload(sys)
-            self._origEncoding = sys.getdefaultencoding()
-            sys.setdefaultencoding('ascii')
+            pass
+        # This is the behavior we want - don't change anything.
+        self._origEncoding = None
 
 
     def tearDown(self):
@@ -391,19 +381,16 @@ class LogPublisherTests(LogPublisherTestCaseMixin,
 
     def test_singleUnicode(self):
         """
-        L{log.LogPublisher.msg} encodes Unicode as ``ascii`` with
-        ``backslashreplace`` error handling on Python 2.
+        L{log.LogPublisher.msg} does not accept non-ASCII Unicode on Python 2,
+        logging an error instead.
 
-        On Python 3, where Unicode is default message type, the
-        message is logged normally.
+        On Python 3, where Unicode is default message type, the message is
+        logged normally.
         """
         message = "Hello, \N{VULGAR FRACTION ONE HALF} world."
         self.lp.msg(message)
         self.assertEqual(len(self.out), 1)
-        if _PY3:
-            self.assertIn(message, self.out[0])
-        else:
-            self.assertIn(r"Hello, \xbd world", self.out[0])
+        self.assertIn(message, self.out[0])
 
 
 
@@ -454,15 +441,27 @@ class FileObserverTests(LogPublisherTestCaseMixin,
             # So only do this after changing the timezone.
 
             # Compute a POSIX timestamp for a certain date and time that is
-            # known to occur at a time when daylight saving time is in effect.
-            localDaylightTuple = (2006, 6, 30, 0, 0, 0, 4, 181, 1)
-            daylight = time.mktime(localDaylightTuple)
-
-            # Compute a POSIX timestamp for a certain date and time that is
             # known to occur at a time when daylight saving time is not in
             # effect.
             localStandardTuple = (2007, 1, 31, 0, 0, 0, 2, 31, 0)
             standard = time.mktime(localStandardTuple)
+
+            # Compute a POSIX timestamp for a certain date and time that is
+            # known to occur at a time when daylight saving time is in effect.
+            localDaylightTuple = (2006, 6, 30, 0, 0, 0, 4, 181, 1)
+            try:
+                daylight = time.mktime(localDaylightTuple)
+            except OverflowError:
+                # mktime() may raise OverflowError if its tuple is
+                # inconsistent, although many implementations don't
+                # care. The implementation in glibc>=2.28 will raise
+                # if DST is indicated for a zone that doesn't have DST.
+                # We accept either behavior: ignoring the DST flag for those
+                # zones, or raising EOVERFLOW.
+                if daylightOffset == standardOffset:  # DST-less zone?
+                    daylight = standard
+                else:
+                    raise
 
             self.assertEqual(
                 (self.flo.getTimezoneOffset(daylight),
@@ -504,9 +503,10 @@ class FileObserverTests(LogPublisherTestCaseMixin,
         daylight saving time at all (so both summer and winter time test values
         should have the same offset).
         """
-        # Test a timezone that doesn't have DST.  mktime() implementations
-        # available for testing seem happy to produce results for this even
-        # though it's not entirely valid.
+        # Test a timezone that doesn't have DST.  Some mktime()
+        # implementations available for testing seem happy to produce
+        # results for this even though it's not entirely valid. Others
+        # such as glibc>=2.28 return EOVERFLOW.
         self._getTimezoneOffsetTest("Africa/Johannesburg", -7200, -7200)
 
 
@@ -560,7 +560,7 @@ class FileObserverTests(LogPublisherTestCaseMixin,
         includes C{"%f"}, a L{datetime}-only format specifier for microseconds.
         """
         self.flo.timeFormat = '%f'
-        self.assertEqual("600000", self.flo.formatTime(12345.6))
+        self.assertEqual("600000", self.flo.formatTime(112345.6))
 
 
     def test_loggingAnObjectWithBroken__str__(self):
@@ -741,7 +741,7 @@ class FileObserverTests(LogPublisherTestCaseMixin,
         received = []
 
         def preStartObserver(x):
-            if 'pre-start' in list(x.keys()):
+            if 'pre-start' in x.keys():
                 received.append(x)
 
         newPublisher(evt)
@@ -1073,13 +1073,7 @@ class StdioOnnaStickTests(unittest.SynchronousTestCase):
         self.addCleanup(setattr, sys, "stdout", oldStdout)
         # This should go to the log, utf-8 encoded too:
         print(unicodeString)
-        if _PY3:
-            self.assertEqual(self.getLogMessages(),
-                             [unicodeString,
-                              "Also, " + unicodeString,
-                              unicodeString])
-        else:
-            self.assertEqual(self.getLogMessages(),
-                             [unicodeString.encode("utf-8"),
-                              ("Also, " + unicodeString).encode("utf-8"),
-                              unicodeString.encode("utf-8")])
+        self.assertEqual(self.getLogMessages(),
+                         [unicodeString,
+                          "Also, " + unicodeString,
+                          unicodeString])

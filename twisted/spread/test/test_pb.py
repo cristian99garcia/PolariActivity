@@ -12,11 +12,15 @@ only specific tests for old API.
 # Clean up warning suppression.
 
 
-
-import sys, os, time, gc, weakref
+import gc
+import os
+import sys
+import time
+import weakref
 from collections import deque
 
 from io import BytesIO as StringIO
+from typing import Dict
 from zope.interface import implementer, Interface
 
 from twisted.trial import unittest
@@ -26,7 +30,7 @@ from twisted.internet.error import ConnectionRefusedError
 from twisted.internet.defer import Deferred, gatherResults, succeed
 from twisted.protocols.policies import WrappingFactory
 from twisted.python import failure, log
-from twisted.python.compat import iterbytes, xrange, _PY3
+from twisted.python.compat import iterbytes, range
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.cred import portal, checkers, credentials
 
@@ -285,7 +289,8 @@ class SimpleFactoryCopy(pb.Copyable):
     @cvar allIDs: hold every created instances of this class.
     @type allIDs: C{dict}
     """
-    allIDs = {}
+    allIDs = {}  # type: Dict[int, 'SimpleFactoryCopy']
+
     def __init__(self, id):
         self.id = id
         SimpleFactoryCopy.allIDs[id] = self
@@ -476,6 +481,10 @@ class Echoer(pb.Root):
         return st
 
 
+    def remote_echoWithKeywords(self, st, **kw):
+        return (st, kw)
+
+
 class CachedReturner(pb.Root):
     def __init__(self, cache):
         self.cache = cache
@@ -532,13 +541,33 @@ class NewStyleTests(unittest.SynchronousTestCase):
         d = self.ref.callRemote("echo", orig)
         self.pump.flush()
         def cb(res):
-            # receiving the response creates a third one on the way back
+            # Receiving the response creates a third one on the way back
             self.assertIsInstance(res, NewStyleCopy2)
             self.assertEqual(res.value, 2)
             self.assertEqual(NewStyleCopy2.allocated, 3)
             self.assertEqual(NewStyleCopy2.initialized, 1)
-            self.assertFalse(res is orig) # no cheating :)
-        # sending the object creates a second one on the far side
+            self.assertIsNot(res, orig) # No cheating :)
+        # Sending the object creates a second one on the far side
+        d.addCallback(cb)
+        return d
+
+
+    def test_newStyleWithKeywords(self):
+        """
+        Create a new style object with keywords,
+        send it over the wire, and check the result.
+        """
+        orig = NewStyleCopy("value1")
+        d = self.ref.callRemote("echoWithKeywords", orig,
+                                keyword1="one", keyword2="two")
+        self.pump.flush()
+        def cb(res):
+            self.assertIsInstance(res, tuple)
+            self.assertIsInstance(res[0], NewStyleCopy)
+            self.assertIsInstance(res[1], dict)
+            self.assertEqual(res[0].s, "value1")
+            self.assertIsNot(res[0], orig)
+            self.assertEqual(res[1], {"keyword1": "one", "keyword2": "two"})
         d.addCallback(cb)
         return d
 
@@ -819,8 +848,7 @@ class BrokerTests(unittest.TestCase):
         self.assertEqual(complex[0].foo, 4)
         self.assertEqual(len(coll), 2)
         cp = coll[0][0]
-        self.assertIdentical(cp.checkMethod().__self__ if _PY3 else
-                             cp.checkMethod().__self__, cp,
+        self.assertIdentical(cp.checkMethod().__self__, cp,
                              "potential refcounting issue")
         self.assertIdentical(cp.checkSelf(), cp,
                              "other potential refcounting issue")

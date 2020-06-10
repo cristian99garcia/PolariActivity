@@ -8,7 +8,6 @@ Maintainer: Paul Swartz
 """
 
 
-
 from twisted.cred.error import UnauthorizedLogin
 
 

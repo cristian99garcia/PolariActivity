@@ -6,7 +6,6 @@ Test cases for L{twisted.logger._global}.
 """
 
 
-
 import io
 
 from twisted.trial import unittest
@@ -18,6 +17,7 @@ from .._global import LogBeginner
 from .._global import MORE_THAN_ONCE_WARNING
 from .._levels import LogLevel
 from ..test.test_stdlib import nextLine
+from twisted.python.failure import Failure
 
 
 
@@ -44,7 +44,7 @@ def compareEvents(test, actualEvents, expectedEvents):
 
     def simplify(event):
         copy = event.copy()
-        for key in list(event.keys()):
+        for key in event.keys():
             if key not in allMergedKeys:
                 copy.pop(key)
         return copy
@@ -153,6 +153,55 @@ class LogBeginnerTests(unittest.TestCase):
         self.assertEqual([event], events2)
 
 
+    def _bufferLimitTest(self, limit, beginner):
+        """
+        Verify that when more than C{limit} events are logged to L{LogBeginner},
+        only the last C{limit} are replayed by L{LogBeginner.beginLoggingTo}.
+
+        @param limit: The maximum number of events the log beginner should
+            buffer.
+        @type limit: L{int}
+
+        @param beginner: The L{LogBeginner} against which to verify.
+        @type beginner: L{LogBeginner}
+
+        @raise: C{self.failureException} if the wrong events are replayed by
+            C{beginner}.
+
+        @return: L{None}
+        """
+        for count in range(limit + 1):
+            self.publisher(dict(count=count))
+        events = []
+        beginner.beginLoggingTo([events.append])
+        self.assertEqual(
+            list(range(1, limit + 1)),
+            list(event["count"] for event in events),
+        )
+
+
+    def test_defaultBufferLimit(self):
+        """
+        Up to C{LogBeginner._DEFAULT_BUFFER_SIZE} log events are buffered for
+        replay by L{LogBeginner.beginLoggingTo}.
+        """
+        limit = LogBeginner._DEFAULT_BUFFER_SIZE
+        self._bufferLimitTest(limit, self.beginner)
+
+
+    def test_overrideBufferLimit(self):
+        """
+        The size of the L{LogBeginner} event buffer can be overridden with the
+        C{initialBufferSize} initilizer argument.
+        """
+        limit = 3
+        beginner = LogBeginner(
+            self.publisher, self.errorStream, self.sysModule,
+            self.warningsModule, initialBufferSize=limit,
+        )
+        self._bufferLimitTest(limit, beginner)
+
+
     def test_beginLoggingToTwice(self):
         """
         When invoked twice, L{LogBeginner.beginLoggingTo} will emit a log
@@ -202,7 +251,7 @@ class LogBeginnerTests(unittest.TestCase):
         log = Logger(observer=self.publisher)
         log.info("ignore this")
         log.critical("a critical {message}", message="message")
-        self.assertEqual(self.errorStream.getvalue(), "a critical message\n")
+        self.assertEqual(self.errorStream.getvalue(), u"a critical message\n")
 
 
     def test_criticalLoggingStops(self):
@@ -213,7 +262,7 @@ class LogBeginnerTests(unittest.TestCase):
         log = Logger(observer=self.publisher)
         self.beginner.beginLoggingTo(())
         log.critical("another critical message")
-        self.assertEqual(self.errorStream.getvalue(), "")
+        self.assertEqual(self.errorStream.getvalue(), u"")
 
 
     def test_beginLoggingToRedirectStandardIO(self):
@@ -268,7 +317,7 @@ class LogBeginnerTests(unittest.TestCase):
         self.sysModule.stdout.write(b"\x97\x9B\n")
         self.sysModule.stderr.write(b"\xBC\xFC\n")
         compareEvents(
-            self, x, [dict(log_io="\u674e"), dict(log_io="\u7469")]
+            self, x, [dict(log_io=u"\u674e"), dict(log_io=u"\u7469")]
         )
 
 
@@ -307,3 +356,16 @@ class LogBeginnerTests(unittest.TestCase):
                 filename=__file__, lineno=2,
             )]
         )
+
+
+    def test_failuresAppendTracebacks(self):
+        """
+        The string resulting from a logged failure contains a traceback.
+        """
+        f = Failure(Exception("this is not the behavior you are looking for"))
+        log = Logger(observer=self.publisher)
+        log.failure('a failure', failure=f)
+        msg = self.errorStream.getvalue()
+        self.assertIn('a failure', msg)
+        self.assertIn('this is not the behavior you are looking for', msg)
+        self.assertIn('Traceback', msg)

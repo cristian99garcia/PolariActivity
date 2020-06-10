@@ -12,21 +12,18 @@ Maintainer: Itamar Shtull-Trauring
 """
 
 
-
-from twisted.python.compat import _PY3, intToBytes, nativeString, urllib_parse
-from twisted.python.compat import str
+from twisted.python.compat import intToBytes, nativeString, urllib_parse
+from twisted.python.compat import unicode
 
 # System Imports
 import base64
-if _PY3:
-    import xmlrpc.client as xmlrpclib
-else:
-    import xmlrpc.client
+import xmlrpc.client as xmlrpclib
 
 # Sibling Imports
 from twisted.web import resource, server, http
 from twisted.internet import defer, protocol, reactor
-from twisted.python import log, reflect, failure
+from twisted.python import reflect, failure
+from twisted.logger import Logger
 
 # These are deprecated, use the class level definitions
 NOT_FOUND = 8001
@@ -34,10 +31,10 @@ FAILURE = 8002
 
 
 # Useful so people don't need to import xmlrpclib directly
-Fault = xmlrpc.client.Fault
-Binary = xmlrpc.client.Binary
-Boolean = xmlrpc.client.Boolean
-DateTime = xmlrpc.client.DateTime
+Fault = xmlrpclib.Fault
+Binary = xmlrpclib.Binary
+Boolean = xmlrpclib.Boolean
+DateTime = xmlrpclib.DateTime
 
 
 def withRequest(f):
@@ -125,6 +122,7 @@ class XMLRPC(resource.Resource):
     isLeaf = 1
     separator = '.'
     allowedMethods = (b'POST',)
+    _log = Logger()
 
     def __init__(self, allowNone=False, useDateTime=False):
         resource.Resource.__init__(self)
@@ -150,7 +148,7 @@ class XMLRPC(resource.Resource):
         request.content.seek(0, 0)
         request.setHeader(b"content-type", b"text/xml; charset=utf-8")
         try:
-            args, functionPath = xmlrpc.client.loads(request.content.read(),
+            args, functionPath = xmlrpclib.loads(request.content.read(),
                 use_datetime=self.useDateTime)
         except Exception as e:
             f = Fault(self.FAILURE, "Can't deserialize input: %s" % (e,))
@@ -185,28 +183,28 @@ class XMLRPC(resource.Resource):
             result = (result,)
         try:
             try:
-                content = xmlrpc.client.dumps(
+                content = xmlrpclib.dumps(
                     result, methodresponse=True,
                     allow_none=self.allowNone)
             except Exception as e:
                 f = Fault(self.FAILURE, "Can't serialize output: %s" % (e,))
-                content = xmlrpc.client.dumps(f, methodresponse=True,
+                content = xmlrpclib.dumps(f, methodresponse=True,
                                           allow_none=self.allowNone)
 
-            if isinstance(content, str):
+            if isinstance(content, unicode):
                 content = content.encode('utf8')
             request.setHeader(
                 b"content-length", intToBytes(len(content)))
             request.write(content)
         except:
-            log.err()
+            self._log.failure('')
         request.finish()
 
 
     def _ebRender(self, failure):
         if isinstance(failure.value, Fault):
             return failure.value
-        log.err(failure)
+        self._log.failure('', failure)
         return Fault(self.FAILURE, "error")
 
 
@@ -433,8 +431,8 @@ class _QueryFactory(protocol.ClientFactory):
         self.path, self.host = path, host
         self.user, self.password = user, password
         self.payload = payloadTemplate % (method,
-            xmlrpc.client.dumps(args, allow_none=allowNone))
-        if isinstance(self.payload, str):
+            xmlrpclib.dumps(args, allow_none=allowNone))
+        if isinstance(self.payload, unicode):
             self.payload = self.payload.encode('utf8')
         self.deferred = defer.Deferred(canceller)
         self.useDateTime = useDateTime
@@ -443,7 +441,7 @@ class _QueryFactory(protocol.ClientFactory):
         if not self.deferred:
             return
         try:
-            response = xmlrpc.client.loads(contents,
+            response = xmlrpclib.loads(contents,
                 use_datetime=self.useDateTime)[0][0]
         except:
             deferred, self.deferred = self.deferred, None

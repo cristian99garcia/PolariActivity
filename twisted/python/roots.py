@@ -9,14 +9,16 @@ Maintainer: Glyph Lefkowitz
 """
 
 
-
 from twisted.python import reflect
+
+
 
 class NotSupportedError(NotImplementedError):
     """
     An exception meaning that the tree-manipulation operation
     you're attempting to perform is not supported.
     """
+
 
 
 class Request:
@@ -40,6 +42,7 @@ class Request:
         raise NotImplementedError("%s.finish" % reflect.qual(self.__class__))
 
 
+
 class Entity:
     """I am a terminal object in a hierarchy, with no children.
 
@@ -56,6 +59,7 @@ class Entity:
         and request.finish().
         """
         raise NotImplementedError("%s.render" % reflect.qual(self.__class__))
+
 
 
 class Collection:
@@ -132,7 +136,7 @@ class Collection:
 
         See getStaticEntity.
         """
-        return list(self.entities.items())
+        return self.entities.items()
 
     def listDynamicEntities(self, request):
         """A list of all name, entity that I can generate on demand.
@@ -153,7 +157,7 @@ class Collection:
 
         See getStaticEntity.
         """
-        return list(self.entities.keys())
+        return self.entities.keys()
 
 
     def listDynamicNames(self):

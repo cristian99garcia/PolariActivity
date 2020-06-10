@@ -6,7 +6,6 @@ Tests for interrupting tests with Control-C.
 """
 
 
-
 from twisted.python.compat import NativeStringIO
 
 from twisted.trial import unittest

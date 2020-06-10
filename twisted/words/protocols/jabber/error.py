@@ -8,10 +8,9 @@ XMPP Error support.
 """
 
 
-
 import copy
 
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from twisted.words.xish import domish
 
 NS_XML = "http://www.w3.org/XML/1998/namespace"
@@ -255,7 +254,7 @@ def _parseError(error, errorNamespace):
     for element in error.elements():
         if element.uri == errorNamespace:
             if element.name == 'text':
-                text = str(element)
+                text = unicode(element)
                 textLang = element.getAttribute((NS_XML, 'lang'))
             else:
                 condition = element.name
@@ -315,7 +314,7 @@ def exceptionFromStanza(stanza):
 
             if not condition and code:
                condition, type = CODES_TO_CONDITIONS[code]
-               text = str(stanza.error)
+               text = unicode(stanza.error)
         else:
             children.append(element)
 

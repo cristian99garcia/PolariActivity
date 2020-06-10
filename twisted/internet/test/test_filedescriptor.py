@@ -6,7 +6,6 @@ Whitebox tests for L{twisted.internet.abstract.FileDescriptor}.
 """
 
 
-
 from zope.interface.verify import verifyClass
 
 from twisted.internet.abstract import FileDescriptor
@@ -64,7 +63,7 @@ class FileDescriptorTests(SynchronousTestCase):
         L{FileDescriptor.write} doesn't accept unicode data.
         """
         fileDescriptor = FileDescriptor(reactor=object())
-        self.assertRaises(TypeError, fileDescriptor.write, 'foo')
+        self.assertRaises(TypeError, fileDescriptor.write, u'foo')
 
 
     def test_writeSequenceWithUnicodeRaisesException(self):
@@ -73,7 +72,7 @@ class FileDescriptorTests(SynchronousTestCase):
         """
         fileDescriptor = FileDescriptor(reactor=object())
         self.assertRaises(
-            TypeError, fileDescriptor.writeSequence, [b'foo', 'bar', b'baz'])
+            TypeError, fileDescriptor.writeSequence, [b'foo', u'bar', b'baz'])
 
 
     def test_implementInterfaceIPushProducer(self):

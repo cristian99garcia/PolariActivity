@@ -11,7 +11,7 @@ this code is arranged.
 """
 
 
-
+from unittest import skipIf
 from twisted.trial import unittest, util
 from twisted.internet import reactor, protocol, defer
 
@@ -59,6 +59,36 @@ class SynchronousTestFailureInTearDown(
 
 class AsynchronousTestFailureInTearDown(
     FailureInTearDownMixin, unittest.TestCase):
+    pass
+
+
+
+class FailureButTearDownRunsMixin(object):
+    """
+    A test fails, but its L{tearDown} still runs.
+    """
+    tornDown = False
+
+    def tearDown(self):
+        self.tornDown = True
+
+
+    def test_fails(self):
+        """
+        A test that fails.
+        """
+        raise FoolishError("I am a broken test")
+
+
+
+class SynchronousTestFailureButTearDownRuns(
+        FailureButTearDownRunsMixin, unittest.SynchronousTestCase):
+    pass
+
+
+
+class AsynchronousTestFailureButTearDownRuns(
+        FailureButTearDownRunsMixin, unittest.TestCase):
     pass
 
 
@@ -122,10 +152,10 @@ class ErrorTest(unittest.SynchronousTestCase):
 
 
 
+@skipIf(True, "skipping this test")
 class TestSkipTestCase(unittest.SynchronousTestCase):
     pass
 
-TestSkipTestCase.skip = "skipping this test"
 
 
 class DelayedCall(unittest.TestCase):

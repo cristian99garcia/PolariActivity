@@ -10,10 +10,16 @@ import array
 
 from twisted.conch.insults import insults, helper
 from twisted.python import text as tptext
+from twisted.python.compat import _bytesChr as chr
+
+
 
 class YieldFocus(Exception):
-    """Input focus manipulation exception
     """
+    Input focus manipulation exception
+    """
+
+
 
 class BoundedTerminalWrapper(object):
     def __init__(self, terminal, width, height, xoff, yoff):
@@ -85,9 +91,9 @@ class Widget(object):
 
 
     def keystrokeReceived(self, keyID, modifier):
-        if keyID == '\t':
+        if keyID == b'\t':
             self.tabReceived(modifier)
-        elif keyID == '\x7f':
+        elif keyID == b'\x7f':
             self.backspaceReceived()
         elif keyID in insults.FUNCTION_KEYS:
             self.functionKeyReceived(keyID, modifier)
@@ -101,7 +107,8 @@ class Widget(object):
 
 
     def focusReceived(self):
-        """Called when focus is being given to this widget.
+        """
+        Called when focus is being given to this widget.
 
         May raise YieldFocus is this widget does not want focus.
         """
@@ -119,7 +126,10 @@ class Widget(object):
 
 
     def functionKeyReceived(self, keyID, modifier):
-        func = getattr(self, 'func_' + keyID.name, None)
+        name = keyID
+        if not isinstance(keyID, str):
+            name = name.decode("utf-8")
+        func = getattr(self, 'func_' + name, None)
         if func is not None:
             func(modifier)
 
@@ -296,7 +306,7 @@ class AbsoluteBox(ContainerWidget):
 
 
 class _Box(ContainerWidget):
-    TOP, CENTER, BOTTOM = list(range(3))
+    TOP, CENTER, BOTTOM = range(3)
 
     def __init__(self, gravity=CENTER):
         ContainerWidget.__init__(self)
@@ -378,12 +388,15 @@ class _Box(ContainerWidget):
                 heightOffset += want
 
 
+
 class HBox(_Box):
     variableDimension = 0
 
 
+
 class VBox(_Box):
     variableDimension = 1
+
 
 
 class Packer(ContainerWidget):
@@ -396,7 +409,7 @@ class Packer(ContainerWidget):
         for n, ch in enumerate(self.children):
             boxes[n % len(boxes)].addChild(ch)
         h = HBox()
-        list(map(h.addChild, boxes))
+        map(h.addChild, boxes)
         h.render(width, height, terminal)
 
 
@@ -412,7 +425,7 @@ class Canvas(Widget):
 
 
     def resize(self, width, height):
-        contents = array.array('c', ' ' * width * height)
+        contents = array.array('B', b' ' * width * height)
         if self.contents is not None:
             for x in range(min(width, self._width)):
                 for y in range(min(height, self._height)):
@@ -437,7 +450,7 @@ class Canvas(Widget):
 
 
     def clear(self):
-        self.contents = array.array('c', ' ' * len(self.contents))
+        self.contents = array.array('B', b' ' * len(self.contents))
 
 
     def render(self, width, height, terminal):
@@ -448,7 +461,12 @@ class Canvas(Widget):
             self.resize(width, height)
         for i in range(height):
             terminal.cursorPosition(0, i)
-            terminal.write(''.join(self.contents[self._width * i:self._width * i + self._width])[:width])
+            text = self.contents[
+                self._width * i:
+                self._width * i + self._width].tobytes()
+            text = text[:width]
+            terminal.write(text)
+
 
 
 def horizontalLine(terminal, y, left, right):
@@ -456,6 +474,7 @@ def horizontalLine(terminal, y, left, right):
     terminal.cursorPosition(left, y)
     terminal.write(chr(0o161) * (right - left))
     terminal.selectCharacterSet(insults.CS_US, insults.G0)
+
 
 
 def verticalLine(terminal, x, top, bottom):
@@ -538,9 +557,9 @@ class Border(Widget):
 
     def render(self, width, height, terminal):
         if self.containee.focused:
-            terminal.write('\x1b[31m')
+            terminal.write(b'\x1b[31m')
         rectangle(terminal, (0, 0), (width, height))
-        terminal.write('\x1b[0m')
+        terminal.write(b'\x1b[0m')
         wrap = BoundedTerminalWrapper(terminal, width - 2, height - 2, 1, 1)
         self.containee.draw(width - 2, height - 2, wrap)
 
@@ -558,14 +577,14 @@ class Button(Widget):
 
 
     def characterReceived(self, keyID, modifier):
-        if keyID == '\r':
+        if keyID == b'\r':
             self.onPress()
 
 
     def render(self, width, height, terminal):
         terminal.cursorPosition(0, 0)
         if self.focused:
-            terminal.write('\x1b[1m' + self.label + '\x1b[0m')
+            terminal.write(b'\x1b[1m' + self.label + b'\x1b[0m')
         else:
             terminal.write(self.label)
 
@@ -576,7 +595,7 @@ class TextInput(Widget):
         Widget.__init__(self)
         self.onSubmit = onSubmit
         self.maxwidth = maxwidth
-        self.buffer = ''
+        self.buffer = b''
         self.cursor = 0
 
 
@@ -606,7 +625,7 @@ class TextInput(Widget):
 
 
     def characterReceived(self, keyID, modifier):
-        if keyID == '\r':
+        if keyID == b'\r':
             self.onSubmit(self.buffer)
         else:
             if len(self.buffer) < self.maxwidth:
@@ -624,12 +643,12 @@ class TextInput(Widget):
         terminal.cursorPosition(0, 0)
         if self.focused:
             terminal.write(currentText[:self.cursor])
-            cursor(terminal, currentText[self.cursor:self.cursor+1] or ' ')
+            cursor(terminal, currentText[self.cursor:self.cursor+1] or b' ')
             terminal.write(currentText[self.cursor+1:])
-            terminal.write(' ' * (self.maxwidth - len(currentText) + 1))
+            terminal.write(b' ' * (self.maxwidth - len(currentText) + 1))
         else:
             more = self.maxwidth - len(currentText)
-            terminal.write(currentText + '_' * more)
+            terminal.write(currentText + b'_' * more)
 
 
     def _renderText(self):
@@ -644,7 +663,7 @@ class PasswordInput(TextInput):
 
 
 class TextOutput(Widget):
-    text = ''
+    text = b''
 
     def __init__(self, size=None):
         Widget.__init__(self)
@@ -660,7 +679,7 @@ class TextOutput(Widget):
     def render(self, width, height, terminal):
         terminal.cursorPosition(0, 0)
         text = self.text[:width]
-        terminal.write(text + ' ' * (width - len(text)))
+        terminal.write(text + b' ' * (width - len(text)))
 
 
 
@@ -675,7 +694,7 @@ class TextOutput(Widget):
 
 
 class TextOutputArea(TextOutput):
-    WRAP, TRUNCATE = list(range(2))
+    WRAP, TRUNCATE = range(2)
 
     def __init__(self, size=None, longLines=WRAP):
         TextOutput.__init__(self, size)
@@ -688,8 +707,15 @@ class TextOutputArea(TextOutput):
         outputLines = []
         while inputLines:
             if self.longLines == self.WRAP:
-                wrappedLines = tptext.greedyWrap(inputLines.pop(0), width)
-                outputLines.extend(wrappedLines or [''])
+                line = inputLines.pop(0)
+                if not isinstance(line, str):
+                    line = line.decode("utf-8")
+                wrappedLines = []
+                for wrappedLine in tptext.greedyWrap(line, width):
+                    if not isinstance(wrappedLine, bytes):
+                        wrappedLine = wrappedLine.encode("utf-8")
+                    wrappedLines.append(wrappedLine)
+                outputLines.extend(wrappedLines or [b''])
             else:
                 outputLines.append(inputLines.pop(0)[:width])
             if len(outputLines) >= height:
@@ -754,10 +780,10 @@ class Viewport(Widget):
             n = 0
             for n, (ch, attr) in enumerate(line[self._xOffset:self._xOffset + width]):
                 if ch is self._buf.void:
-                    ch = ' '
+                    ch = b' '
                 terminal.write(ch)
             if n < width:
-                terminal.write(' ' * (width - n - 1))
+                terminal.write(b' ' * (width - n - 1))
 
 
 
@@ -791,10 +817,10 @@ class HorizontalScrollbar(_Scrollbar):
     def func_RIGHT_ARROW(self, modifier):
         self.bigger()
 
-    _left = '\N{BLACK LEFT-POINTING TRIANGLE}'
-    _right = '\N{BLACK RIGHT-POINTING TRIANGLE}'
-    _bar = '\N{LIGHT SHADE}'
-    _slider = '\N{DARK SHADE}'
+    _left = u'\N{BLACK LEFT-POINTING TRIANGLE}'
+    _right = u'\N{BLACK RIGHT-POINTING TRIANGLE}'
+    _bar = u'\N{LIGHT SHADE}'
+    _slider = u'\N{DARK SHADE}'
 
 
     def render(self, width, height, terminal):
@@ -819,10 +845,10 @@ class VerticalScrollbar(_Scrollbar):
     def func_DOWN_ARROW(self, modifier):
         self.bigger()
 
-    _up = '\N{BLACK UP-POINTING TRIANGLE}'
-    _down = '\N{BLACK DOWN-POINTING TRIANGLE}'
-    _bar = '\N{LIGHT SHADE}'
-    _slider = '\N{DARK SHADE}'
+    _up = u'\N{BLACK UP-POINTING TRIANGLE}'
+    _down = u'\N{BLACK DOWN-POINTING TRIANGLE}'
+    _bar = u'\N{LIGHT SHADE}'
+    _slider = u'\N{DARK SHADE}'
 
 
     def render(self, width, height, terminal):
@@ -894,12 +920,12 @@ class ScrolledArea(Widget):
         wrapper = BoundedTerminalWrapper(terminal, width - 2, height - 2, 1, 1)
         self._viewport.draw(width - 2, height - 2, wrapper)
         if self.focused:
-            terminal.write('\x1b[31m')
+            terminal.write(b'\x1b[31m')
         horizontalLine(terminal, 0, 1, width - 1)
         verticalLine(terminal, 0, 1, height - 1)
         self._vert.draw(1, height - 1, BoundedTerminalWrapper(terminal, 1, height - 1, width - 1, 0))
         self._horiz.draw(width, 1, BoundedTerminalWrapper(terminal, width, 1, 0, height - 1))
-        terminal.write('\x1b[0m')
+        terminal.write(b'\x1b[0m')
 
 
 
@@ -925,7 +951,7 @@ class Selection(Widget):
         self.onSelect = onSelect
         self.minVisible = minVisible
         if minVisible is not None:
-            self._width = max(list(map(len, self.sequence)))
+            self._width = max(map(len, self.sequence))
 
 
     def sizeHint(self):
@@ -971,7 +997,7 @@ class Selection(Widget):
 
 
     def characterReceived(self, keyID, modifier):
-        if keyID == '\r':
+        if keyID == b'\r':
             self.onSelect(self.sequence[self.focusedIndex])
 
 
@@ -993,6 +1019,6 @@ class Selection(Widget):
                     modes = str(insults.REVERSE_VIDEO),
                 terminal.selectGraphicRendition(*modes)
             text = ele[:width]
-            terminal.write(text + (' ' * (width - len(text))))
+            terminal.write(text + (b' ' * (width - len(text))))
             if n == self.renderOffset:
                 terminal.restoreCursor()

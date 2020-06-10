@@ -9,7 +9,6 @@ that process transports implement IProducer properly.
 """
 
 
-
 import sys
 
 from twisted.internet import stdio, protocol

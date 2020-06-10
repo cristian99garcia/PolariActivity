@@ -3,20 +3,32 @@
 # See LICENSE for details.
 
 
-
-import os, sys, errno, warnings
+import errno
+import os
+import sys
+import warnings
 try:
-    import pwd, grp
+    import grp as _grp
+    import pwd as _pwd
 except ImportError:
-    pwd = grp = None
+    pwd = None
+    grp = None
+else:
+    grp = _grp
+    pwd = _pwd
+
 try:
-    from os import setgroups, getgroups
+    from os import setgroups as _setgroups, getgroups as _getgroups
 except ImportError:
-    setgroups = getgroups = None
+    setgroups = None
+    getgroups = None
+else:
+    setgroups = _setgroups
+    getgroups = _getgroups
 
-from functools import wraps
+from typing import Sequence
 
-from twisted.python.compat import _PY3, str
+from twisted.python.compat import unicode
 from incremental import Version
 from twisted.python.deprecate import deprecatedModuleAttribute
 
@@ -61,7 +73,7 @@ class InsensitiveDict:
 
 
     def _lowerOrReturn(self, key):
-        if isinstance(key, bytes) or isinstance(key, str):
+        if isinstance(key, bytes) or isinstance(key, unicode):
             return key.lower()
         else:
             return key
@@ -96,7 +108,7 @@ class InsensitiveDict:
 
     def _doPreserve(self, key):
         if not self.preserve and (isinstance(key, bytes)
-                                  or isinstance(key, str)):
+                                  or isinstance(key, unicode)):
             return key.lower()
         else:
             return key
@@ -106,21 +118,21 @@ class InsensitiveDict:
         """
         List of keys in their original case.
         """
-        return list(self.keys())
+        return list(self.iterkeys())
 
 
     def values(self):
         """
         List of values.
         """
-        return list(self.values())
+        return list(self.itervalues())
 
 
     def items(self):
         """
         List of (key,value) pairs.
         """
-        return list(self.items())
+        return list(self.iteritems())
 
 
     def get(self, key, default=None):
@@ -139,7 +151,7 @@ class InsensitiveDict:
         If 'key' doesn't exist, associate it with the 'default' value.
         Return value associated with 'key'.
         """
-        if key not in self:
+        if not self.has_key(key):
             self[key] = default
         return self[key]
 
@@ -148,7 +160,7 @@ class InsensitiveDict:
         """
         Copy (key,value) pairs from 'dict'.
         """
-        for k,v in list(dict.items()):
+        for k,v in dict.items():
             self[k] = v
 
 
@@ -156,33 +168,33 @@ class InsensitiveDict:
         """
         String representation of the dictionary.
         """
-        items = ", ".join([("%r: %r" % (k,v)) for k,v in list(self.items())])
+        items = ", ".join([("%r: %r" % (k,v)) for k,v in self.items()])
         return "InsensitiveDict({%s})" % items
 
 
     def iterkeys(self):
-        for v in list(self.data.values()):
+        for v in self.data.values():
             yield self._doPreserve(v[0])
 
 
     def itervalues(self):
-        for v in list(self.data.values()):
+        for v in self.data.values():
             yield v[1]
 
 
     def iteritems(self):
-        for (k, v) in list(self.data.values()):
+        for (k, v) in self.data.values():
             yield self._doPreserve(k), v
 
 
     def popitem(self):
-        i=list(self.items())[0]
+        i=self.items()[0]
         del self[i[0]]
         return i
 
 
     def clear(self):
-        for k in list(self.keys()):
+        for k in self.keys():
             del self[k]
 
 
@@ -195,7 +207,7 @@ class InsensitiveDict:
 
 
     def __eq__(self, other):
-        for k,v in list(self.items()):
+        for k,v in self.items():
             if not (k in other) or not (other[k]==v):
                 return 0
         return len(self)==len(other)
@@ -250,7 +262,7 @@ def getPluginDirs():
                             os.path.abspath(twisted.__file__))), 'plugins')
     userPlugins = os.path.expanduser("~/TwistedPlugins")
     confPlugins = os.path.expanduser("~/.twisted")
-    allPlugins = list(filter(os.path.isdir, [systemPlugins, userPlugins, confPlugins]))
+    allPlugins = filter(os.path.isdir, [systemPlugins, userPlugins, confPlugins])
     return allPlugins
 
 
@@ -448,7 +460,7 @@ class LineLog:
         """
         if size < 0:
             size = 0
-        self.log = [None]*size
+        self.log = [None] * size
         self.size = size
 
 
@@ -461,18 +473,22 @@ class LineLog:
 
 
     def str(self):
-        return '\n'.join([_f for _f in self.log if _f])
+        return bytes(self)
+
+
+    def __bytes__(self):
+        return b'\n'.join(filter(None, self.log))
 
 
     def __getitem__(self, item):
-        return [_f for _f in self.log if _f][item]
+        return filter(None, self.log)[item]
 
 
     def clear(self):
         """
-        Empty the log
+        Empty the log.
         """
-        self.log = [None]*self.size
+        self.log = [None] * self.size
 
 
 
@@ -528,7 +544,7 @@ class IntervalDifferential(object):
 class _IntervalDifferentialIterator(object):
     def __init__(self, i, d):
 
-        self.intervals = [[e, e, n] for (e, n) in zip(i, list(range(len(i))))]
+        self.intervals = [[e, e, n] for (e, n) in zip(i, range(len(i)))]
         self.default = d
         self.last = 0
 
@@ -587,7 +603,7 @@ class FancyStrMixin:
     might be used for a float.
     """
     # Override in subclasses:
-    showAttributes = ()
+    showAttributes = ()  # type: Sequence[str]
 
 
     def __str__(self):
@@ -614,7 +630,7 @@ class FancyEqMixin:
     Comparison is done using the list of attributes defined in
     C{compareAttributes}.
     """
-    compareAttributes = ()
+    compareAttributes = ()  # type: Sequence[str]
 
     def __eq__(self, other):
         if not self.compareAttributes:
@@ -636,9 +652,11 @@ class FancyEqMixin:
 
 try:
     # initgroups is available in Python 2.7+ on UNIX-likes
-    from os import initgroups as _initgroups
+    from os import initgroups as __initgroups
 except ImportError:
     _initgroups = None
+else:
+    _initgroups = __initgroups
 
 
 
@@ -663,11 +681,10 @@ else:
         @type uid: C{int}
         @param uid: The UID for which to look up group information.
 
-        @type primaryGid: C{int} or L{None}
-        @param primaryGid: If provided, an additional GID to include when
-            setting the groups.
+        @type primaryGid: C{int}
+        @param primaryGid: The GID to include when setting the groups.
         """
-        return _initgroups(pwd.getpwuid(uid)[0], primaryGid)
+        return _initgroups(pwd.getpwuid(uid).pw_name, primaryGid)
 
 
 
@@ -706,81 +723,14 @@ def switchUID(uid, gid, euid=False):
     if uid is not None:
         if uid == getuid():
             uidText = (euid and "euid" or "uid")
-            actionText = "tried to drop privileges and set%s %s" % (uidText, uid)
-            problemText = "%s is already %s" % (uidText, getuid())
-            warnings.warn("%s but %s; should we be root? Continuing."
-                          % (actionText, problemText))
+            actionText = "tried to drop privileges and set{} {}".format(
+                uidText, uid)
+            problemText = "{} is already {}".format(uidText, getuid())
+            warnings.warn("{} but {}; should we be root? Continuing.".format(
+                          actionText, problemText))
         else:
             initgroups(uid, gid)
             setuid(uid)
-
-
-
-class SubclassableCStringIO(object):
-    """
-    A wrapper around cStringIO to allow for subclassing.
-    """
-    __csio = None
-
-    def __init__(self, *a, **kw):
-        from io import StringIO
-        self.__csio = StringIO(*a, **kw)
-
-
-    def __iter__(self):
-        return self.__csio.__iter__()
-
-
-    def __next__(self):
-        return next(self.__csio)
-
-
-    def close(self):
-        return self.__csio.close()
-
-
-    def isatty(self):
-        return self.__csio.isatty()
-
-
-    def seek(self, pos, mode=0):
-        return self.__csio.seek(pos, mode)
-
-
-    def tell(self):
-        return self.__csio.tell()
-
-
-    def read(self, n=-1):
-        return self.__csio.read(n)
-
-
-    def readline(self, length=None):
-        return self.__csio.readline(length)
-
-
-    def readlines(self, sizehint=0):
-        return self.__csio.readlines(sizehint)
-
-
-    def truncate(self, size=None):
-        return self.__csio.truncate(size)
-
-
-    def write(self, s):
-        return self.__csio.write(s)
-
-
-    def writelines(self, list):
-        return self.__csio.writelines(list)
-
-
-    def flush(self):
-        return self.__csio.flush()
-
-
-    def getvalue(self):
-        return self.__csio.getvalue()
 
 
 
@@ -996,52 +946,12 @@ def runWithWarningsSuppressed(suppressedWarnings, f, *args, **kwargs):
 
 
 
-def _replaceIf(condition, alternative):
-    """
-    If C{condition}, replace this function with C{alternative}.
-
-    @param condition: A L{bool} which says whether this should be replaced.
-
-    @param alternative: An alternative function that will be swapped in instead
-        of the original, if C{condition} is truthy.
-
-    @return: A decorator.
-    """
-    def decorator(func):
-
-        if condition is True:
-            call = alternative
-        elif condition is False:
-            call = func
-        else:
-            raise ValueError(("condition argument to _replaceIf requires a "
-                              "bool, not {}").format(repr(condition)))
-
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            return call(*args, **kwargs)
-
-        return wrapped
-
-    return decorator
-
-
-
 __all__ = [
     "uniquify", "padTo", "getPluginDirs", "addPluginDir", "sibpath",
     "getPassword", "println", "makeStatBar", "OrderedDict",
     "InsensitiveDict", "spewer", "searchupwards", "LineLog",
     "raises", "IntervalDifferential", "FancyStrMixin", "FancyEqMixin",
-    "switchUID", "SubclassableCStringIO", "mergeFunctionMetadata",
+    "switchUID", "mergeFunctionMetadata",
     "nameToLabel", "uidFromString", "gidFromString", "runAsEffectiveUser",
     "untilConcludes", "runWithWarningsSuppressed",
 ]
-
-
-if _PY3:
-    __notported__ = ["SubclassableCStringIO", "makeStatBar"]
-    for name in __all__[:]:
-        if name in __notported__:
-            __all__.remove(name)
-            del globals()[name]
-    del name, __notported__

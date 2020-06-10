@@ -7,7 +7,6 @@ reactors.
 """
 
 
-
 from twisted.trial.unittest import SynchronousTestCase
 
 from twisted.internet.abstract import isIPv6Address
@@ -56,3 +55,14 @@ class IPv6AddressTests(SynchronousTestCase):
         self.assertFalse(isIPv6Address("%eth0"))
         self.assertFalse(isIPv6Address(":%eth0"))
         self.assertFalse(isIPv6Address("hello%eth0"))
+
+
+    def test_unicodeAndBytes(self):
+        """
+        L{isIPv6Address} evaluates ASCII-encoded bytes as well as text.
+        """
+        self.assertTrue(isIPv6Address(b"fe80::2%1"))
+        self.assertTrue(isIPv6Address(u"fe80::2%1"))
+        self.assertFalse(isIPv6Address(u"\u4321"))
+        self.assertFalse(isIPv6Address(u"hello%eth0"))
+        self.assertFalse(isIPv6Address(b"hello%eth0"))

@@ -6,56 +6,29 @@
 Different styles of persisted objects.
 """
 
-
-
-# System Imports
-import types
-import pickle
-try:
-    import copyreg
-except ImportError:
-    import copyreg as copy_reg
 import copy
+import copyreg as copy_reg
 import inspect
-
-from twisted.python.compat import _PY3, _PYPY
-
-# Twisted Imports
-from twisted.python import log
-from twisted.python import reflect
-
-oldModules = {}
+import pickle
+import types
+from typing import Dict
+from twisted.python.compat import _PYPY
+from twisted.python import log, reflect
 
 
-try:
-    import pickle
-except ImportError:
-    cPickle = None
 
-if cPickle is None or pickle.PicklingError is pickle.PicklingError:
-    _UniversalPicklingError = pickle.PicklingError
-else:
-    class _UniversalPicklingError(pickle.PicklingError,
-                                  pickle.PicklingError):
-        """
-        A PicklingError catchable by both L{cPickle.PicklingError} and
-        L{pickle.PicklingError} handlers.
-        """
+oldModules = {}  # type: Dict[str, types.ModuleType]
 
 
-## First, let's register support for some stuff that really ought to
-## be registerable...
+_UniversalPicklingError = pickle.PicklingError
+
+
 
 def pickleMethod(method):
     'support function for copy_reg to pickle method refs'
-    if _PY3:
-        return (unpickleMethod, (method.__name__,
-                                 method.__self__,
-                                 method.__self__.__class__))
-    else:
-        return (unpickleMethod, (method.__func__.__name__,
-                                 method.__self__,
-                                 method.__self__.__class__))
+    return (unpickleMethod, (method.__name__,
+                             method.__self__,
+                             method.__self__.__class__))
 
 
 
@@ -74,9 +47,7 @@ def _methodFunction(classObject, methodName):
     @rtype: L{types.FunctionType}
     """
     methodObject = getattr(classObject, methodName)
-    if _PY3:
-        return methodObject
-    return methodObject.__func__
+    return methodObject
 
 
 
@@ -107,16 +78,13 @@ def unpickleMethod(im_name, im_self, im_class):
             raise
         return unpickleMethod(im_name, im_self, im_self.__class__)
     else:
-        if _PY3:
-            maybeClass = ()
-        else:
-            maybeClass = tuple([im_class])
+        maybeClass = ()
         bound = types.MethodType(methodFunction, im_self, *maybeClass)
         return bound
 
 
 
-copyreg.pickle(types.MethodType, pickleMethod, unpickleMethod)
+copy_reg.pickle(types.MethodType, pickleMethod, unpickleMethod)
 
 def _pickleFunction(f):
     """
@@ -157,7 +125,7 @@ def _unpickleFunction(fullyQualifiedName):
 
 
 
-copyreg.pickle(types.FunctionType, _pickleFunction, _unpickleFunction)
+copy_reg.pickle(types.FunctionType, _pickleFunction, _unpickleFunction)
 
 def pickleModule(module):
     'support function for copy_reg to pickle module refs'
@@ -172,7 +140,7 @@ def unpickleModule(name):
     return __import__(name,{},{},'x')
 
 
-copyreg.pickle(types.ModuleType,
+copy_reg.pickle(types.ModuleType,
                 pickleModule,
                 unpickleModule)
 
@@ -256,12 +224,12 @@ def unpickleStringI(val, sek):
 
 
 try:
-    from io import InputType, OutputType, StringIO as _cStringIO
+    from cStringIO import InputType, OutputType, StringIO as _cStringIO
 except ImportError:
     from io import StringIO as _cStringIO
 else:
-    copyreg.pickle(OutputType, pickleStringO, unpickleStringO)
-    copyreg.pickle(InputType, pickleStringI, unpickleStringI)
+    copy_reg.pickle(OutputType, pickleStringO, unpickleStringO)
+    copy_reg.pickle(InputType, pickleStringI, unpickleStringI)
 
 
 
@@ -292,8 +260,11 @@ class Ephemeral:
         self.__class__ = Ephemeral
 
 
-versionedsToUpgrade = {}
+
+versionedsToUpgrade = {}  # type: Dict[int, 'Versioned']
 upgraded = {}
+
+
 
 def doUpgrade():
     global versionedsToUpgrade, upgraded

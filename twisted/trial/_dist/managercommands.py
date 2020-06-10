@@ -7,7 +7,9 @@ Commands for reporting test success of failure to the manager.
 @since: 12.3
 """
 
-from twisted.protocols.amp import Command, String, Boolean, ListOf
+from twisted.protocols.amp import Command, Boolean, ListOf, Unicode
+
+NativeString = Unicode
 
 
 
@@ -15,8 +17,8 @@ class AddSuccess(Command):
     """
     Add a success.
     """
-    arguments = [('testName', String())]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString())]
+    response = [(b'success', Boolean())]
 
 
 
@@ -24,9 +26,11 @@ class AddError(Command):
     """
     Add an error.
     """
-    arguments = [('testName', String()), ('error', String()),
-                 ('errorClass', String()), ('frames', ListOf(String()))]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString()),
+                 (b'error', NativeString()),
+                 (b'errorClass', NativeString()),
+                 (b'frames', ListOf(NativeString()))]
+    response = [(b'success', Boolean())]
 
 
 
@@ -34,9 +38,11 @@ class AddFailure(Command):
     """
     Add a failure.
     """
-    arguments = [('testName', String()), ('fail', String()),
-                 ('failClass', String()), ('frames', ListOf(String()))]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString()),
+                 (b'fail', NativeString()),
+                 (b'failClass', NativeString()),
+                 (b'frames', ListOf(NativeString()))]
+    response = [(b'success', Boolean())]
 
 
 
@@ -44,8 +50,9 @@ class AddSkip(Command):
     """
     Add a skip.
     """
-    arguments = [('testName', String()), ('reason', String())]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString()),
+                 (b'reason', NativeString())]
+    response = [(b'success', Boolean())]
 
 
 
@@ -53,9 +60,10 @@ class AddExpectedFailure(Command):
     """
     Add an expected failure.
     """
-    arguments = [('testName', String()), ('error', String()),
-                 ('todo', String())]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString()),
+                 (b'error', NativeString()),
+                 (b'todo', NativeString())]
+    response = [(b'success', Boolean())]
 
 
 
@@ -63,8 +71,9 @@ class AddUnexpectedSuccess(Command):
     """
     Add an unexpected success.
     """
-    arguments = [('testName', String()), ('todo', String())]
-    response = [('success', Boolean())]
+    arguments = [(b'testName', NativeString()),
+                 (b'todo', NativeString())]
+    response = [(b'success', Boolean())]
 
 
 
@@ -72,5 +81,5 @@ class TestWrite(Command):
     """
     Write test log.
     """
-    arguments = [('out', String())]
-    response = [('success', Boolean())]
+    arguments = [(b'out', NativeString())]
+    response = [(b'success', Boolean())]

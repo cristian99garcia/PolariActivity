@@ -6,15 +6,15 @@ Credential managers for L{twisted.mail}.
 """
 
 
-
 import hmac
+import hashlib
 
 from zope.interface import implementer
 
 from twisted.cred import credentials
 from twisted.python.compat import nativeString
 from twisted.mail._except import IllegalClientResponse
-from twisted.mail.interfaces import IClientAuthentication
+from twisted.mail.interfaces import IClientAuthentication, IChallengeResponse
 
 
 @implementer(IClientAuthentication)
@@ -28,8 +28,8 @@ class CramMD5ClientAuthenticator:
 
 
     def challengeResponse(self, secret, chal):
-        response = hmac.HMAC(secret, chal).hexdigest().encode('ascii')
-        return self.user + b' ' + response
+        response = hmac.HMAC(secret, chal, digestmod=hashlib.md5).hexdigest()
+        return self.user + b' ' + response.encode('ascii')
 
 
 
@@ -71,6 +71,7 @@ class PLAINAuthenticator:
 
 
 
+@implementer(IChallengeResponse)
 class LOGINCredentials(credentials.UsernamePassword):
     def __init__(self):
         self.challenges = [b'Password\0', b'User Name\0']
@@ -91,6 +92,7 @@ class LOGINCredentials(credentials.UsernamePassword):
 
 
 
+@implementer(IChallengeResponse)
 class PLAINCredentials(credentials.UsernamePassword):
     def __init__(self):
         credentials.UsernamePassword.__init__(self, None, None)
@@ -110,7 +112,6 @@ class PLAINCredentials(credentials.UsernamePassword):
 
     def moreChallenges(self):
         return False
-
 
 
 __all__ = [

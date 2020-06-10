@@ -6,7 +6,6 @@ Tests for L{twisted.python.runtime}.
 """
 
 
-
 import sys
 
 from twisted.python.reflect import namedModule

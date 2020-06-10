@@ -2,41 +2,30 @@
 # See LICENSE for details.
 
 """
-Tests for L{twisted.cred.strcred}.
+L{twisted.cred.strcred}.
 """
 
 
-
 import os
+from typing import Sequence, Type
+from unittest import skipIf
+from zope.interface import Interface
 
 from twisted import plugin
-from twisted.trial import unittest
+from twisted.trial.unittest import TestCase
 from twisted.cred import credentials, checkers, error, strcred
-from twisted.plugins import cred_file, cred_anonymous
-from twisted.python import usage, compat
+from twisted.plugins import cred_file, cred_anonymous, cred_unix
+from twisted.python import usage
+from twisted.python.compat import NativeStringIO
 from twisted.python.filepath import FilePath
 from twisted.python.fakepwd import UserDatabase
 from twisted.python.reflect import requireModule
 
-if compat._PY3:
-    from io import StringIO
-else:
-    from io import BytesIO as StringIO
 
-try:
-    import crypt
-except ImportError:
-    crypt = None
 
-try:
-    import pwd
-except ImportError:
-    pwd = None
-
-try:
-    import spwd
-except ImportError:
-    spwd = None
+crypt = requireModule("crypt")
+pwd = requireModule("pwd")
+spwd = requireModule("spwd")
 
 
 
@@ -52,11 +41,11 @@ def getInvalidAuthType():
 
 
 
-class PublicAPITests(unittest.TestCase):
+class PublicAPITests(TestCase):
 
     def test_emptyDescription(self):
         """
-        Test that the description string cannot be empty.
+        The description string cannot be empty.
         """
         iat = getInvalidAuthType()
         self.assertRaises(strcred.InvalidAuthType, strcred.makeChecker, iat)
@@ -66,7 +55,7 @@ class PublicAPITests(unittest.TestCase):
 
     def test_invalidAuthType(self):
         """
-        Test that an unrecognized auth type raises an exception.
+        An unrecognized auth type raises an exception.
         """
         iat = getInvalidAuthType()
         self.assertRaises(strcred.InvalidAuthType, strcred.makeChecker, iat)
@@ -75,11 +64,11 @@ class PublicAPITests(unittest.TestCase):
 
 
 
-class StrcredFunctionsTests(unittest.TestCase):
+class StrcredFunctionsTests(TestCase):
 
     def test_findCheckerFactories(self):
         """
-        Test that findCheckerFactories returns all available plugins.
+        L{strcred.findCheckerFactories} returns all available plugins.
         """
         availablePlugins = list(strcred.findCheckerFactories())
         for plg in plugin.getPlugins(strcred.ICheckerFactory):
@@ -88,7 +77,7 @@ class StrcredFunctionsTests(unittest.TestCase):
 
     def test_findCheckerFactory(self):
         """
-        Test that findCheckerFactory returns the first plugin
+        L{strcred.findCheckerFactory} returns the first plugin
         available for a given authentication type.
         """
         self.assertIdentical(strcred.findCheckerFactory('file'),
@@ -96,7 +85,7 @@ class StrcredFunctionsTests(unittest.TestCase):
 
 
 
-class MemoryCheckerTests(unittest.TestCase):
+class MemoryCheckerTests(TestCase):
 
     def setUp(self):
         self.admin = credentials.UsernamePassword('admin', 'asdf')
@@ -118,8 +107,8 @@ class MemoryCheckerTests(unittest.TestCase):
 
     def test_badFormatArgString(self):
         """
-        Test that an argument string which does not contain user:pass
-        pairs (i.e., an odd number of ':' characters) raises an exception.
+        An argument string which does not contain user:pass pairs
+        (i.e., an odd number of ':' characters) raises an exception.
         """
         self.assertRaises(strcred.InvalidAuthArgumentString,
                           strcred.makeChecker, 'memory:a:b:c')
@@ -127,7 +116,7 @@ class MemoryCheckerTests(unittest.TestCase):
 
     def test_memoryCheckerSucceeds(self):
         """
-        Test that the checker works with valid credentials.
+        The checker works with valid credentials.
         """
         def _gotAvatar(username):
             self.assertEqual(username, self.admin.username)
@@ -138,7 +127,7 @@ class MemoryCheckerTests(unittest.TestCase):
 
     def test_memoryCheckerFailsUsername(self):
         """
-        Test that the checker fails with an invalid username.
+        The checker fails with an invalid username.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badUser),
                                   error.UnauthorizedLogin)
@@ -146,14 +135,14 @@ class MemoryCheckerTests(unittest.TestCase):
 
     def test_memoryCheckerFailsPassword(self):
         """
-        Test that the checker fails with an invalid password.
+        The checker fails with an invalid password.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badPass),
                                   error.UnauthorizedLogin)
 
 
 
-class AnonymousCheckerTests(unittest.TestCase):
+class AnonymousCheckerTests(TestCase):
 
     def test_isChecker(self):
         """
@@ -167,7 +156,7 @@ class AnonymousCheckerTests(unittest.TestCase):
 
     def testAnonymousAccessSucceeds(self):
         """
-        Test that we can log in anonymously using this checker.
+        We can log in anonymously using this checker.
         """
         checker = strcred.makeChecker('anonymous')
         request = checker.requestAvatarId(credentials.Anonymous())
@@ -177,16 +166,21 @@ class AnonymousCheckerTests(unittest.TestCase):
 
 
 
-class UnixCheckerTests(unittest.TestCase):
+@skipIf(not pwd, "Required module not available: pwd")
+@skipIf(not crypt, "Required module not available: crypt")
+@skipIf(not spwd, "Required module not available: spwd")
+class UnixCheckerTests(TestCase):
+
     users = {
         'admin': 'asdf',
         'alice': 'foo',
         }
 
 
-    def _spwd(self, username):
-        return (username, crypt.crypt(self.users[username], 'F/'),
-                0, 0, 99999, 7, -1, -1, -1)
+    def _spwd_getspnam(self, username):
+        return spwd.struct_spwd((username,
+                                 crypt.crypt(self.users[username], 'F/'),
+                                 0, 0, 99999, 7, -1, -1, -1))
 
 
     def setUp(self):
@@ -195,24 +189,23 @@ class UnixCheckerTests(unittest.TestCase):
         self.badPass = credentials.UsernamePassword('alice', 'foobar')
         self.badUser = credentials.UsernamePassword('x', 'yz')
         self.checker = strcred.makeChecker('unix')
+        self.adminBytes = credentials.UsernamePassword(b'admin', b'asdf')
+        self.aliceBytes = credentials.UsernamePassword(b'alice', b'foo')
+        self.badPassBytes = credentials.UsernamePassword(b'alice', b'foobar')
+        self.badUserBytes = credentials.UsernamePassword(b'x', b'yz')
+        self.checkerBytes = strcred.makeChecker('unix')
 
         # Hack around the pwd and spwd modules, since we can't really
         # go about reading your /etc/passwd or /etc/shadow files
         if pwd:
             database = UserDatabase()
-            for username, password in list(self.users.items()):
+            for username, password in self.users.items():
                 database.addUser(
                     username, crypt.crypt(password, 'F/'),
                     1000, 1000, username, '/home/' + username, '/bin/sh')
             self.patch(pwd, 'getpwnam', database.getpwnam)
         if spwd:
-            self._spwd_getspnam = spwd.getspnam
-            spwd.getspnam = self._spwd
-
-
-    def tearDown(self):
-        if spwd:
-            spwd.getspnam = self._spwd_getspnam
+            self.patch(spwd, 'getspnam', self._spwd_getspnam)
 
 
     def test_isChecker(self):
@@ -223,11 +216,15 @@ class UnixCheckerTests(unittest.TestCase):
         self.assertTrue(checkers.ICredentialsChecker.providedBy(self.checker))
         self.assertIn(credentials.IUsernamePassword,
                       self.checker.credentialInterfaces)
+        self.assertTrue(checkers.ICredentialsChecker.providedBy(
+                        self.checkerBytes))
+        self.assertIn(credentials.IUsernamePassword,
+                      self.checkerBytes.credentialInterfaces)
 
 
     def test_unixCheckerSucceeds(self):
         """
-        Test that the checker works with valid credentials.
+        The checker works with valid credentials.
         """
         def _gotAvatar(username):
             self.assertEqual(username, self.admin.username)
@@ -236,38 +233,106 @@ class UnixCheckerTests(unittest.TestCase):
                 .addCallback(_gotAvatar))
 
 
+    def test_unixCheckerSucceedsBytes(self):
+        """
+        The checker works with valid L{bytes} credentials.
+        """
+        def _gotAvatar(username):
+            self.assertEqual(username,
+                             self.adminBytes.username.decode("utf-8"))
+        return (self.checkerBytes
+                .requestAvatarId(self.adminBytes)
+                .addCallback(_gotAvatar))
+
+
     def test_unixCheckerFailsUsername(self):
         """
-        Test that the checker fails with an invalid username.
+        The checker fails with an invalid username.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badUser),
                                   error.UnauthorizedLogin)
 
 
+    def test_unixCheckerFailsUsernameBytes(self):
+        """
+        The checker fails with an invalid L{bytes} username.
+        """
+        return self.assertFailure(self.checkerBytes.requestAvatarId(
+            self.badUserBytes), error.UnauthorizedLogin)
+
+
     def test_unixCheckerFailsPassword(self):
         """
-        Test that the checker fails with an invalid password.
+        The checker fails with an invalid password.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badPass),
                                   error.UnauthorizedLogin)
 
 
-    if None in (pwd, spwd, crypt):
-        availability = []
-        for module, name in ((pwd, "pwd"), (spwd, "spwd"), (crypt, "crypt")):
-            if module is None:
-                availability += [name]
-        for method in (test_unixCheckerSucceeds,
-                       test_unixCheckerFailsUsername,
-                       test_unixCheckerFailsPassword):
-            method.skip = ("Required module(s) are unavailable: " +
-                           ", ".join(availability))
+    def test_unixCheckerFailsPasswordBytes(self):
+        """
+        The checker fails with an invalid L{bytes} password.
+        """
+        return self.assertFailure(self.checkerBytes.requestAvatarId(
+            self.badPassBytes), error.UnauthorizedLogin)
 
 
 
-class FileDBCheckerTests(unittest.TestCase):
+@skipIf(not crypt, "Required module is unavailable: crypt")
+class CryptTests(TestCase):
     """
-    Test for the --auth=file:... file checker.
+    L{crypt} has functions for encrypting password.
+    """
+
+    def test_verifyCryptedPassword(self):
+        """
+        L{cred_unix.verifyCryptedPassword}
+        """
+        password = "sample password ^%$"
+
+        for salt in (None, "ab"):
+            try:
+                cryptedCorrect = crypt.crypt(password, salt)
+            except TypeError:
+                # Older Python versions would throw a TypeError if
+                # a value of None was is used for the salt.
+                # Newer Python versions allow it.
+                continue
+            cryptedIncorrect = "$1x1234"
+            self.assertTrue(cred_unix.verifyCryptedPassword(cryptedCorrect,
+                                                            password))
+            self.assertFalse(cred_unix.verifyCryptedPassword(cryptedIncorrect,
+                                                             password))
+
+
+        # Python 3.3+ has crypt.METHOD_*, but not all
+        # platforms implement all methods.
+        for method in ("METHOD_SHA512", "METHOD_SHA256", "METHOD_MD5",
+                       "METHOD_CRYPT"):
+            cryptMethod = getattr(crypt, method, None)
+            if not cryptMethod:
+                continue
+            password = "interesting password xyz"
+            crypted = crypt.crypt(password, cryptMethod)
+            incorrectCrypted = crypted + "blahfooincorrect"
+            result = cred_unix.verifyCryptedPassword(crypted, password)
+            self.assertTrue(result)
+            # Try to pass in bytes
+            result = cred_unix.verifyCryptedPassword(crypted.encode("utf-8"),
+                                                     password.encode("utf-8"))
+            self.assertTrue(result)
+            result = cred_unix.verifyCryptedPassword(incorrectCrypted, password)
+            self.assertFalse(result)
+            # Try to pass in bytes
+            result = cred_unix.verifyCryptedPassword(incorrectCrypted.encode("utf-8"),
+                                                     password.encode("utf-8"))
+            self.assertFalse(result)
+
+
+
+class FileDBCheckerTests(TestCase):
+    """
+    C{--auth=file:...} file checker.
     """
 
     def setUp(self):
@@ -299,7 +364,7 @@ class FileDBCheckerTests(unittest.TestCase):
 
     def test_fileCheckerSucceeds(self):
         """
-        Test that the checker works with valid credentials.
+        The checker works with valid credentials.
         """
         def _gotAvatar(username):
             self.assertEqual(username, self.admin.username)
@@ -310,7 +375,7 @@ class FileDBCheckerTests(unittest.TestCase):
 
     def test_fileCheckerFailsUsername(self):
         """
-        Test that the checker fails with an invalid username.
+        The checker fails with an invalid username.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badUser),
                                   error.UnauthorizedLogin)
@@ -318,7 +383,7 @@ class FileDBCheckerTests(unittest.TestCase):
 
     def test_fileCheckerFailsPassword(self):
         """
-        Test that the checker fails with an invalid password.
+        The checker fails with an invalid password.
         """
         return self.assertFailure(self.checker.requestAvatarId(self.badPass),
                                   error.UnauthorizedLogin)
@@ -326,7 +391,7 @@ class FileDBCheckerTests(unittest.TestCase):
 
     def test_failsWithEmptyFilename(self):
         """
-        Test that an empty filename raises an error.
+        An empty filename raises an error.
         """
         self.assertRaises(ValueError, strcred.makeChecker, 'file')
         self.assertRaises(ValueError, strcred.makeChecker, 'file:')
@@ -338,7 +403,7 @@ class FileDBCheckerTests(unittest.TestCase):
         should produce a warning.
         """
         oldOutput = cred_file.theFileCheckerFactory.errorOutput
-        newOutput = StringIO()
+        newOutput = NativeStringIO()
         cred_file.theFileCheckerFactory.errorOutput = newOutput
         strcred.makeChecker('file:' + self._fakeFilename())
         cred_file.theFileCheckerFactory.errorOutput = oldOutput
@@ -346,22 +411,14 @@ class FileDBCheckerTests(unittest.TestCase):
 
 
 
-class SSHCheckerTests(unittest.TestCase):
+@skipIf(not requireModule('cryptography'), 'cryptography is not available')
+@skipIf(not requireModule('pyasn1'), 'pyasn1 is not available')
+class SSHCheckerTests(TestCase):
     """
-    Tests for the --auth=sshkey:... checker.  The majority of the tests for the
-    ssh public key database checker are in
+    Tests for the C{--auth=sshkey:...} checker.  The majority of the
+    tests for the ssh public key database checker are in
     L{twisted.conch.test.test_checkers.SSHPublicKeyCheckerTestCase}.
     """
-
-    skip = None
-
-    if requireModule('cryptography') is None:
-        skip = 'cryptography is not available'
-
-    if requireModule('pyasn1') is None:
-        skip = 'pyasn1 is not available'
-
-
     def test_isChecker(self):
         """
         Verifies that strcred.makeChecker('sshkey') returns an object
@@ -381,11 +438,11 @@ class DummyOptions(usage.Options, strcred.AuthOptionMixin):
 
 
 
-class CheckerOptionsTests(unittest.TestCase):
+class CheckerOptionsTests(TestCase):
 
     def test_createsList(self):
         """
-        Test that the --auth command line creates a list in the
+        The C{--auth} command line creates a list in the
         Options instance and appends values to it.
         """
         options = DummyOptions()
@@ -398,7 +455,7 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_invalidAuthError(self):
         """
-        Test that the --auth command line raises an exception when it
+        The C{--auth} command line raises an exception when it
         gets a parameter it doesn't understand.
         """
         options = DummyOptions()
@@ -415,9 +472,8 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_createsDictionary(self):
         """
-        Test that the --auth command line creates a dictionary
-        mapping supported interfaces to the list of credentials
-        checkers that support it.
+        The C{--auth} command line creates a dictionary mapping supported
+        interfaces to the list of credentials checkers that support it.
         """
         options = DummyOptions()
         options.parseOptions(['--auth', 'memory', '--auth', 'anonymous'])
@@ -436,8 +492,8 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_credInterfacesProvidesLists(self):
         """
-        Test that when two --auth arguments are passed along which
-        support the same interface, a list with both is created.
+        When two C{--auth} arguments are passed along which support the same
+        interface, a list with both is created.
         """
         options = DummyOptions()
         options.parseOptions(['--auth', 'memory', '--auth', 'unix'])
@@ -448,7 +504,7 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_listDoesNotDisplayDuplicates(self):
         """
-        Test that the list for --help-auth does not duplicate items.
+        The list for C{--help-auth} does not duplicate items.
         """
         authTypes = []
         options = DummyOptions()
@@ -459,10 +515,10 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_displaysListCorrectly(self):
         """
-        Test that the --help-auth argument correctly displays all
+        The C{--help-auth} argument correctly displays all
         available authentication plugins, then exits.
         """
-        newStdout = StringIO()
+        newStdout = NativeStringIO()
         options = DummyOptions()
         options.authOutput = newStdout
         self.assertRaises(SystemExit, options.parseOptions, ['--help-auth'])
@@ -472,10 +528,10 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_displaysHelpCorrectly(self):
         """
-        Test that the --help-auth-for argument will correctly display
-        the help file for a particular authentication plugin.
+        The C{--help-auth-for} argument will correctly display the help file for a
+        particular authentication plugin.
         """
-        newStdout = StringIO()
+        newStdout = NativeStringIO()
         options = DummyOptions()
         options.authOutput = newStdout
         self.assertRaises(
@@ -487,7 +543,7 @@ class CheckerOptionsTests(unittest.TestCase):
 
     def test_unexpectedException(self):
         """
-        When the checker specified by --auth raises an unexpected error, it
+        When the checker specified by C{--auth} raises an unexpected error, it
         should be caught and re-raised within a L{usage.UsageError}.
         """
         options = DummyOptions()
@@ -514,11 +570,11 @@ class OptionsSupportsAllInterfaces(usage.Options, strcred.AuthOptionMixin):
 
 
 class OptionsSupportsNoInterfaces(usage.Options, strcred.AuthOptionMixin):
-    supportedInterfaces = []
+    supportedInterfaces = []  # type: Sequence[Type[Interface]]
 
 
 
-class LimitingInterfacesTests(unittest.TestCase):
+class LimitingInterfacesTests(TestCase):
     """
     Tests functionality that allows an application to limit the
     credential interfaces it can support. For the purposes of this
@@ -554,7 +610,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_supportsInterface(self):
         """
-        Test that the supportsInterface method behaves appropriately.
+        The supportsInterface method behaves appropriately.
         """
         options = OptionsForUsernamePassword()
         self.assertTrue(
@@ -568,7 +624,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_supportsAllInterfaces(self):
         """
-        Test that the supportsInterface method behaves appropriately
+        The supportsInterface method behaves appropriately
         when the supportedInterfaces attribute is None.
         """
         options = OptionsSupportsAllInterfaces()
@@ -580,7 +636,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_supportsCheckerFactory(self):
         """
-        Test that the supportsCheckerFactory method behaves appropriately.
+        The supportsCheckerFactory method behaves appropriately.
         """
         options = OptionsForUsernamePassword()
         fileCF = cred_file.theFileCheckerFactory
@@ -591,9 +647,8 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_canAddSupportedChecker(self):
         """
-        Test that when addChecker is called with a checker that
-        implements at least one of the interfaces our application
-        supports, it is successful.
+        When addChecker is called with a checker that implements at least one
+        of the interfaces our application supports, it is successful.
         """
         options = OptionsForUsernamePassword()
         options.addChecker(self.goodChecker)
@@ -609,8 +664,8 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_failOnAddingUnsupportedChecker(self):
         """
-        Test that when addChecker is called with a checker that does
-        not implement any supported interfaces, it fails.
+        When addChecker is called with a checker that does not implement any
+        supported interfaces, it fails.
         """
         options = OptionsForUsernameHashedPassword()
         self.assertRaises(strcred.UnsupportedInterfaces,
@@ -619,7 +674,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_unsupportedInterfaceError(self):
         """
-        Test that the --auth command line raises an exception when it
+        The C{--auth} command line raises an exception when it
         gets a checker we don't support.
         """
         options = OptionsSupportsNoInterfaces()
@@ -631,7 +686,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_helpAuthLimitsOutput(self):
         """
-        Test that --help-auth will only list checkers that purport to
+        C{--help-auth} will only list checkers that purport to
         supply at least one of the credential interfaces our
         application can use.
         """
@@ -647,7 +702,7 @@ class LimitingInterfacesTests(unittest.TestCase):
 
     def test_helpAuthTypeLimitsOutput(self):
         """
-        Test that --help-auth-type will display a warning if you get
+        C{--help-auth-type} will display a warning if you get
         help for an authType that does not supply at least one of the
         credential interfaces our application can use.
         """
@@ -660,15 +715,8 @@ class LimitingInterfacesTests(unittest.TestCase):
                 break
         self.assertNotIdentical(invalidFactory, None)
         # Capture output and make sure the warning is there
-        newStdout = StringIO()
+        newStdout = NativeStringIO()
         options.authOutput = newStdout
         self.assertRaises(SystemExit, options.parseOptions,
                           ['--help-auth-type', 'anonymous'])
         self.assertIn(strcred.notSupportedWarning, newStdout.getvalue())
-
-
-__all__ = [
-    "CheckerOptionsTests", "FileDBCheckerTests", "LimitingInterfacesTests",
-    "SSHCheckerTests", "UnixCheckerTests", "AnonymousCheckerTests",
-    "MemoryCheckerTests", "StrcredFunctionsTests", "PublicAPITests"
-]

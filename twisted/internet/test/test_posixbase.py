@@ -6,7 +6,6 @@ Tests for L{twisted.internet.posixbase} and supporting code.
 """
 
 
-
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet.posixbase import PosixReactorBase, _Waker

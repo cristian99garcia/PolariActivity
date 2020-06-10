@@ -7,7 +7,6 @@ Implementation of an in-memory worker that defers execution.
 """
 
 
-
 from zope.interface import implementer
 
 from . import IWorker

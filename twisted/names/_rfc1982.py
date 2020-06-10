@@ -15,7 +15,6 @@ Utilities for handling RFC1982 Serial Number Arithmetic.
 """
 
 
-
 import calendar
 from datetime import datetime, timedelta
 

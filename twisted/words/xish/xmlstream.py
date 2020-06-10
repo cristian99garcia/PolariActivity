@@ -32,17 +32,15 @@ Maintainer: Ralph Meijer
 """
 
 
-
 from twisted.python import failure
-from twisted.python.compat import intern, str
+from twisted.python.compat import intern, unicode
 from twisted.internet import protocol
 from twisted.words.xish import domish, utility
-import sys
 
-STREAM_CONNECTED_EVENT = sys.intern("//event/stream/connected")
-STREAM_START_EVENT = sys.intern("//event/stream/start")
-STREAM_END_EVENT = sys.intern("//event/stream/end")
-STREAM_ERROR_EVENT = sys.intern("//event/stream/error")
+STREAM_CONNECTED_EVENT = intern("//event/stream/connected")
+STREAM_START_EVENT = intern("//event/stream/start")
+STREAM_END_EVENT = intern("//event/stream/end")
+STREAM_ERROR_EVENT = intern("//event/stream/error")
 
 class XmlStream(protocol.Protocol, utility.EventDispatcher):
     """ Generic Streaming XML protocol handler.
@@ -159,7 +157,7 @@ class XmlStream(protocol.Protocol, utility.EventDispatcher):
         if domish.IElement.providedBy(obj):
             obj = obj.toXml()
 
-        if isinstance(obj, str):
+        if isinstance(obj, unicode):
             obj = obj.encode('utf-8')
 
         if self.rawDataOutFn:

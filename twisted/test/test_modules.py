@@ -7,7 +7,6 @@ objects.
 """
 
 
-
 import sys
 import itertools
 import compileall

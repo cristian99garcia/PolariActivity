@@ -75,7 +75,7 @@ class IdentServer(basic.LineOnlyReceiver):
             self.invalidQuery()
         else:
             try:
-                portOnServer, portOnClient = list(map(int, parts))
+                portOnServer, portOnClient = map(int, parts)
             except ValueError:
                 self.invalidQuery()
             else:
@@ -238,7 +238,7 @@ class IdentClient(basic.LineOnlyReceiver):
         if len(parts) != 3:
             deferred.errback(IdentError(line))
         else:
-            ports, type, addInfo = list(map(str.strip, parts))
+            ports, type, addInfo = map(str.strip, parts)
             if type == 'ERROR':
                 for et in self.errorTypes:
                     if et.identDescription == addInfo:

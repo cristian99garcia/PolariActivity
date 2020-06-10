@@ -19,10 +19,13 @@ from twisted.conch.manhole import ColoredManhole
 class UnexpectedOutputError(Exception):
     pass
 
+
+
 class TerminalProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, proto):
         self.proto = proto
         self.onConnection = defer.Deferred()
+
 
     def connectionMade(self):
         self.proto.makeConnection(self)
@@ -93,8 +96,7 @@ def runWithProtocol(klass):
     oldSettings = termios.tcgetattr(fd)
     tty.setraw(fd)
     try:
-        p = ServerProtocol(klass)
-        stdio.StandardIO(p)
+        stdio.StandardIO(ServerProtocol(klass))
         reactor.run()
     finally:
         termios.tcsetattr(fd, termios.TCSANOW, oldSettings)

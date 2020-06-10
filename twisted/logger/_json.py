@@ -17,7 +17,6 @@ from ._file import FileLogObserver
 from ._levels import LogLevel
 from ._logger import Logger
 
-from twisted.python.compat import str
 from twisted.python.failure import Failure
 
 log = Logger()
@@ -60,9 +59,9 @@ def asBytes(obj):
     @rtype: L{bytes}
     """
     if isinstance(obj, list):
-        return list(map(asBytes, obj))
+        return map(asBytes, obj)
     elif isinstance(obj, dict):
-        return dict((asBytes(k), asBytes(v)) for k, v in list(obj.items()))
+        return dict((asBytes(k), asBytes(v)) for k, v in obj.items())
     elif isinstance(obj, str):
         return obj.encode("utf-8")
     else:
@@ -76,19 +75,19 @@ def failureFromJSON(failureDict):
 
     @param failureDict: a JSON-deserialized object like one previously returned
         by L{failureAsJSON}.
-    @type failureDict: L{dict} mapping L{unicode} to attributes
+    @type failureDict: L{dict} mapping L{str} to attributes
 
     @return: L{Failure}
     @rtype: L{Failure}
     """
     # InstanceType() is only available in Python 2 and lower.
-    # __new__ is only available in Python 3 and higher.
+    # __new__ is only available on new-style classes.
     newFailure = getattr(Failure, "__new__", None)
     if newFailure is None:
-        failureDict = asBytes(failureDict)
         f = types.InstanceType(Failure)
     else:
         f = newFailure(Failure)
+
     typeInfo = failureDict["type"]
     failureDict["type"] = type(typeInfo["__name__"], (), typeInfo)
     f.__dict__ = failureDict
@@ -178,23 +177,20 @@ def eventAsJSON(event):
     @return: A string of the serialized JSON; note that this will contain no
         newline characters, and may thus safely be stored in a line-delimited
         file.
-    @rtype: L{unicode}
+    @rtype: L{str}
     """
-    if bytes is str:
-        kw = dict(default=objectSaveHook, encoding="charmap", skipkeys=True)
-    else:
-        def default(unencodable):
-            """
-            Serialize an object not otherwise serializable by L{dumps}.
+    def default(unencodable):
+        """
+        Serialize an object not otherwise serializable by L{dumps}.
 
-            @param unencodable: An unencodable object.
-            @return: C{unencodable}, serialized
-            """
-            if isinstance(unencodable, bytes):
-                return unencodable.decode("charmap")
-            return objectSaveHook(unencodable)
+        @param unencodable: An unencodable object.
+        @return: C{unencodable}, serialized
+        """
+        if isinstance(unencodable, bytes):
+            return unencodable.decode("charmap")
+        return objectSaveHook(unencodable)
 
-        kw = dict(default=default, skipkeys=True)
+    kw = dict(default=default, skipkeys=True)
 
     flattenEvent(event)
     result = dumps(event, **kw)
@@ -209,7 +205,7 @@ def eventFromJSON(eventText):
     Decode a log event from JSON.
 
     @param eventText: The output of a previous call to L{eventAsJSON}
-    @type eventText: L{unicode}
+    @type eventText: L{str}
 
     @return: A reconstructed version of the log event.
     @rtype: L{dict}
@@ -229,16 +225,16 @@ def jsonFileLogObserver(outFile, recordSeparator="\x1e"):
         RS + JSON + NL
 
     C{JSON} is the serialized event, which is JSON text.  C{NL} is a newline
-    (C{u"\\n"}).  C{RS} is a record separator.  By default, this is a single
-    RS character (C{u"\\x1e"}), which makes the default output conform to the
+    (C{"\\n"}).  C{RS} is a record separator.  By default, this is a single
+    RS character (C{"\\x1e"}), which makes the default output conform to the
     IETF draft document "draft-ietf-json-text-sequence-13".
 
     @param outFile: A file-like object.  Ideally one should be passed which
-        accepts L{unicode} data.  Otherwise, UTF-8 L{bytes} will be used.
+        accepts L{str} data.  Otherwise, UTF-8 L{bytes} will be used.
     @type outFile: L{io.IOBase}
 
     @param recordSeparator: The record separator to use.
-    @type recordSeparator: L{unicode}
+    @type recordSeparator: L{str}
 
     @return: A file log observer.
     @rtype: L{FileLogObserver}
@@ -256,13 +252,13 @@ def eventsFromJSONLogFile(inFile, recordSeparator=None, bufferSize=4096):
     Event records that are truncated or otherwise unreadable are ignored.
 
     @param inFile: A (readable) file-like object.  Data read from C{inFile}
-        should be L{unicode} or UTF-8 L{bytes}.
+        should be L{str} or UTF-8 L{bytes}.
     @type inFile: iterable of lines
 
     @param recordSeparator: The expected record separator.
         If L{None}, attempt to automatically detect the record separator from
-        one of C{u"\\x1e"} or C{u""}.
-    @type recordSeparator: L{unicode}
+        one of C{"\\x1e"} or C{""}.
+    @type recordSeparator: L{str}
 
     @param bufferSize: The size of the read buffer used while reading from
         C{inFile}.

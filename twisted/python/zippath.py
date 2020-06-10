@@ -9,7 +9,6 @@ See the constructor of L{ZipArchive} for use.
 """
 
 
-
 import os
 import time
 import errno

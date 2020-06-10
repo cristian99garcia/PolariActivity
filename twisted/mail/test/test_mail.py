@@ -9,7 +9,7 @@ import os
 import errno
 import shutil
 import pickle
-import io
+import StringIO
 import email.message
 import email.parser
 import tempfile
@@ -20,42 +20,35 @@ from hashlib import md5
 from zope.interface.verify import verifyClass
 from zope.interface import Interface, implementer
 
-from twisted.trial import unittest
-from twisted.mail import smtp
-from twisted.mail import pop3
-from twisted.names import dns
-from twisted.internet import protocol
-from twisted.internet import defer
-from twisted.internet.defer import Deferred
-from twisted.internet import reactor
-from twisted.internet import interfaces
-from twisted.internet import task
-from twisted.internet.error import DNSLookupError, CannotListenError
-from twisted.internet.error import ProcessDone, ProcessTerminated
-from twisted.internet import address
-from twisted.python import failure
-from twisted.python.filepath import FilePath
-from twisted.python import log
-from twisted.mail.relaymanager import _AttemptManager
-from twisted.test.proto_helpers import MemoryReactorClock, StringTransport
-
-from twisted import mail
+import twisted.cred.checkers
+import twisted.cred.credentials
+import twisted.cred.portal
+import twisted.mail.alias
 import twisted.mail.mail
 import twisted.mail.maildir
+import twisted.mail.protocols
 import twisted.mail.relay
 import twisted.mail.relaymanager
-import twisted.mail.protocols
-import twisted.mail.alias
 
-from twisted.names.error import DNSNameError
+from twisted import cred, mail
+from twisted.internet import (address, defer, interfaces, protocol,
+                              reactor, task)
+from twisted.internet.defer import Deferred
+from twisted.internet.error import (DNSLookupError, CannotListenError,
+                                    ProcessDone, ProcessTerminated)
+from twisted.mail import pop3, smtp
+from twisted.mail.relaymanager import _AttemptManager
+from twisted.names import dns
 from twisted.names.dns import RRHeader, Record_CNAME, Record_MX
+from twisted.names.error import DNSNameError
+from twisted.python import failure, log
+from twisted.python.compat import range
+from twisted.python.filepath import FilePath
+from twisted.test.proto_helpers import (LineSendingProtocol,
+                                        MemoryReactorClock, StringTransport)
+from twisted.trial import unittest
 
-from twisted import cred
-import twisted.cred.credentials
-import twisted.cred.checkers
-import twisted.cred.portal
 
-from twisted.test.proto_helpers import LineSendingProtocol
 
 class DomainWithDefaultsTests(unittest.TestCase):
     def testMethods(self):
@@ -64,21 +57,21 @@ class DomainWithDefaultsTests(unittest.TestCase):
 
         self.assertEqual(len(d), 10)
         self.assertEqual(list(iter(d)), list(range(10)))
-        self.assertEqual(list(d.keys()), list(iter(d)))
+        self.assertEqual(list(d.iterkeys()), list(iter(d)))
 
-        items = list(d.items())
+        items = list(d.iteritems())
         items.sort()
         self.assertEqual(items, [(x, x + 10) for x in range(10)])
 
-        values = list(d.values())
+        values = list(d.itervalues())
         values.sort()
         self.assertEqual(values, list(range(10, 20)))
 
-        items = list(d.items())
+        items = d.items()
         items.sort()
         self.assertEqual(items, [(x, x + 10) for x in range(10)])
 
-        values = list(d.values())
+        values = d.values()
         values.sort()
         self.assertEqual(values, list(range(10, 20)))
 
@@ -152,7 +145,7 @@ class DomainWithDefaultsTests(unittest.TestCase):
         """
         sut = mail.mail.DomainWithDefaultDict({}, 'Default')
 
-        'anything' in sut
+        sut.has_key('anything')
 
         message = (
             'twisted.mail.mail.DomainWithDefaultDict.has_key was deprecated '
@@ -854,10 +847,10 @@ class ServiceDomainTests(unittest.TestCase):
             smtp.Address('<someguy@someplace>'),
             ['user@host.name']
         )
-        fp = io.StringIO(hdr)
+        fp = StringIO.StringIO(hdr)
         emailParser = email.parser.Parser()
         m = emailParser.parse(fp)
-        self.assertEqual(len(list(m.items())), 1)
+        self.assertEqual(len(m.items()), 1)
         self.assertIn('Received', m)
 
 
@@ -915,7 +908,7 @@ class VirtualPOP3Tests(unittest.TestCase):
         self.S.addDomain('test.domain', self.D)
 
         portal = cred.portal.Portal(self.D)
-        list(map(portal.registerChecker, self.D.getCredentialsCheckers()))
+        map(portal.registerChecker, self.D.getCredentialsCheckers())
         self.S.portals[''] = self.S.portals['test.domain'] = portal
 
         self.P = mail.protocols.VirtualPOP3()
@@ -1690,7 +1683,7 @@ class LiveFireExerciseTests(unittest.TestCase):
         domain.addUser('user', 'password')
         service.addDomain('test.domain', domain)
         service.portals[''] = service.portals['test.domain']
-        list(map(service.portals[''].registerChecker, domain.getCredentialsCheckers()))
+        map(service.portals[''].registerChecker, domain.getCredentialsCheckers())
 
         service.setQueue(mail.relay.DomainQueuer(service))
 
@@ -1797,7 +1790,7 @@ class LiveFireExerciseTests(unittest.TestCase):
         return done
 
 
-aliasFile = io.StringIO("""\
+aliasFile = StringIO.StringIO("""\
 # Here's a comment
    # woop another one
 testuser:                   address1,address2, address3,
@@ -2237,34 +2230,34 @@ done""")
         })
 
         res1 = A1.resolve(aliases)
-        r1 = list(map(str, res1.objs))
+        r1 = map(str, res1.objs)
         r1.sort()
-        expected = list(map(str, [
+        expected = map(str, [
             mail.alias.AddressAlias('user1', None, None),
             mail.alias.MessageWrapper(DummyProcess(), 'echo'),
             mail.alias.FileWrapper('/file'),
-        ]))
+        ])
         expected.sort()
         self.assertEqual(r1, expected)
 
         res2 = A2.resolve(aliases)
-        r2 = list(map(str, res2.objs))
+        r2 = map(str, res2.objs)
         r2.sort()
-        expected = list(map(str, [
+        expected = map(str, [
             mail.alias.AddressAlias('user2', None, None),
             mail.alias.AddressAlias('user3', None, None)
-        ]))
+        ])
         expected.sort()
         self.assertEqual(r2, expected)
 
         res3 = A3.resolve(aliases)
-        r3 = list(map(str, res3.objs))
+        r3 = map(str, res3.objs)
         r3.sort()
-        expected = list(map(str, [
+        expected = map(str, [
             mail.alias.AddressAlias('user1', None, None),
             mail.alias.MessageWrapper(DummyProcess(), 'echo'),
             mail.alias.FileWrapper('/file'),
-        ]))
+        ])
         expected.sort()
         self.assertEqual(r3, expected)
 
@@ -2292,11 +2285,11 @@ done""")
         aliases['alias4'] = A4
 
         res = A4.resolve(aliases)
-        r = list(map(str, res.objs))
+        r = map(str, res.objs)
         r.sort()
-        expected = list(map(str, [
+        expected = map(str, [
             mail.alias.MessageWrapper(DummyProcess(), 'echo')
-        ]))
+        ])
         expected.sort()
         self.assertEqual(r, expected)
 
@@ -2647,6 +2640,6 @@ class _AttemptManagerTests(unittest.TestCase):
 from twisted.python.runtime import platformType
 import types
 if platformType != "posix":
-    for o in list(locals().values()):
-        if isinstance(o, type) and issubclass(o, unittest.TestCase):
+    for o in locals().values():
+        if isinstance(o, (types.ClassType, type)) and issubclass(o, unittest.TestCase):
             o.skip = "twisted.mail only works on posix"

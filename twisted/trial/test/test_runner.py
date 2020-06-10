@@ -5,10 +5,12 @@
 # Author: Robert Collins
 
 
-
 import os
 import pdb
 import sys
+import unittest as pyunit
+
+from typing import List
 
 from zope.interface import implementer
 from zope.interface.verify import verifyObject
@@ -25,8 +27,6 @@ from twisted.plugins import twisted_trial
 from twisted import plugin
 from twisted.internet import defer
 
-
-pyunit = __import__('unittest')
 
 
 class CapturingDebugger(object):
@@ -99,7 +99,7 @@ class CapturingReporter(object):
 
 
 
-class TrialRunnerTestsMixin:
+class TrialRunnerTestsMixin(object):
     """
     Mixin defining tests for L{runner.TrialRunner}.
     """
@@ -595,7 +595,8 @@ class UntilFailureTests(unittest.SynchronousTestCase):
         """
         A test case that fails when run 3 times in a row.
         """
-        count = []
+        count = []  # type: List[None]
+
         def test_foo(self):
             self.count.append(None)
             if len(self.count) == 3:
@@ -844,9 +845,12 @@ class ErrorHolderTestsMixin(object):
         L{runner.ErrorHolder.__repr__} returns a string describing the error it
         holds.
         """
-        self.assertEqual(repr(self.holder),
+        expected = (
             "<ErrorHolder description='description' "
-            "error=ZeroDivisionError('integer division or modulo by zero',)>")
+            "error={}>".format(repr(self.holder.error[1]))
+        )
+
+        self.assertEqual(repr(self.holder), expected)
 
 
 
@@ -895,8 +899,10 @@ class MalformedMethodTests(unittest.SynchronousTestCase):
         """
         def test_foo(self, blah):
             pass
-        def test_bar():
+
+        def test_bar():  # type: ignore[misc]
             pass
+
         test_spam = defer.inlineCallbacks(test_bar)
 
     def _test(self, method):

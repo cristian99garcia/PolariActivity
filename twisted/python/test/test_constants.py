@@ -6,7 +6,6 @@ Unit tests for L{twisted.python.constants}.
 """
 
 
-
 import warnings
 
 from twisted.trial.unittest import TestCase
@@ -1114,9 +1113,9 @@ class ValuedLetters(Values):
     # definition is order different from the order of the values, which lets us
     # test that we're not somehow ordering by value and happen the get the same
     # results.
-    alpha   = ValueConstant('\u0391')
-    digamma = ValueConstant('\u03dc')
-    zeta    = ValueConstant('\u0396')
+    alpha   = ValueConstant(u'\u0391')
+    digamma = ValueConstant(u'\u03dc')
+    zeta    = ValueConstant(u'\u0396')
 
 
 

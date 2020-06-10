@@ -6,7 +6,6 @@ Tests for L{twisted.python.systemd}.
 """
 
 
-
 import os
 
 from twisted.trial.unittest import TestCase
@@ -52,7 +51,7 @@ class MemoryOnlyMixin(object):
         new L{ListenFDs} which will claim those integers represent inherited
         file descriptors.
         """
-        return ListenFDs(list(range(start, start + count)))
+        return ListenFDs(range(start, start + count))
 
 
 

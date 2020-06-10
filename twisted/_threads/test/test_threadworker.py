@@ -6,7 +6,6 @@ Tests for L{twisted._threads._threadworker}.
 """
 
 
-
 import gc
 import weakref
 

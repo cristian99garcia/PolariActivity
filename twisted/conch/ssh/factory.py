@@ -2,12 +2,12 @@
 # See LICENSE for details.
 
 """
-A Factory for SSH servers, along with an OpenSSHFactory to use the same
-data sources as OpenSSH.
+A Factory for SSH servers.
+
+See also L{twisted.conch.openssh_compat.factory} for OpenSSH compatibility.
 
 Maintainer: Paul Swartz
 """
-
 
 
 from twisted.internet import protocol
@@ -54,13 +54,14 @@ class SSHFactory(protocol.Factory):
         @return: The built transport.
         """
         t = protocol.Factory.buildProtocol(self, addr)
-        t.supportedPublicKeys = list(self.privateKeys.keys())
+        t.supportedPublicKeys = self.privateKeys.keys()
         if not self.primes:
             log.msg('disabling non-fixed-group key exchange algorithms '
                     'because we cannot find moduli file')
             t.supportedKeyExchanges = [
                 kexAlgorithm for kexAlgorithm in t.supportedKeyExchanges
-                if _kex.isFixedGroup(kexAlgorithm)]
+                if _kex.isFixedGroup(kexAlgorithm) or
+                     _kex.isEllipticCurve(kexAlgorithm)]
         return t
 
 
@@ -104,7 +105,7 @@ class SSHFactory(protocol.Factory):
         @type bits: L{int}
         @rtype:     L{tuple}
         """
-        primesKeys = sorted(list(self.primes.keys()), key=lambda i: abs(i - bits))
+        primesKeys = sorted(self.primes.keys(), key=lambda i: abs(i - bits))
         realBits = primesKeys[0]
         return random.choice(self.primes[realBits])
 

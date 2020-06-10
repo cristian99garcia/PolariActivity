@@ -9,7 +9,6 @@ Calculations for HTTP Digest authentication.
 """
 
 
-
 from binascii import hexlify
 from hashlib import md5, sha1
 

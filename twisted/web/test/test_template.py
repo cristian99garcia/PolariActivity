@@ -6,7 +6,6 @@ Tests for L{twisted.web.template}
 """
 
 
-
 from zope.interface.verify import verifyObject
 
 from twisted.internet.defer import succeed, gatherResults
@@ -27,6 +26,8 @@ from twisted.web.test.test_web import DummyRequest
 from twisted.web.server import NOT_DONE_YET
 
 from twisted.python.compat import NativeStringIO as StringIO
+from twisted.logger import globalLogPublisher
+from twisted.test.proto_helpers import EventLoggingObserver
 
 
 _xmlFileSuppress = SUPPRESS(category=DeprecationWarning,
@@ -241,7 +242,7 @@ class XMLLoaderTestsMixin(object):
             self.assertEqual(len(warnings), 0)
 
         self.assertEqual(tag.tagName, 'p')
-        self.assertEqual(tag.children, ['Hello, world.'])
+        self.assertEqual(tag.children, [u'Hello, world.'])
 
 
     def test_loadTwice(self):
@@ -748,6 +749,10 @@ class RenderElementTests(TestCase):
         L{renderElement} will render a traceback when rendering of
         the element fails and our site is configured to display tracebacks.
         """
+        logObserver = EventLoggingObserver.createWithCleanup(
+            self,
+            globalLogPublisher
+        )
         self.request.site.displayTracebacks = True
 
         element = FailingElement()
@@ -755,6 +760,9 @@ class RenderElementTests(TestCase):
         d = self.request.notifyFinish()
 
         def check(_):
+            self.assertEquals(1, len(logObserver))
+            f = logObserver[0]["log_failure"]
+            self.assertIsInstance(f.value, FlattenerError)
             flushed = self.flushLoggedErrors(FlattenerError)
             self.assertEqual(len(flushed), 1)
             self.assertEqual(

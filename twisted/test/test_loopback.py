@@ -6,7 +6,6 @@ Test case for L{twisted.protocols.loopback}.
 """
 
 
-
 from zope.interface import implementer
 
 from twisted.python.compat import intToBytes
@@ -237,7 +236,7 @@ class LoopbackAsyncTests(LoopbackTestCaseMixin, unittest.TestCase):
 
 
     def _producertest(self, producerClass):
-        toProduce = list(map(intToBytes, list(range(0, 10))))
+        toProduce = list(map(intToBytes, range(0, 10)))
 
         class ProducingProtocol(Protocol):
             def connectionMade(self):

@@ -5,7 +5,6 @@
 Tests for L{twisted._threads._memory}.
 """
 
-
 from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import SynchronousTestCase

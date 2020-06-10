@@ -26,7 +26,6 @@ more information about the protocol.
 """
 
 
-
 from collections import deque
 
 from twisted.protocols.basic import LineReceiver
@@ -88,7 +87,7 @@ class Command(object):
         """
         self.command = command
         self._deferred = Deferred()
-        for k, v in list(kwargs.items()):
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 

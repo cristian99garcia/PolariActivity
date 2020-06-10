@@ -6,7 +6,6 @@ Tests for L{twisted.names.common}.
 """
 
 
-
 from zope.interface.verify import verifyClass
 
 from twisted.internet.interfaces import IResolver

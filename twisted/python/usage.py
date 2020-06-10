@@ -13,8 +13,6 @@ or doc/core/howto/options.xhtml in your Twisted directory.
 """
 
 
-
-
 # System Imports
 import inspect
 import os
@@ -22,10 +20,12 @@ import sys
 import getopt
 from os import path
 import textwrap
+from typing import Callable, Optional
 
 # Sibling Imports
 from twisted.python import reflect, util
-from twisted.python.compat import _PY3
+
+
 
 class UsageError(Exception):
     pass
@@ -188,7 +188,7 @@ class Options(dict):
             self._dispatch.update(dispatch)
 
 
-    __hash__ = object.__hash__
+    __hash__ = object.__hash__  # type: Callable[[object], int]
 
 
     def opt_help(self):
@@ -319,18 +319,18 @@ class Options(dict):
         reflect.accumulateClassList(self.__class__, 'optFlags', flags)
 
         for flag in flags:
-            int, short, doc = util.padTo(3, flag)
-            if not int:
+            long, short, doc = util.padTo(3, flag)
+            if not long:
                 raise ValueError("A flag cannot be without a name.")
 
-            docs[int] = doc
-            settings[int] = 0
+            docs[long] = doc
+            settings[long] = 0
             if short:
                 shortOpt = shortOpt + short
-                synonyms[short] = int
-            longOpt.append(int)
-            synonyms[int] = int
-            dispatch[int] = self._generic_flag
+                synonyms[short] = long
+            longOpt.append(long)
+            synonyms[long] = long
+            dispatch[long] = self._generic_flag
 
         return longOpt, shortOpt, docs, settings, synonyms, dispatch
 
@@ -349,21 +349,21 @@ class Options(dict):
         synonyms = {}
 
         for parameter in parameters:
-            int, short, default, doc, paramType = util.padTo(5, parameter)
-            if not int:
+            long, short, default, doc, paramType = util.padTo(5, parameter)
+            if not long:
                 raise ValueError("A parameter cannot be without a name.")
 
-            docs[int] = doc
-            settings[int] = default
+            docs[long] = doc
+            settings[long] = default
             if short:
                 shortOpt = shortOpt + short + ':'
-                synonyms[short] = int
-            longOpt.append(int + '=')
-            synonyms[int] = int
+                synonyms[short] = long
+            longOpt.append(long + '=')
+            synonyms[long] = long
             if paramType is not None:
-                dispatch[int] = CoerceParameter(self, paramType)
+                dispatch[long] = CoerceParameter(self, paramType)
             else:
-                dispatch[int] = CoerceParameter(self, str)
+                dispatch[long] = CoerceParameter(self, str)
 
         return longOpt, shortOpt, docs, settings, synonyms, dispatch
 
@@ -388,7 +388,7 @@ class Options(dict):
         dct = {}
         reflect.addMethodNamesToDict(self.__class__, dct, "opt_")
 
-        for name in list(dct.keys()):
+        for name in dct.keys():
             method = getattr(self, 'opt_'+name)
 
             takesArg = not flagFunction(method, name)
@@ -427,13 +427,13 @@ class Options(dict):
 
         reverse_dct = {}
         # Map synonyms
-        for name in list(dct.keys()):
+        for name in dct.keys():
             method = getattr(self, 'opt_' + name)
             if method not in reverse_dct:
                 reverse_dct[method] = []
             reverse_dct[method].append(name.replace('_', '-'))
 
-        for method, names in list(reverse_dct.items()):
+        for method, names in reverse_dct.items():
             if len(names) < 2:
                 continue
             longest = max(names, key=len)
@@ -451,11 +451,13 @@ class Options(dict):
         Returns a string containing a description of these options and how to
         pass them to the executed file.
         """
+        executableName = reflect.filenameToModuleName(sys.argv[0])
 
-        default = "%s%s" % (path.basename(sys.argv[0]),
-                            (self.longOpt and " [options]") or '')
+        if executableName.endswith('.__main__'):
+            executableName = '{} -m {}'.format(os.path.basename(sys.executable), executableName.replace('.__main__', ''))
+
         if self.parent is None:
-            default = "Usage: %s%s" % (path.basename(sys.argv[0]),
+            default = "Usage: %s%s" % (executableName,
                                        (self.longOpt and " [options]") or '')
         else:
             default = '%s' % ((self.longOpt and "[options]") or '')
@@ -466,7 +468,6 @@ class Options(dict):
         if self.parent is not None:
             synopsis = ' '.join((self.parent.getSynopsis(),
                                  self.parent.subCommand, synopsis))
-
         return synopsis
 
     def getUsage(self, width=None):
@@ -494,7 +495,7 @@ class Options(dict):
             commands = ''
 
         longToShort = {}
-        for key, value in list(self.synonyms.items()):
+        for key, value in self.synonyms.items():
             longname = value
             if (key != longname) and (len(key) == 1):
                 longToShort[longname] = key
@@ -560,7 +561,8 @@ class Completer(object):
     This class produces no completion matches itself - see the various
     subclasses for specific completion functionality.
     """
-    _descr = None
+    _descr = None  # type: Optional[str]
+
     def __init__(self, descr=None, repeat=False):
         """
         @type descr: C{str}
@@ -867,6 +869,9 @@ def docMakeChunks(optList, width=80):
 
     # XXX: sanity check to make sure we have a sane combination of keys.
 
+    # Sort the options so they always appear in the same order
+    optList.sort(key=lambda o: o.get('short', None) or o.get('long', None))
+
     maxOptLen = 0
     for opt in optList:
         optLen = len(opt.get('long', ''))
@@ -903,18 +908,18 @@ def docMakeChunks(optList, width=80):
         if opt.get('long', None):
             long = opt['long']
             if opt.get("optType", None) == "parameter":
-                long = int + '='
+                long = long + '='
 
-            long = "%-*s" % (maxOptLen, int)
+            long = "%-*s" % (maxOptLen, long)
             if short:
                 comma = ","
         else:
             long = " " * (maxOptLen + len('--'))
 
         if opt.get('optType', None) == 'command':
-            column1 = '    %s      ' % int
+            column1 = '    %s      ' % long
         else:
-            column1 = "  %2s%c --%s  " % (short, comma, int)
+            column1 = "  %2s%c --%s  " % (short, comma, long)
 
         if opt.get('doc', ''):
             doc = opt['doc'].strip()
@@ -968,20 +973,12 @@ def flagFunction(method, name=None):
     @return: If the method is a flag handler, return C{True}.  Otherwise return
         C{False}.
     """
-    if _PY3:
-        reqArgs = len(inspect.signature(method).parameters)
-        if reqArgs > 1:
-            raise UsageError('Invalid Option function for %s' %
-                             (name or method.__name__))
-        if reqArgs == 1:
-            return False
-    else:
-        reqArgs = len(inspect.getargspec(method).args)
-        if reqArgs > 2:
-            raise UsageError('Invalid Option function for %s' %
-                             (name or method.__name__))
-        if reqArgs == 2:
-            return False
+    reqArgs = len(inspect.signature(method).parameters)
+    if reqArgs > 1:
+        raise UsageError('Invalid Option function for %s' %
+                         (name or method.__name__))
+    if reqArgs == 1:
+        return False
     return True
 
 

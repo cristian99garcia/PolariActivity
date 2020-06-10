@@ -6,7 +6,6 @@ Test Twisted's doctest support.
 """
 
 
-
 from twisted.trial import itrial, runner, unittest, reporter
 from twisted.trial.test import mockdoctest
 

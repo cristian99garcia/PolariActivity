@@ -8,12 +8,15 @@ L{twisted.web._flatten}.
 
 import sys
 import traceback
+from unittest import skipIf
 
 from xml.etree.cElementTree import XML
 
 from collections import OrderedDict
 
 from zope.interface import implementer
+
+from twisted.python.compat import _PY35PLUS
 
 from twisted.trial.unittest import TestCase
 from twisted.test.testutils import XMLAssertionMixin
@@ -301,7 +304,7 @@ class SerializationTests(FlattenTestCase, XMLAssertionMixin):
         Test that unicode is encoded correctly in the appropriate places, and
         raises an error when it occurs in inappropriate place.
         """
-        snowman = '\N{SNOWMAN}'
+        snowman = u'\N{SNOWMAN}'
         return gatherResults([
             self.assertFlattensTo(snowman, b'\xe2\x98\x83'),
             self.assertFlattensTo(tags.p(snowman), b'<p>\xe2\x98\x83</p>'),
@@ -319,7 +322,7 @@ class SerializationTests(FlattenTestCase, XMLAssertionMixin):
         A character reference is flattened to a string using the I{&#NNNN;}
         syntax.
         """
-        ref = CharRef(ord("\N{SNOWMAN}"))
+        ref = CharRef(ord(u"\N{SNOWMAN}"))
         return self.assertFlattensTo(ref, b"&#9731;")
 
 
@@ -340,6 +343,44 @@ class SerializationTests(FlattenTestCase, XMLAssertionMixin):
             self.assertFlattensTo(d, b'three'),
             self.assertFlattensTo(d, b'three'),
         ])
+
+
+    @skipIf(not _PY35PLUS, "coroutines not available before Python 3.5")
+    def test_serializeCoroutine(self):
+        """
+        Test that a coroutine returning a value is substituted with the that
+        value when flattened.
+        """
+        from textwrap import dedent
+        namespace = {}
+        exec(dedent(
+            """
+            async def coro(x):
+                return x
+            """
+        ), namespace)
+        coro = namespace["coro"]
+
+        return self.assertFlattensTo(coro('four'), b'four')
+
+
+    @skipIf(not _PY35PLUS, "coroutines not available before Python 3.5")
+    def test_serializeCoroutineWithAwait(self):
+        """
+        Test that a coroutine returning an awaited deferred value is
+        substituted with that value when flattened.
+        """
+        from textwrap import dedent
+        namespace = dict(succeed=succeed)
+        exec(dedent(
+            """
+            async def coro(x):
+                return await succeed(x)
+            """
+        ), namespace)
+        coro = namespace["coro"]
+
+        return self.assertFlattensTo(coro('four'), b'four')
 
 
     def test_serializeIRenderable(self):

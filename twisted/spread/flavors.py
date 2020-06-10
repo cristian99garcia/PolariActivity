@@ -17,7 +17,6 @@ but may have a small impact on users who subclass and override methods.
 """
 
 
-
 # NOTE: this module should NOT import pb; it is supposed to be a module which
 # abstractly defines remotely accessible types.  Many of these types expect to
 # be serialized by Jelly, but they ought to be accessible through other
@@ -28,7 +27,7 @@ import sys
 from zope.interface import implementer, Interface
 
 from twisted.python import log, reflect
-from twisted.python.compat import _PY3, str, comparable, cmp
+from twisted.python.compat import unicode, comparable, cmp
 from .jelly import (
     setUnjellyableForClass, setUnjellyableForClassTree,
     setUnjellyableFactoryForClass, unjellyableRegistry, Jellyable, Unjellyable,
@@ -109,6 +108,11 @@ class Referenceable(Serializable):
         """
         args = broker.unserialize(args)
         kw = broker.unserialize(kw)
+        # Need this to interoperate with Python 2 clients
+        # which may try to send use keywords where keys are of type
+        # bytes.
+        if [key for key in kw.keys() if isinstance(key, bytes)]:
+            kw = dict((k.decode('utf8'), v) for k, v in kw.items())
 
         if not isinstance(message, str):
             message = message.decode('utf8')
@@ -392,9 +396,8 @@ class RemoteCopy(Unjellyable):
         object's dictionary (or a filtered approximation of it depending
         on my peer's perspective).
         """
-        if _PY3:
-            state = {x.decode('utf8') if isinstance(x, bytes)
-                     else x:y for x,y in list(state.items())}
+        state = {x.decode('utf8') if isinstance(x, bytes)
+                 else x: y for x, y in state.items()}
         self.__dict__ = state
 
     def unjellyFor(self, unjellier, jellyList):
@@ -622,7 +625,7 @@ class RemoteCacheObserver:
         """(internal) action method.
         """
         cacheID = self.broker.cachedRemotelyAs(self.cached)
-        if isinstance(_name, str):
+        if isinstance(_name, unicode):
             _name = _name.encode("utf-8")
         if cacheID is None:
             from pb import ProtocolError

@@ -3,7 +3,6 @@
 # See LICENSE for details.
 
 
-
 from twisted.trial import unittest
 
 from twisted.words.xish import xpath
@@ -43,37 +42,37 @@ class XPathTests(unittest.TestCase):
         self.e = Element(("testns", "foo"))
         self.e["attrib1"] = "value1"
         self.e["attrib3"] = "user@host/resource"
-        self.e.addContent("somecontent")
+        self.e.addContent(u"somecontent")
         self.bar1 = self.e.addElement("bar")
         self.subfoo = self.bar1.addElement("foo")
         self.gar1 = self.subfoo.addElement("gar")
-        self.gar1.addContent("DEF")
-        self.e.addContent("somemorecontent")
+        self.gar1.addContent(u"DEF")
+        self.e.addContent(u"somemorecontent")
         self.bar2 = self.e.addElement("bar")
         self.bar2["attrib2"] = "value2"
         self.bar3 = self.bar2.addElement("bar")
         self.subfoo2 = self.bar3.addElement("foo")
         self.gar2 = self.bar3.addElement("gar")
-        self.gar2.addContent("ABC")
+        self.gar2.addContent(u"ABC")
         self.bar4 = self.e.addElement("bar")
         self.bar5 = self.e.addElement("bar")
         self.bar5["attrib4"] = "value4"
         self.bar5["attrib5"] = "value5"
         self.subfoo3 = self.bar5.addElement("foo")
         self.gar3 = self.bar5.addElement("gar")
-        self.gar3.addContent("JKL")
+        self.gar3.addContent(u"JKL")
         self.bar6 = self.e.addElement("bar")
         self.bar6["attrib4"] = "value4"
         self.bar6["attrib5"] = "value4"
         self.subfoo4 = self.bar6.addElement("foo")
         self.gar4 = self.bar6.addElement("gar")
-        self.gar4.addContent("MNO")
+        self.gar4.addContent(u"MNO")
         self.bar7 = self.e.addElement("bar")
         self.bar7["attrib4"] = "value4"
         self.bar7["attrib5"] = "value6"
-        self.bar7["attrib6"] = "á"
+        self.bar7["attrib6"] = u"á"
         self.quux = self.bar7.addElement("quux")
-        self.quux.addContent("\N{SNOWMAN}")
+        self.quux.addContent(u"\N{SNOWMAN}")
 
     def test_staticMethods(self):
         """
@@ -142,7 +141,7 @@ class XPathTests(unittest.TestCase):
         """
         Nodes' attributes can be matched with non-ASCII values.
         """
-        xp = XPathQuery("/foo/*[@attrib6='á']")
+        xp = XPathQuery(u"/foo/*[@attrib6='á']")
         self.assertEqual(xp.matches(self.e), True)
         self.assertEqual(xp.queryForNodes(self.e), [self.bar7])
 
@@ -210,7 +209,7 @@ class XPathTests(unittest.TestCase):
         """
         A node can be matched by text with non-ascii code points.
         """
-        xp = XPathQuery("//*[text()='\N{SNOWMAN}']")
+        xp = XPathQuery(u"//*[text()='\N{SNOWMAN}']")
         self.assertEqual(xp.matches(self.e), True)
         self.assertEqual(xp.queryForNodes(self.e), [self.quux])
 

@@ -12,7 +12,6 @@ listeners or connectors are added)::
 """
 
 
-
 # System imports
 import errno
 from select import error as SelectError, poll
@@ -98,7 +97,7 @@ class PollReactor(posixbase.PosixReactorBase, posixbase._PollLikeMixin):
         except:
             # the hard way: necessary because fileno() may disappear at any
             # moment, thanks to python's underlying sockets impl
-            for fd, fdes in list(self._selectables.items()):
+            for fd, fdes in self._selectables.items():
                 if selectable is fdes:
                     break
             else:

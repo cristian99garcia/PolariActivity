@@ -21,8 +21,8 @@ does not:
 """
 
 
-
 from twisted.internet.protocol import Protocol
+from twisted.python.compat import unicode
 from twisted.python.reflect import prefixedMethodNames
 
 
@@ -44,13 +44,13 @@ def unionlist(*args):
     for x in args:
         l.extend(x)
     d = dict([(x, 1) for x in l])
-    return list(d.keys())
+    return d.keys()
 
 
 def zipfndict(*args, **kw):
     default = kw.get('default', nop)
     d = {}
-    for key in unionlist(*[list(fndict.keys()) for fndict in args]):
+    for key in unionlist(*[fndict.keys() for fndict in args]):
         d[key] = tuple([x.get(key, default) for x in args])
     return d
 
@@ -119,7 +119,7 @@ class XMLParser(Protocol):
         if self._prepend:
             data = self._prepend + data
         for encoding in self.encodings:
-            data = str(data, encoding)
+            data = unicode(data, encoding)
         return data
 
     def maybeBodyData(self):
@@ -148,17 +148,15 @@ class XMLParser(Protocol):
         stateTable = self._buildStateTable()
         if not self.state:
             # all UTF-16 starts with this string
-            if data.startswith('\xff\xfe'):
-                self._prepend = '\xff\xfe'
-                self.encodings.append('UTF-16')
-                data = data[2:]
-            elif data.startswith('\xfe\xff'):
-                self._prepend = '\xfe\xff'
+            if data.startswith((b'\xff\xfe', b'\xfe\xff')):
+                self._prepend = data[0:2]
                 self.encodings.append('UTF-16')
                 data = data[2:]
             self.state = 'begin'
         if self.encodings:
             data = self._decode(data)
+        else:
+            data = data.decode("utf-8")
         # bring state, lineno, colno into local scope
         lineno, colno = self.lineno, self.colno
         curState = self.state
@@ -172,7 +170,7 @@ class XMLParser(Protocol):
         try:
             for byte in data:
                 # do newline stuff
-                if byte == '\n':
+                if byte == u'\n':
                     lineno += 1
                     colno = 0
                 else:

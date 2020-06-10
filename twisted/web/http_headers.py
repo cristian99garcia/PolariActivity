@@ -7,8 +7,7 @@ An API for storing HTTP header names and values.
 """
 
 
-
-from twisted.python.compat import comparable, cmp, str
+from twisted.python.compat import comparable, cmp, unicode
 
 
 def _dashCapitalize(name):
@@ -22,6 +21,22 @@ def _dashCapitalize(name):
     @rtype: L{bytes}
     """
     return b'-'.join([word.capitalize() for word in name.split(b'-')])
+
+
+
+def _sanitizeLinearWhitespace(headerComponent):
+    r"""
+    Replace linear whitespace (C{\n}, C{\r\n}, C{\r}) in a header key
+    or value with a single space.  If C{headerComponent} is not
+    L{bytes}, it is passed through unchanged.
+
+    @param headerComponent: The header key or value to sanitize.
+    @type headerComponent: L{bytes}
+
+    @return: The sanitized header key or value.
+    @rtype: L{bytes}
+    """
+    return b' '.join(headerComponent.splitlines())
 
 
 
@@ -59,7 +74,7 @@ class Headers(object):
     def __init__(self, rawHeaders=None):
         self._rawHeaders = {}
         if rawHeaders is not None:
-            for name, values in list(rawHeaders.items()):
+            for name, values in rawHeaders.items():
                 self.setRawHeaders(name, values)
 
 
@@ -93,7 +108,7 @@ class Headers(object):
         @return: C{name}, encoded if required, lowercased
         @rtype: L{bytes}
         """
-        if isinstance(name, str):
+        if isinstance(name, unicode):
             return name.lower().encode('iso-8859-1')
         return name.lower()
 
@@ -108,7 +123,7 @@ class Headers(object):
         @return: C{value}, encoded if required
         @rtype: L{bytes}
         """
-        if isinstance(value, str):
+        if isinstance(value, unicode):
             return value.encode('utf8')
         return value
 
@@ -141,9 +156,6 @@ class Headers(object):
         @return: C{values}, with each item decoded
         @rtype: L{list} of L{unicode}
         """
-        if type(values) is not list:
-            return values
-
         newValues = []
 
         for value in values:
@@ -202,8 +214,11 @@ class Headers(object):
             raise TypeError("Header entry %r should be list but found "
                             "instance of %r instead" % (name, type(values)))
 
-        name = self._encodeName(name)
-        self._rawHeaders[name] = self._encodeValues(values)
+        name = _sanitizeLinearWhitespace(self._encodeName(name))
+        encodedValues = [_sanitizeLinearWhitespace(v)
+                         for v in self._encodeValues(values)]
+
+        self._rawHeaders[name] = self._encodeValues(encodedValues)
 
 
     def addRawHeader(self, name, value):
@@ -237,13 +252,15 @@ class Headers(object):
         @param default: The value to return if no header with the given C{name}
             exists.
 
-        @rtype: L{list} of strings, same type as C{name}
-        @return: A L{list} of values for the given header.
+        @rtype: L{list} of strings, same type as C{name} (except when
+            C{default} is returned).
+        @return: If the named header is present, a L{list} of its
+            values.  Otherwise, C{default}.
         """
         encodedName = self._encodeName(name)
         values = self._rawHeaders.get(encodedName, default)
 
-        if isinstance(name, str):
+        if isinstance(name, unicode) and values is not default:
             return self._decodeValues(values)
         return values
 
@@ -254,7 +271,7 @@ class Headers(object):
         object, as L{bytes}.  The keys are capitalized in canonical
         capitalization.
         """
-        for k, v in list(self._rawHeaders.items()):
+        for k, v in self._rawHeaders.items():
             yield self._canonicalNameCaps(k), v
 
 

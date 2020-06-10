@@ -5,5 +5,3 @@
 """
 Tests for L{twisted._threads}.
 """
-
-

@@ -6,13 +6,14 @@ Test cases for L{jelly} object serialization.
 """
 
 
-
 import datetime
 import decimal
+from unittest import skipIf
 
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from twisted.spread import jelly, pb
 from twisted.trial import unittest
+from twisted.trial.unittest import TestCase
 from twisted.test.proto_helpers import StringTransport
 
 
@@ -115,7 +116,7 @@ class SimpleJellyTest:
 
 
 
-class JellyTests(unittest.TestCase):
+class JellyTests(TestCase):
     """
     Testcases for L{jelly} module serialization.
 
@@ -329,6 +330,7 @@ class JellyTests(unittest.TestCase):
         self._testSecurity(inputList, b"frozenset")
 
 
+    @skipIf(not jelly._sets, "sets.Set is gone in Python 3 and higher")
     def test_oldSets(self):
         """
         Test jellying C{sets.Set}: it should serialize to the same thing as
@@ -345,10 +347,9 @@ class JellyTests(unittest.TestCase):
         else:
             self.assertIsInstance(output[0], set)
 
-    if not jelly._sets:
-        test_oldSets.skip = "sets.Set is gone in Python 3 and higher"
 
-
+    @skipIf(not jelly._sets, "sets.ImmutableSets is gone in Python 3 "
+                             "and higher")
     def test_oldImmutableSets(self):
         """
         Test jellying C{sets.ImmutableSet}: it should serialize to the same
@@ -365,10 +366,6 @@ class JellyTests(unittest.TestCase):
             self.assertIsInstance(output[0], jelly._sets.ImmutableSet)
         else:
             self.assertIsInstance(output[0], frozenset)
-
-    if not jelly._sets:
-        test_oldImmutableSets.skip = (
-            "sets.ImmutableSets is gone in Python 3 and higher")
 
 
     def test_simple(self):
@@ -400,7 +397,7 @@ class JellyTests(unittest.TestCase):
 
 
     def test_unicode(self):
-        x = str('blah')
+        x = unicode('blah')
         y = jelly.unjelly(jelly.jelly(x))
         self.assertEqual(x, y)
         self.assertEqual(type(x), type(y))
@@ -584,7 +581,7 @@ class JellyTests(unittest.TestCase):
 
 
 
-class JellyDeprecationTests(unittest.TestCase):
+class JellyDeprecationTests(TestCase):
     """
     Tests for deprecated Jelly things
     """
@@ -637,7 +634,7 @@ class ClassB(pb.Copyable, pb.RemoteCopy):
 
 
 
-class CircularReferenceTests(unittest.TestCase):
+class CircularReferenceTests(TestCase):
     """
     Tests for circular references handling in the jelly/unjelly process.
     """

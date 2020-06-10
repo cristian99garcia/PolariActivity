@@ -7,7 +7,6 @@ L{twisted.words} support for Instance Messenger.
 """
 
 
-
 from twisted.internet import defer
 from twisted.internet import error
 from twisted.python import log

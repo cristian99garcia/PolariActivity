@@ -7,7 +7,6 @@ related functionality.
 """
 
 
-
 from twisted.internet import reactor, defer, task
 from twisted.trial import unittest
 
@@ -184,7 +183,7 @@ class CooperatorTests(unittest.TestCase):
             tasks.append(c.coiterate(myiter(stuff)))
 
         return defer.DeferredList(tasks).addCallback(
-            lambda ign: self.assertEqual(tuple(L), sum(list(zip(*groupsOfThings)), ())))
+            lambda ign: self.assertEqual(tuple(L), sum(zip(*groupsOfThings), ())))
 
 
     def testResourceExhaustion(self):

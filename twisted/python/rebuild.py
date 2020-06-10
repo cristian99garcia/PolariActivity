@@ -13,14 +13,37 @@ import types
 import time
 import linecache
 
+from imp import reload
+
+from types import ModuleType
+from typing import Dict
+
 # Sibling Imports
 from twisted.python import log, reflect
-import importlib
 
 lastRebuild = time.time()
 
+def _isClassType(t):
+    """
+    Compare to types.ClassType in a py2/3-compatible way
 
-class Sensitive:
+    Python 2 used comparison to types.ClassType to check for old-style
+    classes Python 3 has no concept of old-style classes, so if
+    ClassType doesn't exist, it can't be an old-style class - return
+    False in that case.
+
+    Note that the type() of new-style classes is NOT ClassType, and
+    so this should return False for new-style classes in python 2
+    as well.
+    """
+    _ClassType = getattr(types, 'ClassType', None)
+    if _ClassType is None:
+        return False
+    return t == _ClassType
+
+
+
+class Sensitive(object):
     """
     A utility mixin that's sensitive to rebuilds.
 
@@ -34,8 +57,10 @@ class Sensitive:
         yn = (self.lastRebuild < lastRebuild)
         return yn
 
+
     def rebuildUpToDate(self):
         self.lastRebuild = time.time()
+
 
     def latestVersionOf(self, anObject):
         """
@@ -49,20 +74,20 @@ class Sensitive:
             return latestFunction(anObject)
         elif t == types.MethodType:
             if anObject.__self__ is None:
-                return getattr(anObject.__self__.__class__, anObject.__name__)
+                return getattr(anObject.im_class, anObject.__name__)
             else:
                 return getattr(anObject.__self__, anObject.__name__)
-        elif t == types.InstanceType:
-            # Kick it, if it's out of date.
-            getattr(anObject, 'nothing', None)
-            return anObject
-        elif t == type:
+        elif _isClassType(t):
             return latestClass(anObject)
         else:
             log.msg('warning returning anObject!')
             return anObject
 
-_modDictIDMap = {}
+
+
+_modDictIDMap = {}  # type:Dict[int, ModuleType]
+
+
 
 def latestFunction(oldFunc):
     """
@@ -75,6 +100,7 @@ def latestFunction(oldFunc):
     if module is None:
         return oldFunc
     return getattr(module, oldFunc.__name__)
+
 
 
 def latestClass(oldClass):
@@ -90,11 +116,18 @@ def latestClass(oldClass):
         newClass.__bases__ = tuple(newBases)
         return newClass
     except TypeError:
-        if newClass.__module__ == "__builtin__":
+        if newClass.__module__ in ("__builtin__", "builtins"):
             # __builtin__ members can't be reloaded sanely
             return newClass
-        ctor = getattr(newClass, '__metaclass__', type)
-        return ctor(newClass.__name__, tuple(newBases), dict(newClass.__dict__))
+
+        ctor = type(newClass)
+        # The value of type(newClass) is the metaclass
+        # in both Python 2 and 3, except if it was old-style.
+        if _isClassType(ctor):
+            ctor = getattr(newClass, '__metaclass__', type)
+        return ctor(newClass.__name__, tuple(newBases),
+                    dict(newClass.__dict__))
+
 
 
 class RebuildError(Exception):
@@ -103,29 +136,27 @@ class RebuildError(Exception):
     """
 
 
+
 def updateInstance(self):
     """
     Updates an instance to be current.
     """
-    try:
-        self.__class__ = latestClass(self.__class__)
-    except TypeError:
-        if hasattr(self.__class__, '__slots__'):
-            raise RebuildError("Can't rebuild class with __slots__ on Python < 2.6")
-        else:
-            raise
+    self.__class__ = latestClass(self.__class__)
 
 
-def __getattr__(self, name):
+
+def __injectedgetattr__(self, name):
     """
     A getattr method to cause a class to be refreshed.
     """
     if name == '__del__':
         raise AttributeError("Without this, Python segfaults.")
     updateInstance(self)
-    log.msg("(rebuilding stale %s instance (%s))" % (reflect.qual(self.__class__), name))
+    log.msg("(rebuilding stale {} instance ({}))".format(
+            reflect.qual(self.__class__), name))
     result = getattr(self, name)
     return result
+
 
 
 def rebuild(module, doLog=1):
@@ -139,9 +170,9 @@ def rebuild(module, doLog=1):
         if not module.ALLOW_TWISTED_REBUILD:
             raise RuntimeError("I am not allowed to be rebuilt.")
     if doLog:
-        log.msg('Rebuilding %s...' % str(module.__name__))
+        log.msg('Rebuilding {}...'.format(str(module.__name__)))
 
-    ## Safely handle adapter re-registration
+    # Safely handle adapter re-registration
     from twisted.python import components
     components.ALLOW_DUPLICATES = True
 
@@ -152,9 +183,10 @@ def rebuild(module, doLog=1):
     functions = {}
     values = {}
     if doLog:
-        log.msg('  (scanning %s): ' % str(module.__name__))
-    for k, v in list(d.items()):
-        if type(v) == type:
+        log.msg('  (scanning {}): '.format(str(module.__name__)))
+    for k, v in d.items():
+        if _isClassType(type(v)):
+            # ClassType exists on Python 2.x and earlier.
             # Failure condition -- instances of classes with buggy
             # __hash__/__cmp__ methods referenced at the module level...
             if v.__module__ == module.__name__:
@@ -178,48 +210,50 @@ def rebuild(module, doLog=1):
     values.update(classes)
     values.update(functions)
     fromOldModule = values.__contains__
-    newclasses = list(newclasses.keys())
-    classes = list(classes.keys())
-    functions = list(functions.keys())
+    newclasses = newclasses.keys()
+    classes = classes.keys()
+    functions = functions.keys()
 
     if doLog:
         log.msg('')
-        log.msg('  (reload   %s)' % str(module.__name__))
+        log.msg('  (reload   {})'.format(str(module.__name__)))
 
     # Boom.
-    importlib.reload(module)
+    reload(module)
     # Make sure that my traceback printing will at least be recent...
     linecache.clearcache()
 
     if doLog:
-        log.msg('  (cleaning %s): ' % str(module.__name__))
+        log.msg('  (cleaning {}): '.format(str(module.__name__)))
 
     for clazz in classes:
         if getattr(module, clazz.__name__) is clazz:
-            log.msg("WARNING: class %s not replaced by reload!" % reflect.qual(clazz))
+            log.msg("WARNING: class {} not replaced by reload!".format(
+                    reflect.qual(clazz)))
         else:
             if doLog:
                 log.logfile.write("x")
                 log.logfile.flush()
             clazz.__bases__ = ()
             clazz.__dict__.clear()
-            clazz.__getattr__ = __getattr__
+            clazz.__getattr__ = __injectedgetattr__
             clazz.__module__ = module.__name__
     if newclasses:
         import gc
     for nclass in newclasses:
         ga = getattr(module, nclass.__name__)
         if ga is nclass:
-            log.msg("WARNING: new-class %s not replaced by reload!" % reflect.qual(nclass))
+            log.msg("WARNING: new-class {} not replaced by reload!".format(
+                    reflect.qual(nclass)))
         else:
             for r in gc.get_referrers(nclass):
                 if getattr(r, '__class__', None) is nclass:
                     r.__class__ = ga
     if doLog:
         log.msg('')
-        log.msg('  (fixing   %s): ' % str(module.__name__))
+        log.msg('  (fixing   {}): '.format(str(module.__name__)))
     modcount = 0
-    for mk, mod in list(sys.modules.items()):
+    for mk, mod in sys.modules.items():
         modcount = modcount + 1
         if mod == module or mod is None:
             continue
@@ -236,13 +270,13 @@ def rebuild(module, doLog=1):
 
         changed = 0
 
-        for k, v in list(mod.__dict__.items()):
+        for k, v in mod.__dict__.items():
             try:
                 hash(v)
             except Exception:
                 continue
             if fromOldModule(v):
-                if type(v) == type:
+                if _isClassType(type(v)):
                     if doLog:
                         log.logfile.write("c")
                         log.logfile.flush()
@@ -256,17 +290,16 @@ def rebuild(module, doLog=1):
                 setattr(mod, k, nv)
             else:
                 # Replace bases of non-module classes just to be sure.
-                if type(v) == type:
+                if _isClassType(type(v)):
                     for base in v.__bases__:
                         if fromOldModule(base):
                             latestClass(v)
-        if doLog and not changed and ((modcount % 10) ==0) :
+        if doLog and not changed and ((modcount % 10) == 0) :
             log.logfile.write(".")
             log.logfile.flush()
 
     components.ALLOW_DUPLICATES = False
     if doLog:
         log.msg('')
-        log.msg('   Rebuilt %s.' % str(module.__name__))
+        log.msg('   Rebuilt {}.'.format(str(module.__name__)))
     return module
-

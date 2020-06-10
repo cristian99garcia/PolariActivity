@@ -9,9 +9,10 @@ Maintainer: Jonathan Lange
 """
 
 
-
 import inspect
 import warnings
+
+from typing import List
 
 from zope.interface import implementer
 
@@ -25,7 +26,9 @@ from twisted.trial import itrial, util
 from twisted.trial._synctest import (
     FailTest, SkipTest, SynchronousTestCase)
 
-_wait_is_running = []
+_wait_is_running = []  # type: List[None]
+
+
 
 @implementer(itrial.ITestCase)
 class TestCase(SynchronousTestCase):
@@ -264,7 +267,7 @@ class TestCase(SynchronousTestCase):
 
         @param reactor: The Twisted reactor.
         """
-        for name, method in list(self._reactorMethods.items()):
+        for name, method in self._reactorMethods.items():
             setattr(reactor, name, method)
         self._reactorMethods = {}
 

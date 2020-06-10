@@ -7,7 +7,6 @@ L{IReactorSocket}.
 """
 
 
-
 __metaclass__ = type
 
 import socket
@@ -29,6 +28,32 @@ from twisted.internet.test.connectionmixins import (LogObserverMixin,
 from twisted.internet import defer, error
 from twisted.test.test_udp import Server, GoodClient
 from twisted.trial.unittest import SkipTest
+
+
+def _has_ipv6():
+    """ Returns True if the system can bind an IPv6 address."""
+    sock = None
+    has_ipv6 = False
+
+    try:
+        sock = socket.socket(socket.AF_INET6)
+        sock.bind(("::1", 0))
+        has_ipv6 = True
+    except socket.error:
+        pass
+
+    if sock:
+        sock.close()
+    return has_ipv6
+
+
+HAS_IPV6 = _has_ipv6()
+
+
+def skipWithoutIPv6(f):
+    if not HAS_IPV6:
+        f.skip = "Does not work on systems without IPv6 support."
+    return f
 
 
 
@@ -141,6 +166,7 @@ class UDPPortTestsMixin(object):
             port.getHost(), IPv4Address('UDP', host, portNumber))
 
 
+    @skipWithoutIPv6
     def test_getHostIPv6(self):
         """
         L{IListeningPort.getHost} returns an L{IPv6Address} when listening on
@@ -246,6 +272,7 @@ class UDPPortTestsMixin(object):
         self.assertIn(repr(port.getHost().port), str(port))
 
 
+    @skipWithoutIPv6
     def test_writeToIPv6Interface(self):
         """
         Writing to an IPv6 UDP socket on the loopback interface succeeds.
@@ -292,6 +319,7 @@ class UDPPortTestsMixin(object):
         self.assertEqual(packet, (b'spam', (cAddr.host, cAddr.port)))
 
 
+    @skipWithoutIPv6
     def test_connectedWriteToIPv6Interface(self):
         """
         An IPv6 address can be passed as the C{interface} argument to
@@ -353,6 +381,7 @@ class UDPPortTestsMixin(object):
             port.write, 'spam', ('example.invalid', 1))
 
 
+    @skipWithoutIPv6
     def test_writingToIPv6OnIPv4RaisesInvalidAddressError(self):
         """
         Writing to an IPv6 address on an IPv4 socket will raise an
@@ -365,6 +394,7 @@ class UDPPortTestsMixin(object):
             error.InvalidAddressError, port.write, 'spam', ('::1', 1))
 
 
+    @skipWithoutIPv6
     def test_writingToIPv4OnIPv6RaisesInvalidAddressError(self):
         """
         Writing to an IPv6 address on an IPv4 socket will raise an

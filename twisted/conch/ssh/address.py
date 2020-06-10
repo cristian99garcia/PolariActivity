@@ -11,7 +11,6 @@ Maintainer: Paul Swartz
 """
 
 
-
 from zope.interface import implementer
 
 from twisted.internet.interfaces import IAddress

@@ -10,23 +10,15 @@ this side of Marmalade!
 """
 
 
+import re
+import types
 
-import types, re
-
-try:
-    from tokenize import generate_tokens as tokenize
-except ImportError:
-    from tokenize import tokenize
-
-
-try:
-    import copyreg
-except:
-    import copyreg as copy_reg
+from tokenize import generate_tokens as tokenize
+import copyreg as copy_reg
 
 from twisted.python import reflect, log
 from twisted.persisted import crefutil
-from twisted.python.compat import str, _PY3, _constructMethod
+from twisted.python.compat import unicode, _constructMethod
 
 ###########################
 # Abstract Object Classes #
@@ -69,12 +61,12 @@ class _NoStateObj:
 NoStateObj = _NoStateObj()
 
 _SIMPLE_BUILTINS = [
-    bool, bytes, str, int, float, complex, type(None),
+    bool, bytes, unicode, int, float, complex, type(None),
     slice, type(Ellipsis)
 ]
 
 try:
-    _SIMPLE_BUILTINS.append(int)
+    _SIMPLE_BUILTINS.append(long)
 except NameError:
     pass
 
@@ -185,6 +177,7 @@ def dictToKW(d):
     return ''.join(out)
 
 
+
 def prettify(obj):
     if hasattr(obj, 'getSource'):
         return obj.getSource()
@@ -197,7 +190,7 @@ def prettify(obj):
 
         elif t is dict:
             out = ['{']
-            for k,v in list(obj.items()):
+            for k,v in obj.items():
                 out.append('\n\0%s: %s,' % (prettify(k), prettify(v)))
             out.append(len(obj) and '\n\0}' or '}')
             return ''.join(out)
@@ -216,7 +209,11 @@ def prettify(obj):
             out.append(len(obj) and '\n\0)' or ')')
             return ''.join(out)
         else:
-            raise TypeError("Unsupported type %s when trying to prettify %s." % (t, obj))
+            raise TypeError(
+                "Unsupported type {} when trying to prettify {}.".format(
+                    t, obj))
+
+
 
 def indentify(s):
     out = []
@@ -245,6 +242,8 @@ def unjellyFromAOT(aot):
     Pass me an Abstract Object Tree, and I'll unjelly it for you.
     """
     return AOTUnjellier().unjelly(aot)
+
+
 
 def unjellyFromSource(stringOrFile):
     """
@@ -295,6 +294,7 @@ class AOTUnjellier:
         self.unjellyInto(d, 0, node)
         return d
 
+
     def unjellyInto(self, obj, loc, ao):
         """Utility method for unjellying one object into another.
         This automates the handling of backreferences.
@@ -305,22 +305,25 @@ class AOTUnjellier:
             o.addDependant(obj, loc)
         return o
 
+
     def callAfter(self, callable, result):
         if isinstance(result, crefutil.NotKnown):
-            l = [None]
-            result.addDependant(l, 1)
+            listResult = [None]
+            result.addDependant(listResult, 1)
         else:
-            l = [result]
-        self.afterUnjelly.append((callable, l))
+            listResult = [result]
+        self.afterUnjelly.append((callable, listResult))
+
 
     def unjellyAttribute(self, instance, attrName, ao):
-        #XXX this is unused????
+        # XXX this is unused????
         """Utility method for unjellying into instances of attributes.
 
         Use this rather than unjellyAO unless you like surprising bugs!
         Alternatively, you can use unjellyInto on your instance's __dict__.
         """
         self.unjellyInto(instance.__dict__, attrName, ao)
+
 
     def unjellyAO(self, ao):
         """Unjelly an Abstract Object and everything it contains.
@@ -349,7 +352,7 @@ class AOTUnjellier:
 
         elif t is dict:
             d = {}
-            for k,v in list(ao.items()):
+            for k,v in ao.items():
                 kvd = crefutil._DictKeyAndValue(d)
                 self.unjellyInto(kvd, 0, k)
                 self.unjellyInto(kvd, 1, v)
@@ -446,6 +449,8 @@ def jellyToAOT(obj):
     """Convert an object to an Abstract Object Tree."""
     return AOTJellier().jelly(obj)
 
+
+
 def jellyToSource(obj, file=None):
     """
     Pass me an object and, optionally, a file object.
@@ -479,8 +484,6 @@ def _classOfMethod(methodObject):
     @return: a class
     @rtype: L{types.ClassType} or L{type}
     """
-    if _PY3:
-        return methodObject.__self__.__class__
     return methodObject.__self__.__class__
 
 
@@ -495,8 +498,6 @@ def _funcOfMethod(methodObject):
     @return: the function implementing C{methodObject}
     @rtype: L{types.FunctionType}
     """
-    if _PY3:
-        return methodObject.__func__
     return methodObject.__func__
 
 
@@ -511,8 +512,6 @@ def _selfOfMethod(methodObject):
     @return: the C{self} passed to C{methodObject}
     @rtype: L{object}
     """
-    if _PY3:
-        return methodObject.__self__
     return methodObject.__self__
 
 
@@ -595,12 +594,12 @@ class AOTJellier:
 
             elif objType is dict:
                 d = {}
-                for k,v in list(obj.items()):
+                for k,v in obj.items():
                     d[self.jellyToAO(k)] = self.jellyToAO(v)
                 retval.setObj(d)
 
-            elif objType in copyreg.dispatch_table:
-                unpickleFunc, state = copyreg.dispatch_table[objType](obj)
+            elif objType in copy_reg.dispatch_table:
+                unpickleFunc, state = copy_reg.dispatch_table[objType](obj)
 
                 retval.setObj(Copyreg( reflect.fullFuncName(unpickleFunc),
                                        self.jellyToAO(state)))

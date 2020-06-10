@@ -7,27 +7,38 @@ L{twisted.persisted.sob}.
 """
 
 
-
 import copy
 import os
 import pickle
 
+try:
+    import asyncio
+except ImportError:
+    asyncio = None
+
+from unittest import skipIf
+
 from twisted.application import service, internet, app, reactors
+from twisted.application.internet import backoffPolicy
 from twisted.internet import interfaces, defer, protocol, reactor
 from twisted.persisted import sob
+from twisted.plugins import twisted_reactors
 from twisted.protocols import wire, basic
 from twisted.python import usage
 from twisted.python.compat import NativeStringIO
+from twisted.python.runtime import platformType
 from twisted.python.test.modules_helpers import TwistedModulesMixin
 from twisted.test.proto_helpers import MemoryReactor
-from twisted.trial import unittest
+from twisted.trial.unittest import TestCase, SkipTest
 
 
 
 class Dummy:
-    processName=None
+    processName = None
 
-class ServiceTests(unittest.TestCase):
+
+
+class ServiceTests(TestCase):
 
     def testName(self):
         s = service.Service()
@@ -154,7 +165,8 @@ else:
     curuid = curgid = 0
 
 
-class ProcessTests(unittest.TestCase):
+
+class ProcessTests(TestCase):
 
     def testID(self):
         p = service.Process(5, 6)
@@ -179,21 +191,25 @@ class ProcessTests(unittest.TestCase):
         self.assertEqual(p.processName, 'hello')
 
 
-class InterfacesTests(unittest.TestCase):
+
+class InterfacesTests(TestCase):
 
     def testService(self):
         self.assertTrue(service.IService.providedBy(service.Service()))
+
 
     def testMultiService(self):
         self.assertTrue(service.IService.providedBy(service.MultiService()))
         self.assertTrue(service.IServiceCollection.providedBy(
                         service.MultiService()))
 
+
     def testProcess(self):
         self.assertTrue(service.IProcess.providedBy(service.Process()))
 
 
-class ApplicationTests(unittest.TestCase):
+
+class ApplicationTests(TestCase):
 
     def testConstructor(self):
         service.Application("hello")
@@ -224,7 +240,9 @@ class ApplicationTests(unittest.TestCase):
         self.assertEqual(p.name, 'hello')
         self.assertIs(p.original, a)
 
-class LoadingTests(unittest.TestCase):
+
+
+class LoadingTests(TestCase):
 
     def test_simpleStoreAndLoad(self):
         a = service.Application("hello")
@@ -244,7 +262,7 @@ class LoadingTests(unittest.TestCase):
 
 
 
-class AppSupportTests(unittest.TestCase):
+class AppSupportTests(TestCase):
 
     def testPassphrase(self):
         self.assertIsNone(app.getPassphrase(0))
@@ -322,7 +340,7 @@ class TestEcho(wire.Echo):
 
 
 
-class InternetTests(unittest.TestCase):
+class InternetTests(TestCase):
 
     def testTCP(self):
         s = service.MultiService()
@@ -351,7 +369,7 @@ class InternetTests(unittest.TestCase):
         can start a server on the same port again.
         """
         if not interfaces.IReactorUDP(reactor, None):
-            raise unittest.SkipTest("This reactor does not support UDP sockets")
+            raise SkipTest("This reactor does not support UDP sockets")
         p = protocol.DatagramProtocol()
         t = internet.UDPServer(0, p)
         t.startService()
@@ -398,6 +416,9 @@ class InternetTests(unittest.TestCase):
         c.startService()
         return d
 
+
+    @skipIf(not interfaces.IReactorUNIX(reactor, None),
+            "This reactor does not support UNIX domain sockets")
     def testUNIX(self):
         # FIXME: This test is far too dense.  It needs comments.
         #  -- spiv, 2004-11-07
@@ -426,10 +447,13 @@ class InternetTests(unittest.TestCase):
         factory.d = defer.Deferred()
         s.startService()
         factory.d.addCallback(self.assertEqual, b'lalala')
-        factory.d.addCallback(lambda x : s.stopService())
-        factory.d.addCallback(lambda x : TestEcho.d)
+        factory.d.addCallback(lambda x: s.stopService())
+        factory.d.addCallback(lambda x: TestEcho.d)
         return factory.d
 
+
+    @skipIf(not interfaces.IReactorUNIX(reactor, None),
+            "This reactor does not support UNIX domain sockets")
     def testVolatile(self):
         factory = protocol.ServerFactory()
         factory.protocol = wire.Echo
@@ -453,6 +477,9 @@ class InternetTests(unittest.TestCase):
         self.assertIsNone(t._connection)
         self.assertFalse(t.running)
 
+
+    @skipIf(not interfaces.IReactorUNIX(reactor, None),
+            "This reactor does not support UNIX domain sockets")
     def testStoppingServer(self):
         factory = protocol.ServerFactory()
         factory.protocol = wire.Echo
@@ -465,12 +492,6 @@ class InternetTests(unittest.TestCase):
         factory.clientConnectionFailed = lambda *args: d.callback(None)
         reactor.connectUNIX('echo.skt', factory)
         return d
-
-    if not interfaces.IReactorUNIX(reactor, None):
-        _skipMsg = "This reactor does not support UNIX domain sockets"
-        testUNIX.skip = _skipMsg
-        testVolatile.skip = _skipMsg
-        testStoppingServer.skip = _skipMsg
 
 
     def testPickledTimer(self):
@@ -600,7 +621,7 @@ class InternetTests(unittest.TestCase):
 
 
 
-class TimerBasicTests(unittest.TestCase):
+class TimerBasicTests(TestCase):
 
     def testTimerRuns(self):
         d = defer.Deferred()
@@ -668,7 +689,7 @@ class FakeReactor(reactors.Reactor):
 
 
 
-class PluggableReactorTests(TwistedModulesMixin, unittest.TestCase):
+class PluggableReactorTests(TwistedModulesMixin, TestCase):
     """
     Tests for the reactor discovery/inspection APIs.
     """
@@ -889,3 +910,108 @@ class PluggableReactorTests(TwistedModulesMixin, unittest.TestCase):
                                ['--reactor', 'fakereactortest', 'subcommand'])
         self.assertIn(message, e.args[0])
         self.assertIn("help-reactors", e.args[0])
+
+
+
+class HelpReactorsTests(TestCase):
+    """
+    --help-reactors lists the available reactors
+    """
+    def setUp(self):
+        """
+        Get the text from --help-reactors
+        """
+        self.options = app.ReactorSelectionMixin()
+        self.options.messageOutput = NativeStringIO()
+        self.assertRaises(SystemExit, self.options.opt_help_reactors)
+        self.message = self.options.messageOutput.getvalue()
+
+
+    @skipIf(asyncio, "Not applicable, asyncio is available")
+    def test_lacksAsyncIO(self):
+        """
+        --help-reactors should NOT display the asyncio reactor on Python < 3.4
+        """
+        self.assertIn(twisted_reactors.asyncio.description, self.message)
+        self.assertIn("!" + twisted_reactors.asyncio.shortName, self.message)
+
+
+    @skipIf(not asyncio, "asyncio library not available")
+    def test_hasAsyncIO(self):
+        """
+        --help-reactors should display the asyncio reactor on Python >= 3.4
+        """
+        self.assertIn(twisted_reactors.asyncio.description, self.message)
+        self.assertNotIn(
+            "!" + twisted_reactors.asyncio.shortName, self.message)
+
+
+    @skipIf(platformType != "win32", "Test only applicable on Windows")
+    def test_iocpWin32(self):
+        """
+        --help-reactors should display the iocp reactor on Windows
+        """
+        self.assertIn(twisted_reactors.iocp.description, self.message)
+        self.assertNotIn("!" + twisted_reactors.iocp.shortName, self.message)
+
+
+    @skipIf(platformType == "win32", "Test not applicable on Windows")
+    def test_iocpNotWin32(self):
+        """
+        --help-reactors should NOT display the iocp reactor on Windows
+        """
+        self.assertIn(twisted_reactors.iocp.description, self.message)
+        self.assertIn("!" + twisted_reactors.iocp.shortName, self.message)
+
+
+    def test_onlySupportedReactors(self):
+        """
+        --help-reactors with only supported reactors
+        """
+        def getReactorTypes():
+            yield twisted_reactors.default
+
+        options = app.ReactorSelectionMixin()
+        options._getReactorTypes = getReactorTypes
+        options.messageOutput = NativeStringIO()
+        self.assertRaises(SystemExit, options.opt_help_reactors)
+        message = options.messageOutput.getvalue()
+        self.assertNotIn("reactors not available", message)
+
+
+
+class BackoffPolicyTests(TestCase):
+    """
+    Tests of L{twisted.application.internet.backoffPolicy}
+    """
+    def test_calculates_correct_values(self):
+        """
+        Test that L{backoffPolicy()} calculates expected values
+        """
+        pol = backoffPolicy(1.0, 60.0, 1.5, jitter=lambda: 1)
+        self.assertAlmostEqual(pol(0), 2)
+        self.assertAlmostEqual(pol(1), 2.5)
+        self.assertAlmostEqual(pol(10), 58.6650390625)
+        self.assertEqual(pol(20), 61)
+        self.assertEqual(pol(100), 61)
+
+    def test_does_not_overflow_on_high_attempts(self):
+        """
+        L{backoffPolicy()} does not fail for large values of the attempt
+        parameter. In previous versions, this test failed when attempt was
+        larger than 1750.
+
+        See https://twistedmatrix.com/trac/ticket/9476
+        """
+        pol = backoffPolicy(1.0, 60.0, 1.5, jitter=lambda: 1)
+        self.assertEqual(pol(1751), 61)
+        self.assertEqual(pol(1000000), 61)
+
+    def test_does_not_overflow_with_large_factor_value(self):
+        """
+        Even with unusual parameters, any L{OverflowError} within
+        L{backoffPolicy()} will be caught and L{maxDelay} will be returned
+        instead
+        """
+        pol = backoffPolicy(1.0, 60.0, 1E10, jitter=lambda: 1)
+        self.assertEqual(pol(1751), 61)

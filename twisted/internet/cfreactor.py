@@ -4,7 +4,7 @@
 
 """
 A reactor for integrating with U{CFRunLoop<http://bit.ly/cfrunloop>}, the
-CoreFoundation main loop used by MacOS X.
+CoreFoundation main loop used by macOS.
 
 This is useful for integrating Twisted with U{PyObjC<http://pyobjc.sf.net/>}
 applications.
@@ -336,7 +336,7 @@ class CFReactor(PosixReactorBase):
         """
         Implement L{IReactorFDSet.removeAll}.
         """
-        allDesc = set([descr for src, cfs, descr, rw in list(self._fdmap.values())])
+        allDesc = set([descr for src, cfs, descr, rw in self._fdmap.values()])
         allDesc -= set(self._internalReaders)
         for desc in allDesc:
             self.removeReader(desc)
@@ -348,7 +348,7 @@ class CFReactor(PosixReactorBase):
         """
         Implement L{IReactorFDSet.getReaders}.
         """
-        return [descr for src, cfs, descr, rw in list(self._fdmap.values())
+        return [descr for src, cfs, descr, rw in self._fdmap.values()
                 if rw[_READ]]
 
 
@@ -356,7 +356,7 @@ class CFReactor(PosixReactorBase):
         """
         Implement L{IReactorFDSet.getWriters}.
         """
-        return [descr for src, cfs, descr, rw in list(self._fdmap.values())
+        return [descr for src, cfs, descr, rw in self._fdmap.values()
                 if rw[_WRITE]]
 
 

@@ -12,7 +12,6 @@ listeners or connectors are added)::
 """
 
 
-
 from select import epoll, EPOLLHUP, EPOLLERR, EPOLLIN, EPOLLOUT
 import errno
 
@@ -144,7 +143,7 @@ class EPollReactor(posixbase.PosixReactorBase, posixbase._PollLikeMixin):
         """
         fd = xer.fileno()
         if fd == -1:
-            for fd, fdes in list(selectables.items()):
+            for fd, fdes in selectables.items():
                 if xer is fdes:
                     break
             else:

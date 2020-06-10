@@ -10,49 +10,54 @@ Do NOT use this module directly - use reactor.spawnProcess() instead.
 Maintainer: Itamar Shtull-Trauring
 """
 
-
-
-from twisted.python.runtime import platform
-
-if platform.isWindows():
-    raise ImportError(("twisted.internet.process does not work on Windows. "
-                       "Use the reactor.spawnProcess() API instead."))
-
 import errno
 import gc
 import os
 import io
-import select
 import signal
 import stat
 import sys
 import traceback
 
-try:
-    import pty
-except ImportError:
-    pty = None
-
-try:
-    import fcntl, termios
-except ImportError:
-    fcntl = None
+from typing import Callable, Dict, Optional
+from twisted.python.runtime import platform
 
 from zope.interface import implementer
 
 from twisted.python import log, failure
 from twisted.python.util import switchUID
-from twisted.python.compat import items, xrange, _PY3
+from twisted.python.compat import items, range
 from twisted.internet import fdesc, abstract, error
 from twisted.internet.main import CONNECTION_LOST, CONNECTION_DONE
 from twisted.internet._baseprocess import BaseProcess
 from twisted.internet.interfaces import IProcessTransport
 
+if platform.isWindows():
+    raise ImportError(("twisted.internet.process does not work on Windows. "
+                       "Use the reactor.spawnProcess() API instead."))
+
+try:
+    import pty as _pty
+except ImportError:
+    pty = None
+else:
+    pty = _pty
+
+try:
+    import fcntl as _fcntl
+    import termios
+except ImportError:
+    fcntl = None
+else:
+    fcntl = _fcntl
+
 # Some people were importing this, which is incorrect, just keeping it
 # here for backwards compatibility:
 ProcessExitedAlready = error.ProcessExitedAlready
 
-reapProcessHandlers = {}
+reapProcessHandlers = {}  # type: Dict[int, Callable]
+
+
 
 def reapAllProcesses():
     """
@@ -62,6 +67,7 @@ def reapAllProcesses():
     # causes a "size changed during iteration" exception
     for process in list(reapProcessHandlers.values()):
         process.reapProcess()
+
 
 
 def registerReapProcessHandler(pid, process):
@@ -76,15 +82,20 @@ def registerReapProcessHandler(pid, process):
         raise RuntimeError("Try to register an already registered process.")
     try:
         auxPID, status = os.waitpid(pid, os.WNOHANG)
-    except:
-        log.msg('Failed to reap %d:' % pid)
+    except:     # noqa
+        log.msg('Failed to reap {}:'.format(pid))
         log.err()
+
+        if pid is None:
+            return
+
         auxPID = None
     if auxPID:
         process.processEnded(status)
     else:
         # if auxPID is 0, there are children but none have exited
         reapProcessHandlers[pid] = process
+
 
 
 def unregisterReapProcessHandler(pid, process):
@@ -96,33 +107,6 @@ def unregisterReapProcessHandler(pid, process):
             and reapProcessHandlers[pid] == process):
         raise RuntimeError("Try to unregister a process not registered.")
     del reapProcessHandlers[pid]
-
-
-def detectLinuxBrokenPipeBehavior():
-    """
-    On some Linux version, write-only pipe are detected as readable. This
-    function is here to check if this bug is present or not.
-
-    See L{ProcessWriter.doRead} for a more detailed explanation.
-
-    @return: C{True} if Linux pipe behaviour is broken.
-    @rtype : L{bool}
-    """
-    r, w = os.pipe()
-    os.write(w, b'a')
-    reads, writes, exes = select.select([w], [], [], 0)
-    if reads:
-        # Linux < 2.6.11 says a write-only pipe is readable.
-        brokenPipeBehavior = True
-    else:
-        brokenPipeBehavior = False
-    os.close(r)
-    os.close(w)
-    return brokenPipeBehavior
-
-
-
-brokenLinuxPipeBehavior = detectLinuxBrokenPipeBehavior()
 
 
 
@@ -174,11 +158,13 @@ class ProcessWriter(abstract.FileDescriptor):
         if self.enableReadHack:
             self.startReading()
 
+
     def fileno(self):
         """
         Return the fileno() of my process's stdin.
         """
         return self.fd
+
 
     def writeSomeData(self, data):
         """
@@ -192,9 +178,11 @@ class ProcessWriter(abstract.FileDescriptor):
             self.startReading()
         return rv
 
+
     def write(self, data):
         self.stopReading()
         abstract.FileDescriptor.write(self, data)
+
 
     def doRead(self):
         """
@@ -210,27 +198,18 @@ class ProcessWriter(abstract.FileDescriptor):
 
         That's what this funky code is for. If linux was not broken, this
         function could be simply "return CONNECTION_LOST".
-
-        BUG: We call select no matter what the reactor.
-        If the reactor is pollreactor, and the fd is > 1024, this will fail.
-        (only occurs on broken versions of linux, though).
         """
         if self.enableReadHack:
-            if brokenLinuxPipeBehavior:
-                fd = self.fd
-                r, w, x = select.select([fd], [fd], [], 0)
-                if r and w:
-                    return CONNECTION_LOST
-            else:
-                return CONNECTION_LOST
+            return CONNECTION_LOST
         else:
             self.stopReading()
+
 
     def connectionLost(self, reason):
         """
         See abstract.FileDescriptor.connectionLost.
         """
-        # At least on OS X 10.4, exiting while stdout is non-blocking can
+        # At least on macOS 10.4, exiting while stdout is non-blocking can
         # result in data loss.  For some reason putting the file descriptor
         # back into blocking mode seems to resolve this issue.
         fdesc.setBlocking(self.fd)
@@ -247,7 +226,7 @@ class ProcessReader(abstract.FileDescriptor):
     I am a selectable representation of a process's output pipe, such as
     stdout and stderr.
     """
-    connected = 1
+    connected = True
 
     def __init__(self, reactor, proc, name, fileno):
         """
@@ -260,18 +239,21 @@ class ProcessReader(abstract.FileDescriptor):
         self.fd = fileno
         self.startReading()
 
+
     def fileno(self):
         """
         Return the fileno() of my process's stderr.
         """
         return self.fd
 
+
     def writeSomeData(self, data):
         # the only time this is actually called is after .loseConnection Any
         # actual write attempt would fail, so we must avoid that. This hack
         # allows us to use .loseConnection on both readers and writers.
-        assert data == ""
+        assert data == b""
         return CONNECTION_LOST
+
 
     def doRead(self):
         """
@@ -279,8 +261,10 @@ class ProcessReader(abstract.FileDescriptor):
         """
         return fdesc.readFromFD(self.fd, self.dataReceived)
 
+
     def dataReceived(self, data):
         self.proc.childDataReceived(self.name, data)
+
 
     def loseConnection(self):
         if self.connected and not self.disconnecting:
@@ -288,6 +272,7 @@ class ProcessReader(abstract.FileDescriptor):
             self.stopReading()
             self.reactor.callLater(0, self.connectionLost,
                                    failure.Failure(CONNECTION_DONE))
+
 
     def connectionLost(self, reason):
         """
@@ -298,11 +283,12 @@ class ProcessReader(abstract.FileDescriptor):
         self.proc.childConnectionLost(self.name, reason)
 
 
+
 class _BaseProcess(BaseProcess, object):
     """
     Base class for Process and PTYProcess.
     """
-    status = None
+    status = None  # type: Optional[int]
     pid = None
 
     def reapProcess(self):
@@ -327,13 +313,13 @@ class _BaseProcess(BaseProcess, object):
                     pid = None
                 else:
                     raise
-        except:
-            log.msg('Failed to reap %d:' % self.pid)
+        except:     # noqa
+            log.msg('Failed to reap {}:'.format(self.pid))
             log.err()
             pid = None
         if pid:
-            self.processEnded(status)
             unregisterReapProcessHandler(pid, self)
+            self.processEnded(status)
 
 
     def _getReason(self, status):
@@ -386,17 +372,17 @@ class _BaseProcess(BaseProcess, object):
         Fork and then exec sub-process.
 
         @param path: the path where to run the new process.
-        @type path: C{str}
+        @type path: L{bytes} or L{unicode}
         @param uid: if defined, the uid used to run the new process.
-        @type uid: C{int}
+        @type uid: L{int}
         @param gid: if defined, the gid used to run the new process.
-        @type gid: C{int}
+        @type gid: L{int}
         @param executable: the executable to run in a new process.
-        @type executable: C{str}
+        @type executable: L{str}
         @param args: arguments used to create the new process.
-        @type args: C{list}.
+        @type args: L{list}.
         @param environment: environment used for the new process.
-        @type environment: C{dict}.
+        @type environment: L{dict}.
         @param kwargs: keyword arguments to L{_setupChild} method.
         """
         collectorEnabled = gc.isenabled()
@@ -437,31 +423,27 @@ class _BaseProcess(BaseProcess, object):
                     # write(2, err) is a useful thing to attempt.
 
                     try:
-                        stderr = os.fdopen(2, 'wb')
+                        # On Python 3, print_exc takes a text stream, but
+                        # on Python 2 it still takes a byte stream.  So on
+                        # Python 3 we will wrap up the byte stream returned
+                        # by os.fdopen using TextIOWrapper.
+
+                        # We hard-code UTF-8 as the encoding here, rather
+                        # than looking at something like
+                        # getfilesystemencoding() or sys.stderr.encoding,
+                        # because we want an encoding that will be able to
+                        # encode the full range of code points.  We are
+                        # (most likely) talking to the parent process on
+                        # the other end of this pipe and not the filesystem
+                        # or the original sys.stderr, so there's no point
+                        # in trying to match the encoding of one of those
+                        # objects.
+
+                        stderr = io.TextIOWrapper(os.fdopen(2, 'wb'),
+                                                  encoding="utf-8")
                         msg = ("Upon execvpe {0} {1} in environment id {2}"
                                "\n:").format(executable, str(args),
                                              id(environment))
-
-                        if _PY3:
-
-                            # On Python 3, print_exc takes a text stream, but
-                            # on Python 2 it still takes a byte stream.  So on
-                            # Python 3 we will wrap up the byte stream returned
-                            # by os.fdopen using TextIOWrapper.
-
-                            # We hard-code UTF-8 as the encoding here, rather
-                            # than looking at something like
-                            # getfilesystemencoding() or sys.stderr.encoding,
-                            # because we want an encoding that will be able to
-                            # encode the full range of code points.  We are
-                            # (most likely) talking to the parent process on
-                            # the other end of this pipe and not the filesystem
-                            # or the original sys.stderr, so there's no point
-                            # in trying to match the encoding of one of those
-                            # objects.
-
-                            stderr = io.TextIOWrapper(stderr, encoding="utf-8")
-
                         stderr.write(msg)
                         traceback.print_exc(file=stderr)
                         stderr.flush()
@@ -514,6 +496,7 @@ class _BaseProcess(BaseProcess, object):
         """
         return "<%s pid=%s status=%s>" % (self.__class__.__name__,
                                           self.pid, self.status)
+
 
 
 class _FDDetector(object):
@@ -621,7 +604,7 @@ class _FDDetector(object):
             # OS-X should get the /dev/fd implementation instead, so mostly
             # this check probably isn't necessary.
             maxfds = min(1024, resource.getrlimit(resource.RLIMIT_NOFILE)[1])
-        return list(range(maxfds))
+        return range(maxfds)
 
 
 
@@ -633,6 +616,7 @@ def _listOpenFDs():
     use.
     """
     return detector._listOpenFDs()
+
 
 
 @implementer(IProcessTransport)
@@ -674,8 +658,8 @@ class Process(_BaseProcess):
         or real UID is 0.)
         """
         if not proto:
-            assert 'r' not in list(childFDs.values())
-            assert 'w' not in list(childFDs.values())
+            assert 'r' not in childFDs.values()
+            assert 'w' not in childFDs.values()
         _BaseProcess.__init__(self, proto)
 
         self.pipes = {}
@@ -796,7 +780,7 @@ class Process(_BaseProcess):
             errfd = sys.stderr
             errfd.write("starting _setupChild\n")
 
-        destList = list(fdmap.values())
+        destList = fdmap.values()
         for fd in _listOpenFDs():
             if fd in destList:
                 continue
@@ -819,7 +803,7 @@ class Process(_BaseProcess):
                 if debug: print("%d already in place" % target, file=errfd)
                 fdesc._unsetCloseOnExec(child)
             else:
-                if child in list(fdmap.values()):
+                if child in fdmap.values():
                     # we can't replace child-fd yet, as some other mapping
                     # still needs the fd it wants to target. We must preserve
                     # that old fd by duping it to a new home.
@@ -843,9 +827,9 @@ class Process(_BaseProcess):
         # need to remove duplicates first.
 
         old = []
-        for fd in list(fdmap.values()):
+        for fd in fdmap.values():
             if not fd in old:
-                if not fd in list(fdmap.keys()):
+                if not fd in fdmap.keys():
                     old.append(fd)
         if debug: print("old", old, file=errfd)
         for fd in old:
@@ -857,6 +841,7 @@ class Process(_BaseProcess):
     def writeToChild(self, childFD, data):
         self.pipes[childFD].write(data)
 
+
     def closeChildFD(self, childFD):
         # for writer pipes, loseConnection tries to write the remaining data
         # out to the pipe before closing it
@@ -865,13 +850,15 @@ class Process(_BaseProcess):
         if childFD in self.pipes:
             self.pipes[childFD].loseConnection()
 
+
     def pauseProducing(self):
-        for p in self.pipes.values():
+        for p in self.pipes.itervalues():
             if isinstance(p, ProcessReader):
                 p.stopReading()
 
+
     def resumeProducing(self):
-        for p in self.pipes.values():
+        for p in self.pipes.itervalues():
             if isinstance(p, ProcessReader):
                 p.startReading()
 
@@ -882,16 +869,20 @@ class Process(_BaseProcess):
         """
         self.closeChildFD(0)
 
+
     def closeStdout(self):
         self.closeChildFD(1)
 
+
     def closeStderr(self):
         self.closeChildFD(2)
+
 
     def loseConnection(self):
         self.closeStdin()
         self.closeStderr()
         self.closeStdout()
+
 
     def write(self, data):
         """
@@ -901,6 +892,7 @@ class Process(_BaseProcess):
         """
         if 0 in self.pipes:
             self.pipes[0].write(data)
+
 
     def registerProducer(self, producer, streaming):
         """
@@ -914,11 +906,13 @@ class Process(_BaseProcess):
         else:
             producer.stopProducing()
 
+
     def unregisterProducer(self):
         """
         Call this to unregister producer for standard input."""
         if 0 in self.pipes:
             self.pipes[0].unregisterProducer()
+
 
     def writeSequence(self, seq):
         """
@@ -944,6 +938,7 @@ class Process(_BaseProcess):
         except:
             log.err()
         self.maybeCallProcessEnded()
+
 
     def maybeCallProcessEnded(self):
         # we don't call ProcessProtocol.processEnded until:
@@ -1067,16 +1062,19 @@ class PTYProcess(abstract.FileDescriptor, _BaseProcess):
         self._resetSignalDisposition()
 
 
-    # PTYs do not have stdin/stdout/stderr. They only have in and out, just
-    # like sockets. You cannot close one without closing off the entire PTY.
     def closeStdin(self):
+        # PTYs do not have stdin/stdout/stderr. They only have in and out, just
+        # like sockets. You cannot close one without closing off the entire PTY
         pass
+
 
     def closeStdout(self):
         pass
 
+
     def closeStderr(self):
         pass
+
 
     def doRead(self):
         """
@@ -1086,11 +1084,13 @@ class PTYProcess(abstract.FileDescriptor, _BaseProcess):
             self.fd,
             lambda data: self.proto.childDataReceived(1, data))
 
+
     def fileno(self):
         """
         This returns the file number of standard output on this process.
         """
         return self.fd
+
 
     def maybeCallProcessEnded(self):
         # two things must happen before we call the ProcessProtocol's
@@ -1102,6 +1102,7 @@ class PTYProcess(abstract.FileDescriptor, _BaseProcess):
         if self.lostProcess == 2:
             _BaseProcess.maybeCallProcessEnded(self)
 
+
     def connectionLost(self, reason):
         """
         I call this to clean up when one or all of my connections has died.
@@ -1110,6 +1111,7 @@ class PTYProcess(abstract.FileDescriptor, _BaseProcess):
         os.close(self.fd)
         self.lostProcess += 1
         self.maybeCallProcessEnded()
+
 
     def writeSomeData(self, data):
         """

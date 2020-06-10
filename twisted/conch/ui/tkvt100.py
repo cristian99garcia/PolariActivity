@@ -8,9 +8,10 @@
 Maintainer: Paul Swartz
 """
 
-import tkinter, tkinter.font
-from . import ansi
+import tkinter as Tkinter
+import tkinter.font as tkFont
 import string
+from . import ansi
 
 ttyFont = None#tkFont.Font(family = 'Courier', size = 10)
 fontWidth, fontHeight = None,None#max(map(ttyFont.measure, string.letters+string.digits)), int(ttyFont.metrics()['linespace'])
@@ -27,20 +28,21 @@ colorMap = {
     'L': '#0000ff', 'M': '#ff00ff', 'C': '#00ffff', 'W': '#ffffff',
 }
 
-class VT100Frame(tkinter.Frame):
+class VT100Frame(Tkinter.Frame):
     def __init__(self, *args, **kw):
         global ttyFont, fontHeight, fontWidth
-        ttyFont = tkinter.font.Font(family = 'Courier', size = 10)
-        fontWidth, fontHeight = max(list(map(ttyFont.measure, string.letters+string.digits))), int(ttyFont.metrics()['linespace'])
+        ttyFont = tkFont.Font(family = 'Courier', size = 10)
+        fontWidth = max(map(ttyFont.measure, string.ascii_letters+string.digits))
+        fontHeight = int(ttyFont.metrics()['linespace'])
         self.width = kw.get('width', 80)
         self.height = kw.get('height', 25)
         self.callback = kw['callback']
         del kw['callback']
         kw['width'] = w = fontWidth * self.width
         kw['height'] = h = fontHeight * self.height
-        tkinter.Frame.__init__(self, *args, **kw)
-        self.canvas = tkinter.Canvas(bg='#000000', width=w, height=h)
-        self.canvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        Tkinter.Frame.__init__(self, *args, **kw)
+        self.canvas = Tkinter.Canvas(bg='#000000', width=w, height=h)
+        self.canvas.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=1)
         self.canvas.bind('<Key>', self.keyPressed)
         self.canvas.bind('<1>', lambda x: 'break')
         self.canvas.bind('<Up>', self.upPressed)
@@ -85,7 +87,7 @@ class VT100Frame(tkinter.Frame):
             [self.canvas.delete(item) for item in items]
         if bg:
             self.canvas.create_rectangle(canvasX, canvasY, canvasX+fontWidth-1, canvasY+fontHeight-1, fill=bg, outline=bg)
-        self.canvas.create_text(canvasX, canvasY, anchor=tkinter.NW, font=ttyFont, text=ch, fill=fg)
+        self.canvas.create_text(canvasX, canvasY, anchor=Tkinter.NW, font=ttyFont, text=ch, fill=fg)
         self.x+=1
             
     def write(self, data):
@@ -171,7 +173,7 @@ class VT100Frame(tkinter.Frame):
             self.x=start-1
         elif cursor[-1]=='H':
             if len(cursor)>1:
-                y,x = list(map(int, cursor[:-1].split(';')))
+                y,x = map(int, cursor[:-1].split(';'))
                 y-=1
                 x-=1
             else:

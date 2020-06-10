@@ -64,13 +64,20 @@ the attributes being deprecated are in the same module as the
 L{deprecatedModuleAttribute} call is being made from, the C{__name__} global
 can be used as the C{moduleName} parameter.
 
+
+To mark an optional, keyword parameter of a function or method as deprecated
+without deprecating the function itself, you can use::
+
+    @deprecatedKeywordParameter(Version("Twisted", 19, 2, 0), 'baz')
+    def someFunction(foo, bar=0, baz=None):
+        ...
+
 See also L{incremental.Version}.
 
 @type DEPRECATION_WARNING_FORMAT: C{str}
 @var DEPRECATION_WARNING_FORMAT: The default deprecation warning string format
     to use when one is not provided by the user.
 """
-
 
 
 __all__ = [
@@ -80,16 +87,18 @@ __all__ = [
     'getWarningMethod',
     'setWarningMethod',
     'deprecatedModuleAttribute',
+    'deprecatedKeywordParameter',
     ]
 
 
-import sys, inspect
+import inspect
+import typing
+import sys
 from warnings import warn, warn_explicit
 from dis import findlinestarts
 from functools import wraps
 
-from incremental import getVersionString
-from twisted.python.compat import _PY3
+from incremental import Version, getVersionString
 
 DEPRECATION_WARNING_FORMAT = '%(fqpn)s was deprecated in %(version)s'
 
@@ -114,7 +123,7 @@ def _fullyQualifiedName(obj):
         return "%s.%s" % (moduleName, name)
     elif inspect.ismethod(obj):
         try:
-            cls = obj.__self__.__class__
+            cls = obj.im_class
         except AttributeError:
             # Python 3 eliminates im_class, substitutes __module__ and
             # __qualname__ to provide similar information.
@@ -356,21 +365,8 @@ def deprecatedProperty(version, replacement=None):
 
 
     def deprecationDecorator(function):
-        if _PY3:
-            warningString = getDeprecationWarningString(
-                function, version, None, replacement)
-        else:
-            # Because Python 2 sucks, we need to implement our own here -- lack
-            # of __qualname__ means that we kinda have to stack walk. It maybe
-            # probably works. Probably. -Amber
-            functionName = function.__name__
-            className = inspect.stack()[1][3]  # wow hax
-            moduleName = function.__module__
-
-            fqdn = "%s.%s.%s" % (moduleName, className, functionName)
-
-            warningString = _getDeprecationWarningString(
-                fqdn, version, None, replacement)
+        warningString = getDeprecationWarningString(
+            function, version, None, replacement)
 
         @wraps(function)
         def deprecatedFunction(*args, **kwargs):
@@ -653,7 +649,7 @@ def warnAboutFunction(offender, warningString):
 
 
 
-def _passed(argspec, positional, keyword):
+def _passedArgSpec(argspec, positional, keyword):
     """
     Take an I{inspect.ArgSpec}, a tuple of positional arguments, and a dict of
     keyword arguments, and return a mapping of arguments that were actually
@@ -683,12 +679,72 @@ def _passed(argspec, positional, keyword):
             result[argspec.varargs] = positional[len(argspec.args):]
     for name, value in zip(argspec.args, positional):
         result[name] = value
-    for name, value in list(keyword.items()):
+    for name, value in keyword.items():
         if name in argspec.args:
             if name in result:
                 raise TypeError("Already passed.")
             result[name] = value
         elif argspec.keywords is not None:
+            kwargs[name] = value
+        else:
+            raise TypeError("no such param")
+    return result
+
+
+
+def _passedSignature(signature, positional, keyword):
+    """
+    Take an L{inspect.Signature}, a tuple of positional arguments, and a dict of
+    keyword arguments, and return a mapping of arguments that were actually
+    passed to their passed values.
+
+    @param signature: The signature of the function to inspect.
+    @type signature: L{inspect.Signature}
+
+    @param positional: The positional arguments that were passed.
+    @type positional: L{tuple}
+
+    @param keyword: The keyword arguments that were passed.
+    @type keyword: L{dict}
+
+    @return: A dictionary mapping argument names (those declared in
+        C{signature}) to values that were passed explicitly by the user.
+    @rtype: L{dict} mapping L{str} to L{object}
+    """
+    result = {}
+    kwargs = None
+    numPositional = 0
+    for (n, (name, param)) in enumerate(signature.parameters.items()):
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            # Varargs, for example: *args
+            result[name] = positional[n:]
+            numPositional = len(result[name]) + 1
+        elif param.kind == inspect.Parameter.VAR_KEYWORD:
+            # Variable keyword args, for example: **my_kwargs
+            kwargs = result[name] = {}
+        elif param.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                            inspect.Parameter.POSITIONAL_ONLY):
+            if n < len(positional):
+                result[name] = positional[n]
+                numPositional += 1
+        elif param.kind == inspect.Parameter.KEYWORD_ONLY:
+            if name not in keyword:
+                if param.default == inspect.Parameter.empty:
+                    raise TypeError("missing keyword arg {}".format(name))
+                else:
+                    result[name] = param.default
+        else:
+            raise TypeError("'{}' parameter is invalid kind: {}".format(
+                                 name, param.kind))
+
+    if len(positional) > numPositional:
+        raise TypeError("Too many arguments.")
+    for name, value in keyword.items():
+        if name in signature.parameters.keys():
+            if name in result:
+                raise TypeError("Already passed.")
+            result[name] = value
+        elif kwargs is not None:
             kwargs[name] = value
         else:
             raise TypeError("no such param")
@@ -714,13 +770,88 @@ def _mutuallyExclusiveArguments(argumentPairs):
     @rtype: 1-argument callable taking a callable and returning a callable.
     """
     def wrapper(wrappee):
-        argspec = inspect.getargspec(wrappee)
+        if getattr(inspect, "signature", None):
+            # Python 3
+            spec = inspect.signature(wrappee)
+            _passed = _passedSignature
+        else:
+            # Python 2
+            spec = inspect.getargspec(wrappee)
+            _passed = _passedArgSpec
+
         @wraps(wrappee)
         def wrapped(*args, **kwargs):
-            arguments = _passed(argspec, args, kwargs)
+            arguments = _passed(spec, args, kwargs)
             for this, that in argumentPairs:
                 if this in arguments and that in arguments:
-                    raise TypeError("nope")
+                    raise TypeError(
+                        ("The %r and %r arguments to %s "
+                         "are mutually exclusive.") %
+                        (this, that, _fullyQualifiedName(wrappee)))
             return wrappee(*args, **kwargs)
         return wrapped
+    return wrapper
+
+
+
+_Tc = typing.TypeVar('_Tc', bound=typing.Callable[..., typing.Any])
+
+
+
+def deprecatedKeywordParameter(version: Version,
+                               name: str,
+                               replacement: typing.Optional[str] = None
+                               ) -> typing.Callable[[_Tc], _Tc]:
+    """
+    Return a decorator that marks a keyword parameter of a callable
+    as deprecated. A warning will be emitted if a caller supplies
+    a value for the parameter, whether the caller uses a keyword or
+    positional syntax.
+
+    @type version: L{incremental.Version}
+    @param version: The version in which the parameter will be marked as
+        having been deprecated.
+
+    @type name: L{str}
+    @param name: The name of the deprecated parameter.
+
+    @type replacement: L{str}
+    @param replacement: Optional text indicating what should be used in
+        place of the deprecated parameter.
+
+    @since: Twisted NEXT
+    """
+    def wrapper(wrappee: _Tc) -> _Tc:
+        warningString = _getDeprecationWarningString(
+            'The %r parameter to %s' % (
+                name,
+                _fullyQualifiedName(wrappee)
+            ),
+            version,
+            replacement=replacement)
+
+        doc = 'The %r parameter was deprecated in %s' % (
+            name, getVersionString(version)
+        )
+        if replacement:
+            doc = doc + '; ' + _getReplacementString(replacement)
+        doc += '.'
+
+        params = inspect.signature(wrappee).parameters
+        if name in params and \
+           params[name].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            parameterIndex = list(params).index(name)
+
+            def checkDeprecatedParameter(*args, **kwargs):
+                if len(args) > parameterIndex or name in kwargs:
+                    warn(warningString, DeprecationWarning, stacklevel=2)
+                return wrappee(*args, **kwargs)
+        else:
+            def checkDeprecatedParameter(*args, **kwargs):
+                if name in kwargs:
+                    warn(warningString, DeprecationWarning, stacklevel=2)
+                return wrappee(*args, **kwargs)
+        decorated = wraps(wrappee)(checkDeprecatedParameter)
+        _appendToDocstring(decorated, doc)
+        return decorated
     return wrapper

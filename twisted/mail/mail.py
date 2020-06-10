@@ -77,6 +77,7 @@ class DomainWithDefaultDict:
         return 1
 
 
+    @classmethod
     def fromkeys(klass, keys, value=None):
         """
         Create a new L{DomainWithDefaultDict} with the specified keys.
@@ -95,7 +96,6 @@ class DomainWithDefaultDict:
         for k in keys:
             d[k] = value
         return d
-    fromkeys = classmethod(fromkeys)
 
 
     def __contains__(self, name):
@@ -235,7 +235,7 @@ class DomainWithDefaultDict:
             (E{2}) L{IDomain} provider or L{None}
         @return: An iterator over the domain name/domain object pairs.
         """
-        return iter(self.domains.items())
+        return self.domains.iteritems()
 
 
     def iterkeys(self):
@@ -249,7 +249,7 @@ class DomainWithDefaultDict:
         @rtype: iterator over L{bytes}
         @return: An iterator over the domain names.
         """
-        return iter(self.domains.keys())
+        return self.domains.iterkeys()
 
 
     def itervalues(self):
@@ -264,7 +264,7 @@ class DomainWithDefaultDict:
             L{None}
         @return: An iterator over the domain objects.
         """
-        return iter(self.domains.values())
+        return self.domains.itervalues()
 
 
     def keys(self):
@@ -275,7 +275,7 @@ class DomainWithDefaultDict:
         @return: The domain names in this dictionary.
 
         """
-        return list(self.domains.keys())
+        return self.domains.keys()
 
 
     def values(self):
@@ -285,7 +285,7 @@ class DomainWithDefaultDict:
         @rtype: L{list} of L{IDomain} provider or L{None}
         @return: The domain objects in this dictionary.
         """
-        return list(self.domains.values())
+        return self.domains.values()
 
 
     def items(self):
@@ -297,7 +297,7 @@ class DomainWithDefaultDict:
             provider or L{None}
         @return: Domain name/domain object pairs in this dictionary.
         """
-        return list(self.domains.items())
+        return self.domains.items()
 
 
     def popitem(self):
@@ -568,7 +568,7 @@ class MailService(service.MultiService):
         @param domain: A domain object.
         """
         portal = Portal(domain)
-        list(map(portal.registerChecker, domain.getCredentialsCheckers()))
+        map(portal.registerChecker, domain.getCredentialsCheckers())
         self.domains[name] = domain
         self.portals[name] = portal
         if self.aliases and IAliasableDomain.providedBy(domain):
@@ -682,7 +682,7 @@ class FileMonitoringService(internet.TimerService):
         Schedule the next monitoring call.
         """
         from twisted.internet import reactor
-        t, self.index = next(self.intervals)
+        t, self.index = self.intervals.next()
         self._call = reactor.callLater(t, self._monitor)
 
 

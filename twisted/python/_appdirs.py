@@ -7,7 +7,6 @@ Application data directory support.
 """
 
 
-
 import appdirs
 import inspect
 

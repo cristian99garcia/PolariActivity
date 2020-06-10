@@ -7,7 +7,6 @@ HTTP response code definitions.
 """
 
 
-
 _CONTINUE = 100
 SWITCHING = 101
 

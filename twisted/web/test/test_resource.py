@@ -36,14 +36,14 @@ class ErrorPageTests(TestCase):
     def _pageRenderingTest(self, page, code, brief, detail):
         request = DummyRequest([b''])
         template = (
-            "\n"
-            "<html>\n"
-            "  <head><title>%s - %s</title></head>\n"
-            "  <body>\n"
-            "    <h1>%s</h1>\n"
-            "    <p>%s</p>\n"
-            "  </body>\n"
-            "</html>\n")
+            u"\n"
+            u"<html>\n"
+            u"  <head><title>%s - %s</title></head>\n"
+            u"  <body>\n"
+            u"    <h1>%s</h1>\n"
+            u"    <p>%s</p>\n"
+            u"  </body>\n"
+            u"</html>\n")
         expected = template % (code, brief, brief, detail)
         self.assertEqual(
             page.render(request), expected.encode('utf-8'))
@@ -173,6 +173,31 @@ class ResourceTests(TestCase):
         self.assertIsInstance(child, DynamicChild)
         self.assertEqual(child.path, path)
         self.assertIdentical(child.request, request)
+
+
+    def test_staticChildPathType(self):
+        """
+        Test that passing the wrong type to putChild results in a warning,
+        and a failure in Python 3
+        """
+        resource = Resource()
+        child = Resource()
+        sibling = Resource()
+        resource.putChild(u"foo", child)
+        warnings = self.flushWarnings([self.test_staticChildPathType])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("Path segment must be bytes",
+                      warnings[0]['message'])
+        # We expect an error here because "foo" != b"foo" on Python 3+
+        self.assertIsInstance(
+            resource.getChildWithDefault(b"foo", DummyRequest([])),
+            ErrorPage)
+
+        resource.putChild(None, sibling)
+        warnings = self.flushWarnings([self.test_staticChildPathType])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("Path segment must be bytes",
+                      warnings[0]['message'])
 
 
     def test_defaultHEAD(self):

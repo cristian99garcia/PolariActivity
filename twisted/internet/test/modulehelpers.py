@@ -6,7 +6,6 @@ Testing helpers related to the module system.
 """
 
 
-
 __all__ = ['NoReactor', 'AlternateReactor']
 
 import sys

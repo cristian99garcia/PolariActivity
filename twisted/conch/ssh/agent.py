@@ -10,7 +10,6 @@ Maintainer: Paul Swartz
 """
 
 
-
 import struct
 
 from twisted.conch.ssh.common import NS, getNS, getMP
@@ -291,6 +290,6 @@ AGENTC_REMOVE_IDENTITY          = 18
 AGENTC_REMOVE_ALL_IDENTITIES    = 19
 
 messages = {}
-for name, value in list(locals().copy().items()):
+for name, value in locals().copy().items():
     if name[:7] == 'AGENTC_':
         messages[value] = name[7:] # doesn't handle doubles

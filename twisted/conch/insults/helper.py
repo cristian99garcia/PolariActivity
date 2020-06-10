@@ -9,8 +9,8 @@ Partial in-memory terminal emulator
 """
 
 
-
-import re, string
+import re
+import string
 
 from zope.interface import implementer
 
@@ -24,7 +24,7 @@ from twisted.conch.insults import insults
 
 FOREGROUND = 30
 BACKGROUND = 40
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = range(9)
 
 
 

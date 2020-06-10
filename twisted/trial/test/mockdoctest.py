@@ -5,6 +5,7 @@
 # support.
 
 
+
 class Counter(object):
     """a simple counter object for testing trial's doctest support
 

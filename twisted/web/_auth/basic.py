@@ -11,7 +11,6 @@ HTTP BASIC authentication.
 """
 
 
-
 import binascii
 
 from zope.interface import implementer

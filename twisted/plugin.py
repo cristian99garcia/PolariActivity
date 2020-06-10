@@ -11,7 +11,6 @@ Plugin system for Twisted.
 """
 
 
-
 import os
 import sys
 
@@ -22,7 +21,7 @@ def _determinePickleModule():
     Determine which 'pickle' API module to use.
     """
     try:
-        import pickle
+        import cPickle
         return cPickle
     except ImportError:
         import pickle

@@ -7,12 +7,13 @@ I contain PythonScript, which is a very simple python script resource.
 """
 
 
-
-import os, traceback
+import os
+import traceback
+from io import StringIO
 
 from twisted import copyright
 from twisted.python.filepath import _coerceToFilesystemEncoding
-from twisted.python.compat import execfile, networkString, NativeStringIO, _PY3
+from twisted.python.compat import execfile, networkString
 from twisted.web import http, server, static, resource, util
 
 
@@ -61,7 +62,7 @@ def ResourceScript(path, registry):
             'cache': cs.cache,
             'recache': cs.recache}
     try:
-        exec(compile(open(path, "rb").read(), path, 'exec'), glob, glob)
+        execfile(path, glob, glob)
     except AlreadyCached as ac:
         return ac.args[0]
     rsrc = glob['resource']
@@ -166,17 +167,17 @@ class PythonScript(resource.Resource):
                      '__file__': _coerceToFilesystemEncoding("", self.filename),
                      'registry': self.registry}
         try:
-            exec(compile(open(self.filename, "rb").read(), self.filename, 'exec'), namespace, namespace)
+            execfile(self.filename, namespace, namespace)
         except IOError as e:
-            if e.errno == 2: #file not found
+            if e.errno == 2:  # file not found
                 request.setResponseCode(http.NOT_FOUND)
-                request.write(resource.NoResource("File not found.").render(request))
-        except:
-            io = NativeStringIO()
+                request.write(
+                    resource.NoResource("File not found.").render(request))
+        except BaseException:
+            io = StringIO()
             traceback.print_exc(file=io)
             output = util._PRE(io.getvalue())
-            if _PY3:
-                output = output.encode("utf8")
+            output = output.encode("utf8")
             request.write(output)
         request.finish()
         return server.NOT_DONE_YET

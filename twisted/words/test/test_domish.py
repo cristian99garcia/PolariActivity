@@ -6,10 +6,8 @@ Tests for L{twisted.words.xish.domish}, a DOM-like library for XMPP.
 """
 
 
-
 from zope.interface.verify import verifyObject
 
-from twisted.python.compat import _PY3, str
 from twisted.python.reflect import requireModule
 from twisted.trial import unittest
 from twisted.words.xish import domish
@@ -108,7 +106,7 @@ class ElementTests(unittest.TestCase):
 
     def test_characterData(self):
         """
-        Extract character data using L{unicode}.
+        Extract character data using L{str}.
         """
         element = domish.Element(("testns", "foo"))
         element.addContent("somecontent")
@@ -132,7 +130,7 @@ class ElementTests(unittest.TestCase):
 
     def test_characterDataUnicode(self):
         """
-        Extract character data using L{unicode}.
+        Extract character data using L{str}.
         """
         element = domish.Element(("testns", "foo"))
         element.addContent("\N{SNOWMAN}")
@@ -189,20 +187,6 @@ class ElementTests(unittest.TestCase):
         """
         element = domish.Element(("testns", "foo"))
         self.assertRaises(TypeError, element.addContent, b'bytes')
-    if not _PY3:
-        test_addContentBytes.skip = (
-            "Bytes behavior of addContent only provided on Python 3.")
-
-
-    def test_addContentBytesNonASCII(self):
-        """
-        Non-ASCII byte strings passed to C{addContent} yield L{UnicodeError}.
-        """
-        element = domish.Element(("testns", "foo"))
-        self.assertRaises(UnicodeError, element.addContent, b'\xe2\x98\x83')
-    if _PY3:
-        test_addContentBytesNonASCII.skip = (
-            "Bytes behavior of addContent only provided on Python 2.")
 
 
     def test_addElementContent(self):
@@ -350,6 +334,23 @@ class DomishStreamTestsMixin:
             self.elements[0].attributes, {(" bar baz ", "baz"): "quux"})
 
 
+    def test_attributesWithNamespaces(self):
+        """
+        Attributes with namespace are parsed without Exception.
+        (https://twistedmatrix.com/trac/ticket/9730 regression test)
+        """
+
+        xml = b"""<root xmlns:test='http://example.org' xml:lang='en'>
+                    <test:test>test</test:test>
+                  </root>"""
+
+        # with Python 3.8 and without #9730 fix, the following error would
+        # happen at next line:
+        # ``RuntimeError: dictionary keys changed during iteration``
+        self.stream.parse(xml)
+        self.assertEqual(self.elements[0].uri, "http://example.org")
+
+
     def testChildPrefix(self):
         xml = b"<root xmlns='testns' xmlns:foo='testns2'><foo:child/></root>"
 
@@ -408,11 +409,6 @@ class DomishSuxStreamTests(DomishStreamTestsMixin, unittest.TestCase):
     stream implementation.
     """
     streamClass = domish.SuxElementStream
-
-    if _PY3:
-        skip = "twisted.web.sux has not been ported to Python 3, yet."
-    elif domish.SuxElementStream is None:
-        skip = "twisted.web is required for SuxElementStream tests."
 
 
 
@@ -572,4 +568,5 @@ class SerializerTests(unittest.TestCase):
         e["test"] = "my value\u0221e"
         e.addContent("A degree symbol...\u00B0")
         self.assertEqual(e.toXml(),
-                          "<foo test='my value\u0221e'>A degree symbol...\u00B0</foo>")
+                         "<foo test='my value\u0221e'"
+                         ">A degree symbol...\u00B0</foo>")

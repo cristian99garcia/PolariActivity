@@ -6,15 +6,24 @@ Tests for L{twisted.words.protocols.jabber.client}
 """
 
 
-
 from hashlib import sha1
 
+from unittest import skipIf
+
 from twisted.internet import defer
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from twisted.trial import unittest
 from twisted.words.protocols.jabber import client, error, jid, xmlstream
 from twisted.words.protocols.jabber.sasl import SASLInitiatingInitializer
 from twisted.words.xish import utility
+
+try:
+    from twisted.internet import ssl
+except ImportError:
+    ssl = None
+    skipWhenNoSSL = (True, "SSL not available")
+else:
+    skipWhenNoSSL = (False, "")
 
 IQ_AUTH_GET = '/iq[@type="get"]/query[@xmlns="jabber:iq:auth"]'
 IQ_AUTH_SET = '/iq[@type="set"]/query[@xmlns="jabber:iq:auth"]'
@@ -98,7 +107,7 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
         super(IQAuthInitializerTests, self).setUp()
         self.init = client.IQAuthInitializer(self.xmlstream)
         self.authenticator.jid = jid.JID('user@example.com/resource')
-        self.authenticator.password = 'secret'
+        self.authenticator.password = u'secret'
 
 
     def testPlainText(self):
@@ -140,9 +149,9 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             The server checks the credentials and responds with an empty result
             signalling success.
             """
-            self.assertEqual('user', str(iq.query.username))
-            self.assertEqual('secret', str(iq.query.password))
-            self.assertEqual('resource', str(iq.query.resource))
+            self.assertEqual('user', unicode(iq.query.username))
+            self.assertEqual('secret', unicode(iq.query.password))
+            self.assertEqual('resource', unicode(iq.query.resource))
 
             # Send server response
             response = xmlstream.toResponse(iq, 'result')
@@ -196,17 +205,17 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             The server checks the credentials and responds with an empty result
             signalling success.
             """
-            self.assertEqual('user', str(iq.query.username))
+            self.assertEqual('user', unicode(iq.query.username))
             self.assertEqual(sha1(b'12345secret').hexdigest(),
-                              str(iq.query.digest))
-            self.assertEqual('resource', str(iq.query.resource))
+                              unicode(iq.query.digest))
+            self.assertEqual('resource', unicode(iq.query.resource))
 
             # Send server response
             response = xmlstream.toResponse(iq, 'result')
             self.pipe.source.send(response)
 
         # Digest authentication relies on the stream session identifier. Set it.
-        self.xmlstream.sid = '12345'
+        self.xmlstream.sid = u'12345'
 
         # Set up an observer for the request for authentication fields
         d1 = self.waitFor(IQ_AUTH_GET, onAuthGet)
@@ -312,7 +321,7 @@ class BindInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             response = xmlstream.toResponse(iq, 'result')
             response.addElement((NS_BIND, 'bind'))
             response.bind.addElement('jid',
-                                     content='user@example.com/other resource')
+                                     content=u'user@example.com/other resource')
             self.pipe.source.send(response)
 
         def cb(result):
@@ -379,11 +388,51 @@ class SessionInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
 
 
 
+class BasicAuthenticatorTests(unittest.TestCase):
+    """
+    Test for both BasicAuthenticator and basicClientFactory.
+    """
+
+    def test_basic(self):
+        """
+        Authenticator and stream are properly constructed by the factory.
+
+        The L{xmlstream.XmlStream} protocol created by the factory has the new
+        L{client.BasicAuthenticator} instance in its C{authenticator}
+        attribute.  It is set up with C{jid} and C{password} as passed to the
+        factory, C{otherHost} taken from the client JID. The stream futher has
+        two initializers, for TLS and authentication, of which the first has
+        its C{required} attribute set to C{True}.
+        """
+        self.client_jid = jid.JID('user@example.com/resource')
+
+        # Get an XmlStream instance. Note that it gets initialized with the
+        # XMPPAuthenticator (that has its associateWithXmlStream called) that
+        # is in turn initialized with the arguments to the factory.
+        xs = client.basicClientFactory(self.client_jid,
+                                       'secret').buildProtocol(None)
+
+        # test authenticator's instance variables
+        self.assertEqual('example.com', xs.authenticator.otherHost)
+        self.assertEqual(self.client_jid, xs.authenticator.jid)
+        self.assertEqual('secret', xs.authenticator.password)
+
+        # test list of initializers
+        tls, auth = xs.initializers
+
+        self.assertIsInstance(tls, xmlstream.TLSInitiatingInitializer)
+        self.assertIsInstance(auth, client.IQAuthInitializer)
+
+        self.assertFalse(tls.required)
+
+
+
 class XMPPAuthenticatorTests(unittest.TestCase):
     """
     Test for both XMPPAuthenticator and XMPPClientFactory.
     """
-    def testBasic(self):
+
+    def test_basic(self):
         """
         Test basic operations.
 
@@ -412,7 +461,36 @@ class XMPPAuthenticatorTests(unittest.TestCase):
         self.assertIsInstance(bind, client.BindInitializer)
         self.assertIsInstance(session, client.SessionInitializer)
 
-        self.assertFalse(tls.required)
+        self.assertTrue(tls.required)
         self.assertTrue(sasl.required)
-        self.assertFalse(bind.required)
+        self.assertTrue(bind.required)
         self.assertFalse(session.required)
+
+
+    @skipIf(*skipWhenNoSSL)
+    def test_tlsConfiguration(self):
+        """
+        A TLS configuration is passed to the TLS initializer.
+        """
+        configs = []
+
+        def init(self, xs, required=True, configurationForTLS=None):
+            configs.append(configurationForTLS)
+
+        self.client_jid = jid.JID('user@example.com/resource')
+
+        # Get an XmlStream instance. Note that it gets initialized with the
+        # XMPPAuthenticator (that has its associateWithXmlStream called) that
+        # is in turn initialized with the arguments to the factory.
+        configurationForTLS = ssl.CertificateOptions()
+        factory = client.XMPPClientFactory(
+            self.client_jid, 'secret',
+            configurationForTLS=configurationForTLS)
+        self.patch(xmlstream.TLSInitiatingInitializer, "__init__", init)
+        xs = factory.buildProtocol(None)
+
+        # test list of initializers
+        version, tls, sasl, bind, session = xs.initializers
+
+        self.assertIsInstance(tls, xmlstream.TLSInitiatingInitializer)
+        self.assertIs(configurationForTLS, configs[0])

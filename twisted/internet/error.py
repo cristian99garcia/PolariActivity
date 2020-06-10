@@ -6,7 +6,6 @@ Exceptions and errors for use in twisted.internet modules.
 """
 
 
-
 import socket
 
 from twisted.python import deprecate
@@ -235,6 +234,17 @@ class ConnectionAborted(ConnectionLost):
 
     @since: 11.1
     """
+
+    def __str__(self):
+        s = [(
+            "Connection was aborted locally using"
+            " ITCPTransport.abortConnection"
+        )]
+        if self.args:
+            s.append(': ')
+            s.append(' '.join(self.args))
+        s.append('.')
+        return ''.join(s)
 
 
 

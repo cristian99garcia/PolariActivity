@@ -6,7 +6,6 @@ Tests for returning Deferreds from a TestCase.
 """
 
 
-
 import unittest as pyunit
 
 from twisted.internet import defer

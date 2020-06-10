@@ -6,7 +6,6 @@ Tests for L{twisted.conch.checkers}.
 """
 
 
-
 try:
     import crypt
 except ImportError:

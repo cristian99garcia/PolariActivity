@@ -9,7 +9,6 @@ that process transports implement IConsumer properly.
 """
 
 
-
 import sys
 
 from twisted.python import log, reflect

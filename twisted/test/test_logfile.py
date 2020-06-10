@@ -2,19 +2,19 @@
 # See LICENSE for details.
 
 
-
 import contextlib
 import errno
 import os
-import pickle
 import stat
 import time
 
-from twisted.trial import unittest
+from unittest import skipIf
+from twisted.trial.unittest import TestCase
 from twisted.python import logfile, runtime
 
 
-class LogFileTests(unittest.TestCase):
+
+class LogFileTests(TestCase):
     """
     Test the rotating log file.
     """
@@ -109,7 +109,7 @@ class LogFileTests(unittest.TestCase):
         self.assertEqual(log._file.tell(), log.size)
         f = log._file
         f.seek(0, 0)
-        self.assertEqual(f.read(), "0123456789abc")
+        self.assertEqual(f.read(), b"0123456789abc")
 
 
     def test_logReader(self):
@@ -212,7 +212,7 @@ class LogFileTests(unittest.TestCase):
         f = log._file
         self.assertEqual(f.tell(), 6)
         f.seek(0, 0)
-        self.assertEqual(f.read(), "abcdef")
+        self.assertEqual(f.read(), b"abcdef")
 
 
     def test_maxNumberOfLog(self):
@@ -283,6 +283,7 @@ class LogFileTests(unittest.TestCase):
             self.assertEqual(mode, 0o066)
 
 
+    @skipIf(runtime.platform.isWindows(), "Can't test reopen on Windows")
     def test_reopen(self):
         """
         L{logfile.LogFile.reopen} allows to rename the currently used file and
@@ -300,9 +301,6 @@ class LogFileTests(unittest.TestCase):
         with open(savePath) as f:
             self.assertEqual(f.read(), "hello1")
 
-    if runtime.platform.isWindows():
-        test_reopen.skip = "Can't test reopen on Windows"
-
 
     def test_nonExistentDir(self):
         """
@@ -311,34 +309,6 @@ class LogFileTests(unittest.TestCase):
         e = self.assertRaises(
             IOError, logfile.LogFile, self.name, 'this_dir_does_not_exist')
         self.assertEqual(e.errno, errno.ENOENT)
-
-
-    def test_persistence(self):
-        """
-        L{LogFile} objects can be pickled and unpickled, which preserves all
-        the various attributes of the log file.
-        """
-        rotateLength = 12345
-        defaultMode = 0o642
-        maxRotatedFiles = 42
-
-        with contextlib.closing(
-                logfile.LogFile(self.name, self.dir,
-                                rotateLength, defaultMode,
-                                maxRotatedFiles)) as log:
-            log.write("123")
-
-        copy = pickle.loads(pickle.dumps(log))
-        self.addCleanup(copy.close)
-
-        # Check that the unpickled log is the same as the original one.
-        self.assertEqual(self.name, copy.name)
-        self.assertEqual(self.dir, copy.directory)
-        self.assertEqual(self.path, copy.path)
-        self.assertEqual(rotateLength, copy.rotateLength)
-        self.assertEqual(defaultMode, copy.defaultMode)
-        self.assertEqual(maxRotatedFiles, copy.maxRotatedFiles)
-        self.assertEqual(log.size, copy.size)
 
 
     def test_cantChangeFileMode(self):
@@ -407,7 +377,7 @@ class RiggedDailyLogFile(logfile.DailyLogFile):
 
 
 
-class DailyLogFileTests(unittest.TestCase):
+class DailyLogFileTests(TestCase):
     """
     Test rotating log file.
     """
@@ -505,6 +475,9 @@ class DailyLogFileTests(unittest.TestCase):
         self.assertEqual(previousFile, log._file)
 
 
+    @skipIf(runtime.platform.isWindows(),
+            "Making read-only directories on Windows is too complex for this "
+            "test to reasonably do.")
     def test_rotatePermissionDirectoryNotOk(self):
         """
         L{DailyLogFile.rotate} doesn't do anything if the directory containing
@@ -519,11 +492,6 @@ class DailyLogFileTests(unittest.TestCase):
         previousFile = log._file
         log.rotate()
         self.assertEqual(previousFile, log._file)
-
-    if runtime.platform.isWindows():
-        test_rotatePermissionDirectoryNotOk.skip = (
-            "Making read-only directories on Windows is too complex for this "
-            "test to reasonably do.")
 
 
     def test_rotatePermissionFileNotOk(self):
@@ -589,26 +557,3 @@ class DailyLogFileTests(unittest.TestCase):
 
         logDate = log.toDate(seconds)
         self.assertEqual(date, logDate)
-
-
-    def test_persistence(self):
-        """
-        L{DailyLogFile} objects can be pickled and unpickled, which preserves
-        all the various attributes of the log file.
-        """
-        defaultMode = 0o642
-
-        log = logfile.DailyLogFile(self.name, self.dir,
-                                   defaultMode)
-        self.addCleanup(log.close)
-        log.write("123")
-
-        # Check that the unpickled log is the same as the original one.
-        copy = pickle.loads(pickle.dumps(log))
-        self.addCleanup(copy.close)
-
-        self.assertEqual(self.name, copy.name)
-        self.assertEqual(self.dir, copy.directory)
-        self.assertEqual(self.path, copy.path)
-        self.assertEqual(defaultMode, copy.defaultMode)
-        self.assertEqual(log.lastDate, copy.lastDate)

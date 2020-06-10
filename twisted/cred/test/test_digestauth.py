@@ -7,7 +7,6 @@ L{twisted.cred.credentials}.
 """
 
 
-
 import base64
 
 from binascii import hexlify
@@ -280,7 +279,7 @@ class DigestAuthTests(TestCase):
         return b', '.join([
                 b"".join((networkString(k), b"=", quote, v, quote))
                 for (k, v)
-                in list(kw.items())
+                in kw.items()
                 if v is not None])
 
 

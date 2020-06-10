@@ -7,7 +7,6 @@ Cred errors.
 
 
 
-
 class Unauthorized(Exception):
     """Standard unauthorized error."""
 

@@ -7,13 +7,12 @@ to load code.
 """
 
 
-
 import sys
 
 from twisted.python.filepath import FilePath
 
 
-class TwistedModulesMixin:
+class TwistedModulesMixin(object):
     """
     A mixin for C{twisted.trial.unittest.SynchronousTestCase} providing useful
     methods for manipulating Python's module system.

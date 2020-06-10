@@ -11,20 +11,17 @@ Maintainer: Itamar Shtull-Trauring
 """
 
 
-
 import os
 import stat
 import socket
 import struct
 from errno import EINTR, EMSGSIZE, EAGAIN, EWOULDBLOCK, ECONNREFUSED, ENOBUFS
-
+from typing import Optional, Type
 from zope.interface import implementer, implementer_only, implementedBy
-
-if not hasattr(socket, 'AF_UNIX'):
-    raise ImportError("UNIX sockets not supported on this platform")
 
 from twisted.internet import main, base, tcp, udp, error, interfaces
 from twisted.internet import protocol, address
+from twisted.internet.abstract import FileDescriptor
 from twisted.python import lockfile, log, reflect, failure
 from twisted.python.filepath import _coerceToFilesystemEncoding
 from twisted.python.util import untilConcludes
@@ -32,9 +29,15 @@ from twisted.python.compat import lazyByteSlice
 
 
 try:
-    from twisted.python import sendmsg
+    from twisted.python import sendmsg as _sendmsg
 except ImportError:
     sendmsg = None
+else:
+    sendmsg = _sendmsg
+
+if not hasattr(socket, 'AF_UNIX'):
+    raise ImportError("UNIX sockets not supported on this platform")
+
 
 
 
@@ -68,7 +71,7 @@ class _SendmsgMixin(object):
         registered producer, if there is one.
     """
 
-    _writeSomeDataBase = None
+    _writeSomeDataBase = None  # type: Optional[Type[FileDescriptor]]
     _fileDescriptorBufferSize = 64
 
     def __init__(self):
@@ -154,8 +157,9 @@ class _SendmsgMixin(object):
 
     def doRead(self):
         """
-        Calls L{IFileDescriptorReceiver.fileDescriptorReceived} and
-        L{IProtocol.dataReceived} with all available data.
+        Calls {IProtocol.dataReceived} with all available data and
+        L{IFileDescriptorReceiver.fileDescriptorReceived} once for each
+        received file descriptor in ancillary data.
 
         This reads up to C{self.bufferSize} bytes of data from its socket, then
         dispatches the data to protocol callbacks to be handled.  If the
@@ -171,23 +175,54 @@ class _SendmsgMixin(object):
             else:
                 return main.CONNECTION_LOST
 
-        if ancillary:
-            fd = struct.unpack('i', ancillary[0][2])[0]
-            if interfaces.IFileDescriptorReceiver.providedBy(self.protocol):
-                self.protocol.fileDescriptorReceived(fd)
+        for cmsgLevel, cmsgType, cmsgData in ancillary:
+            if (cmsgLevel == socket.SOL_SOCKET and
+                cmsgType == sendmsg.SCM_RIGHTS):
+                self._ancillaryLevelSOLSOCKETTypeSCMRIGHTS(cmsgData)
             else:
                 log.msg(
                     format=(
-                        "%(protocolName)s (on %(hostAddress)r) does not "
-                        "provide IFileDescriptorReceiver; closing file "
-                        "descriptor received (from %(peerAddress)r)."),
+                        "%(protocolName)s (on %(hostAddress)r) "
+                        "received unsupported ancillary data "
+                        "(level=%(cmsgLevel)r, type=%(cmsgType)r) "
+                        "from %(peerAddress)r."),
                     hostAddress=self.getHost(), peerAddress=self.getPeer(),
                     protocolName=self._getLogPrefix(self.protocol),
-                    )
-                os.close(fd)
+                    cmsgLevel=cmsgLevel, cmsgType=cmsgType,
+                )
 
         return self._dataReceived(data)
 
+
+    def _ancillaryLevelSOLSOCKETTypeSCMRIGHTS(self, cmsgData):
+        """
+        Processes ancillary data with level SOL_SOCKET and type SCM_RIGHTS,
+        indicating that the ancillary data payload holds file descriptors.
+
+        Calls L{IFileDescriptorReceiver.fileDescriptorReceived} once for each
+        received file descriptor or logs a message if the protocol does not
+        implement L{IFileDescriptorReceiver}.
+
+        @param cmsgData: Ancillary data payload.
+        @type cmsgData: L{bytes}
+        """
+
+        fdCount = len(cmsgData) // 4
+        fds = struct.unpack('i'*fdCount, cmsgData)
+        if interfaces.IFileDescriptorReceiver.providedBy(self.protocol):
+            for fd in fds:
+                self.protocol.fileDescriptorReceived(fd)
+        else:
+            log.msg(
+                format=(
+                    "%(protocolName)s (on %(hostAddress)r) does not "
+                    "provide IFileDescriptorReceiver; closing file "
+                    "descriptor received (from %(peerAddress)r)."),
+                hostAddress=self.getHost(), peerAddress=self.getPeer(),
+                protocolName=self._getLogPrefix(self.protocol),
+            )
+            for fd in fds:
+                os.close(fd)
 
 
 class _UnsupportedSendmsgMixin(object):
@@ -213,6 +248,39 @@ class Server(_SendmsgMixin, tcp.Server):
         _SendmsgMixin.__init__(self)
         tcp.Server.__init__(self, sock, protocol, (client, None), server, sessionno, reactor)
 
+    @classmethod
+    def _fromConnectedSocket(cls, fileDescriptor, factory, reactor):
+        """
+        Create a new L{Server} based on an existing connected I{SOCK_STREAM}
+        socket.
+
+        Arguments are the same as to L{Server.__init__}, except where noted.
+
+        @param fileDescriptor: An integer file descriptor associated with a
+            connected socket.  The socket must be in non-blocking mode.  Any
+            additional attributes desired, such as I{FD_CLOEXEC}, must also be
+            set already.
+
+        @return: A new instance of C{cls} wrapping the socket given by
+            C{fileDescriptor}.
+        """
+        skt = socket.fromfd(fileDescriptor, socket.AF_UNIX, socket.SOCK_STREAM)
+        protocolAddr = address.UNIXAddress(skt.getsockname())
+
+        proto = factory.buildProtocol(protocolAddr)
+        if proto is None:
+            skt.close()
+            return
+
+        # FIXME: is this a suitable sessionno?
+        sessionno = 0
+        self = cls(skt, proto, skt.getpeername(), None, sessionno, reactor)
+        self.repstr = "<%s #%s on %s>" % (
+            self.protocol.__class__.__name__, self.sessionno, skt.getsockname())
+        self.logstr = "%s,%s,%s" % (
+            self.protocol.__class__.__name__, self.sessionno, skt.getsockname())
+        proto.makeConnection(self)
+        return self
 
     def getHost(self):
         return address.UNIXAddress(self.socket.getsockname())
@@ -232,7 +300,7 @@ def _inFilesystemNamespace(path):
     path is stored in the filesystem and C{False} if the path is in this
     abstract namespace.
     """
-    return path[:1] not in (b"\0", "\0")
+    return path[:1] not in (b"\0", u"\0")
 
 
 class _UNIXPort(object):
@@ -259,6 +327,26 @@ class Port(_UNIXPort, tcp.Port):
                           backlog, reactor=reactor)
         self.mode = mode
         self.wantPID = wantPID
+        self._preexistingSocket = None
+
+    @classmethod
+    def _fromListeningDescriptor(cls, reactor, fd, factory):
+        """
+        Create a new L{Port} based on an existing listening I{SOCK_STREAM}
+        socket.
+
+        Arguments are the same as to L{Port.__init__}, except where noted.
+
+        @param fd: An integer file descriptor associated with a listening
+            socket.  The socket must be in non-blocking mode.  Any additional
+            attributes desired, such as I{FD_CLOEXEC}, must also be set already.
+
+        @return: A new instance of C{cls} wrapping the socket given by C{fd}.
+        """
+        port = socket.fromfd(fd, cls.addressFamily, cls.socketType)
+        self = cls(port.getsockname(), factory, reactor=reactor)
+        self._preexistingSocket = port
+        return self
 
     def __repr__(self):
         factoryName = reflect.qual(self.factory.__class__)
@@ -278,6 +366,7 @@ class Port(_UNIXPort, tcp.Port):
         This is called on unserialization, and must be called after creating a
         server to begin listening on the specified port.
         """
+        tcp._reservedFD.reserve()
         log.msg("%s starting on %r" % (
             self._getLogPrefix(self.factory),
             _coerceToFilesystemEncoding('', self.port)))
@@ -300,9 +389,14 @@ class Port(_UNIXPort, tcp.Port):
                         pass
 
         self.factory.doStart()
+
         try:
-            skt = self.createInternetSocket()
-            skt.bind(self.port)
+            if self._preexistingSocket is not None:
+                skt = self._preexistingSocket
+                self._preexistingSocket = None
+            else:
+                skt = self.createInternetSocket()
+                skt.bind(self.port)
         except socket.error as le:
             raise error.CannotListenError(None, self.port, le)
         else:

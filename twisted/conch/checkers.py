@@ -7,7 +7,6 @@ Provide L{ICredentialsChecker} implementations to be used in Conch protocols.
 """
 
 
-
 import sys
 import binascii
 import errno
@@ -34,7 +33,7 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword, ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
-from twisted.python.compat import _keys, _PY3, _b64decodebytes
+from twisted.python.compat import _keys, _b64decodebytes
 from twisted.python import failure, reflect, log
 from twisted.python.deprecate import deprecatedModuleAttribute
 from twisted.python.util import runAsEffectiveUser
@@ -111,12 +110,8 @@ class UNIXPasswordDatabase:
     def requestAvatarId(self, credentials):
         # We get bytes, but the Py3 pwd module uses str. So attempt to decode
         # it using the same method that CPython does for the file on disk.
-        if _PY3:
-            username = credentials.username.decode(sys.getfilesystemencoding())
-            password = credentials.password.decode(sys.getfilesystemencoding())
-        else:
-            username = credentials.username
-            password = credentials.password
+        username = credentials.username.decode(sys.getfilesystemencoding())
+        password = credentials.password.decode(sys.getfilesystemencoding())
 
         for func in self._getByNameFunctions:
             try:
@@ -151,6 +146,7 @@ class SSHPublicKeyDatabase:
         d.addCallback(self._cbRequestAvatarId, credentials)
         d.addErrback(self._ebRequestAvatarId)
         return d
+
 
     def _cbRequestAvatarId(self, validKey, credentials):
         """
@@ -238,6 +234,7 @@ class SSHPublicKeyDatabase:
                         continue
         return False
 
+
     def _ebRequestAvatarId(self, f):
         if not f.check(UnauthorizedLogin):
             log.msg(f)
@@ -263,6 +260,7 @@ class SSHProtocolChecker:
         self.checkers = {}
         self.successfulCredentials = {}
 
+
     def get_credentialInterfaces(self):
         return _keys(self.checkers)
 
@@ -273,6 +271,7 @@ class SSHProtocolChecker:
             credentialInterfaces = checker.credentialInterfaces
         for credentialInterface in credentialInterfaces:
             self.checkers[credentialInterface] = checker
+
 
     def requestAvatarId(self, credentials):
         """
@@ -295,6 +294,7 @@ class SSHProtocolChecker:
         return defer.fail(UnhandledCredentials("No checker for %s" % \
             ', '.join(map(reflect.qual, ifac))))
 
+
     def _cbGoodAuthentication(self, avatarId, credentials):
         """
         Called if a checker has verified the credentials.  We call our
@@ -310,6 +310,7 @@ class SSHProtocolChecker:
             return avatarId
         else:
             raise error.NotEnoughAuthentication()
+
 
     def areDone(self, avatarId):
         """
@@ -579,7 +580,7 @@ class SSHPublicKeyChecker(object):
         try:
             if pubKey.verify(credentials.signature, credentials.sigData):
                 return credentials.username
-        except:  # any error should be treated as a failed login
+        except:  # Any error should be treated as a failed login
             log.err()
             raise UnauthorizedLogin('Error while verifying key')
 

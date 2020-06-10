@@ -7,7 +7,6 @@ Scheduling utility methods and classes.
 """
 
 
-
 __metaclass__ = type
 
 import sys
@@ -87,6 +86,8 @@ class LoopingCall:
 
         return self._deferred
 
+
+    @classmethod
     def withCount(cls, countCallable):
         """
         An alternate constructor for L{LoopingCall} that makes available the
@@ -143,8 +144,6 @@ class LoopingCall:
         self._realLastTime = None
 
         return self
-
-    withCount = classmethod(withCount)
 
 
     def _intervalOf(self, t):
@@ -282,7 +281,7 @@ class LoopingCall:
         elif hasattr(self.f, '__name__'):
             func = self.f.__name__
             if hasattr(self.f, 'im_class'):
-                func = self.f.__self__.__class__.__name__ + '.' + func
+                func = self.f.im_class.__name__ + '.' + func
         else:
             func = reflect.safe_repr(self.f)
 
@@ -837,7 +836,7 @@ class Clock:
 
 
 
-def deferLater(clock, delay, callable, *args, **kw):
+def deferLater(clock, delay, callable=None, *args, **kw):
     """
     Call the given function after a certain period of time has passed.
 
@@ -862,7 +861,8 @@ def deferLater(clock, delay, callable, *args, **kw):
     def deferLaterCancel(deferred):
         delayedCall.cancel()
     d = defer.Deferred(deferLaterCancel)
-    d.addCallback(lambda ignored: callable(*args, **kw))
+    if callable is not None:
+        d.addCallback(lambda ignored: callable(*args, **kw))
     delayedCall = clock.callLater(delay, d.callback, None)
     return d
 

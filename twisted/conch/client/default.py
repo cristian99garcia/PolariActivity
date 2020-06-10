@@ -12,10 +12,9 @@ interact with a known_hosts database, use L{twisted.conch.client.knownhosts}.
 """
 
 
-
 from twisted.python import log
 from twisted.python.compat import (
-    nativeString, raw_input, _PY3, _b64decodebytes as decodebytes)
+    nativeString, raw_input, _b64decodebytes as decodebytes)
 from twisted.python.filepath import FilePath
 
 from twisted.conch.error import ConchError
@@ -26,10 +25,11 @@ from twisted.conch.client.knownhosts import KnownHostsFile, ConsoleUI
 
 from twisted.conch.client import agent
 
-import os, sys, getpass, contextlib
-
-if _PY3:
-    import io
+import contextlib
+import getpass
+import io
+import os
+import sys
 
 # The default location of the known hosts file (probably should be parsed out
 # of an ssh config file someday).
@@ -85,7 +85,7 @@ def verifyHostKey(transport, host, pubKey, fingerprint):
             transport.factory.options['known-hosts']
             or os.path.expanduser(_KNOWN_HOSTS)
             ))
-    ui = ConsoleUI(lambda : _open("/dev/tty", "r+b"))
+    ui = ConsoleUI(lambda : _open("/dev/tty", "r+b", buffering=0))
     return kh.verifyHostKey(ui, actualHost, host, actualKey)
 
 
@@ -127,6 +127,31 @@ def isInKnownHosts(host, pubKey, options):
             else:
                 retVal = 2
     return retVal
+
+
+
+def getHostKeyAlgorithms(host, options):
+    """
+    Look in known_hosts for a key corresponding to C{host}.
+    This can be used to change the order of supported key types
+    in the KEXINIT packet.
+
+    @type host: L{str}
+    @param host: the host to check in known_hosts
+    @type options: L{twisted.conch.client.options.ConchOptions}
+    @param options: options passed to client
+    @return: L{list} of L{str} representing key types or L{None}.
+    """
+    knownHosts = KnownHostsFile.fromPath(FilePath(
+        options['known-hosts']
+        or os.path.expanduser(_KNOWN_HOSTS)
+        ))
+    keyTypes = []
+    for entry in knownHosts.iterentries():
+        if entry.matchesHost(host):
+            if entry.keyType not in keyTypes:
+                keyTypes.append(entry.keyType)
+    return keyTypes or None
 
 
 
@@ -282,7 +307,7 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
             for prompt, echo in prompts:
                 prompt = prompt.decode("utf-8")
                 if echo:
-                    responses.append(input(prompt))
+                    responses.append(raw_input(prompt))
                 else:
                     responses.append(getpass.getpass(prompt))
         return defer.succeed(responses)
@@ -297,13 +322,9 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
         @return: File objects for reading and writing to /dev/tty,
                  corresponding to standard input and standard output.
         @rtype: A L{tuple} of L{io.TextIOWrapper} on Python 3.
-                A L{tuple} of binary files on Python 2.
         """
-        stdin = open("/dev/tty", "rb")
-        stdout = open("/dev/tty", "wb")
-        if _PY3:
-            stdin = io.TextIOWrapper(stdin)
-            stdout = io.TextIOWrapper(stdout)
+        stdin = io.TextIOWrapper(open("/dev/tty", "rb"))
+        stdout = io.TextIOWrapper(open("/dev/tty", "wb"))
         return stdin, stdout
 
 

@@ -11,7 +11,6 @@ implementation and will be used whenever pyOpenSSL 0.10 or newer is installed
 """
 
 
-
 from zope.interface import implementer
 from zope.interface import directlyProvides
 

@@ -9,7 +9,7 @@ from hashlib import sha1
 from zope.interface.verify import verifyObject
 
 from twisted.python import failure
-from twisted.python.compat import str
+from twisted.python.compat import unicode
 from twisted.trial import unittest
 from twisted.words.protocols.jabber import component, ijabber, xmlstream
 from twisted.words.protocols.jabber.jid import JID
@@ -28,7 +28,7 @@ class ComponentInitiatingInitializerTests(unittest.TestCase):
         self.output = []
 
         self.authenticator = xmlstream.Authenticator()
-        self.authenticator.password = 'secret'
+        self.authenticator.password = u'secret'
         self.xmlstream = xmlstream.XmlStream(self.authenticator)
         self.xmlstream.namespace = 'test:component'
         self.xmlstream.send = self.output.append
@@ -37,7 +37,7 @@ class ComponentInitiatingInitializerTests(unittest.TestCase):
                 "<stream:stream xmlns='test:component' "
                 "xmlns:stream='http://etherx.jabber.org/streams' "
                 "from='example.com' id='12345' version='1.0'>")
-        self.xmlstream.sid = '12345'
+        self.xmlstream.sid = u'12345'
         self.init = component.ComponentInitiatingInitializer(self.xmlstream)
 
     def testHandshake(self):
@@ -53,7 +53,7 @@ class ComponentInitiatingInitializerTests(unittest.TestCase):
         self.assertEqual('handshake', handshake.name)
         self.assertEqual('test:component', handshake.uri)
         self.assertEqual(sha1(b'12345' + b'secret').hexdigest(),
-                         str(handshake))
+                         unicode(handshake))
 
         # successful authentication
 
@@ -70,7 +70,7 @@ class ComponentAuthTests(unittest.TestCase):
         self.authComplete = False
         outlist = []
 
-        ca = component.ConnectComponentAuthenticator("cjid", "secret")
+        ca = component.ConnectComponentAuthenticator(u"cjid", u"secret")
         xs = xmlstream.XmlStream(ca)
         xs.transport = DummyTransport(outlist)
 
@@ -309,7 +309,7 @@ class ListenComponentAuthenticatorTests(unittest.TestCase):
         xs.authenticator.onHandshake = handshakes.append
 
         handshake = domish.Element(('jabber:component:accept', 'handshake'))
-        handshake.addContent('1234')
+        handshake.addContent(u'1234')
         xs.authenticator.onElement(handshake)
         self.assertEqual('1234', handshakes[-1])
 
@@ -341,7 +341,7 @@ class ListenComponentAuthenticatorTests(unittest.TestCase):
 
         xs = self.xmlstream
         xs.addOnetimeObserver(xmlstream.STREAM_AUTHD_EVENT, authenticated)
-        xs.sid = '1234'
+        xs.sid = u'1234'
         theHash = '32532c0f7dbf1253c095b18b18e36d38d94c1256'
         xs.authenticator.onHandshake(theHash)
         self.assertEqual('<handshake/>', self.output[-1])
@@ -362,7 +362,7 @@ class ListenComponentAuthenticatorTests(unittest.TestCase):
         xs.addOnetimeObserver(xmlstream.STREAM_AUTHD_EVENT, authenticated)
         xs.sendStreamError = streamErrors.append
 
-        xs.sid = '1234'
+        xs.sid = u'1234'
         theHash = '1234'
         xs.authenticator.onHandshake(theHash)
         self.assertEqual('not-authorized', streamErrors[-1].condition)

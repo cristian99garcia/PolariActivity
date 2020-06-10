@@ -6,7 +6,6 @@
 Exception definitions for L{twisted.web}.
 """
 
-
 try:
     from future_builtins import ascii
 except ImportError:
@@ -19,10 +18,10 @@ __all__ = [
     'RedirectWithNoLocation',
     ]
 
-from collections import Sequence
 
 from twisted.web._responses import RESPONSES
-from twisted.python.compat import str, nativeString, intToBytes
+from twisted.python.compat import unicode, nativeString, intToBytes, Sequence
+
 
 
 def _codeToMessage(code):
@@ -222,6 +221,10 @@ class UnsupportedMethod(Exception):
                 "but my first argument is not a sequence.")
 
 
+    def __str__(self):
+        return "Expected one of %r" % (self.allowedMethods,)
+
+
 
 class SchemeNotSupported(Exception):
     """
@@ -296,6 +299,14 @@ class UnsupportedType(Exception):
     """
 
 
+class ExcessiveBufferingError(Exception):
+    """
+    The HTTP/2 protocol has been forced to buffer an excessive amount of
+    outbound data, and has therefore closed the connection and dropped all
+    outbound data.
+    """
+
+
 
 class FlattenerError(Exception):
     """
@@ -329,15 +340,15 @@ class FlattenerError(Exception):
         # only for an isinstance() check.
         from twisted.web.template import Tag
 
-        if isinstance(obj, (bytes, str)):
+        if isinstance(obj, (bytes, str, unicode)):
             # It's somewhat unlikely that there will ever be a str in the roots
             # list.  However, something like a MemoryError during a str.replace
             # call (eg, replacing " with &quot;) could possibly cause this.
             # Likewise, UTF-8 encoding a unicode string to a byte string might
             # fail like this.
             if len(obj) > 40:
-                if isinstance(obj, str):
-                    ellipsis = '<...>'
+                if isinstance(obj, unicode):
+                    ellipsis = u'<...>'
                 else:
                     ellipsis = b'<...>'
                 return ascii(obj[:20] + ellipsis + obj[-20:])

@@ -9,7 +9,6 @@ Resource limiting policies.
 """
 
 
-
 # system imports
 import sys
 
@@ -124,6 +123,8 @@ class ProtocolWrapper(Protocol):
         self.factory.unregisterProtocol(self)
         self.wrappedProtocol.connectionLost(reason)
 
+        # Breaking reference cycle between self and wrappedProtocol.
+        self.wrappedProtocol = None
 
 
 class WrappingFactory(ClientFactory):
@@ -315,7 +316,7 @@ class ThrottlingFactory(WrappingFactory):
         Throttle reads on all protocols.
         """
         log.msg("Throttling reads on %s" % self)
-        for p in list(self.protocols.keys()):
+        for p in self.protocols.keys():
             p.throttleReads()
 
 
@@ -325,7 +326,7 @@ class ThrottlingFactory(WrappingFactory):
         """
         self.unthrottleReadsID = None
         log.msg("Stopped throttling reads on %s" % self)
-        for p in list(self.protocols.keys()):
+        for p in self.protocols.keys():
             p.unthrottleReads()
 
 
@@ -334,7 +335,7 @@ class ThrottlingFactory(WrappingFactory):
         Throttle writes on all protocols.
         """
         log.msg("Throttling writes on %s" % self)
-        for p in list(self.protocols.keys()):
+        for p in self.protocols.keys():
             p.throttleWrites()
 
 
@@ -344,7 +345,7 @@ class ThrottlingFactory(WrappingFactory):
         """
         self.unthrottleWritesID = None
         log.msg("Stopped throttling writes on %s" % self)
-        for p in list(self.protocols.keys()):
+        for p in self.protocols.keys():
             p.unthrottleWrites()
 
 
@@ -467,13 +468,14 @@ class TimeoutProtocol(ProtocolWrapper):
         """
         Constructor.
 
-        @param factory: An L{protocol.Factory}.
+        @param factory: An L{TimeoutFactory}.
         @param wrappedProtocol: A L{Protocol} to wrapp.
         @param timeoutPeriod: Number of seconds to wait for activity before
             timing out.
         """
         ProtocolWrapper.__init__(self, factory, wrappedProtocol)
         self.timeoutCall = None
+        self.timeoutPeriod = None
         self.setTimeout(timeoutPeriod)
 
 
@@ -487,9 +489,9 @@ class TimeoutProtocol(ProtocolWrapper):
             Otherwise, use the existing value.
         """
         self.cancelTimeout()
+        self.timeoutPeriod = timeoutPeriod
         if timeoutPeriod is not None:
-            self.timeoutPeriod = timeoutPeriod
-        self.timeoutCall = self.factory.callLater(self.timeoutPeriod, self.timeoutFunc)
+            self.timeoutCall = self.factory.callLater(self.timeoutPeriod, self.timeoutFunc)
 
 
     def cancelTimeout(self):
@@ -498,10 +500,11 @@ class TimeoutProtocol(ProtocolWrapper):
 
         If the timeout was already cancelled, this does nothing.
         """
+        self.timeoutPeriod = None
         if self.timeoutCall:
             try:
                 self.timeoutCall.cancel()
-            except error.AlreadyCalled:
+            except (error.AlreadyCalled, error.AlreadyCancelled):
                 pass
             self.timeoutCall = None
 
@@ -721,7 +724,11 @@ class TimeoutMixin:
 
         if self.__timeoutCall is not None:
             if period is None:
-                self.__timeoutCall.cancel()
+                try:
+                    self.__timeoutCall.cancel()
+                except (error.AlreadyCancelled, error.AlreadyCalled):
+                    # Do nothing if the call was already consumed.
+                    pass
                 self.__timeoutCall = None
             else:
                 self.__timeoutCall.reset(period)

@@ -6,7 +6,6 @@ Test cases covering L{twisted.python.zippath}.
 """
 
 
-
 import os
 import zipfile
 

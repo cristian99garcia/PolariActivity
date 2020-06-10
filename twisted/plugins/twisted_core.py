@@ -2,7 +2,6 @@
 # See LICENSE for details.
 
 
-
 from twisted.internet.endpoints import (
     _SystemdParser, _TCP6ServerParser, _StandardIOParser,
     _TLSClientEndpointParser)

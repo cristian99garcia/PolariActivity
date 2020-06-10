@@ -8,7 +8,6 @@ They are in a separate module so they will not prevent test_ssl importing if
 pyOpenSSL is unavailable.
 """
 
-
 from twisted.python.compat import nativeString
 from twisted.internet import ssl
 from twisted.python.filepath import FilePath

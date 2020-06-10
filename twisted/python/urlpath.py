@@ -7,12 +7,11 @@ L{URLPath}, a representation of a URL.
 """
 
 
-
 from twisted.python.compat import (
-    nativeString, str, urllib_parse as urlparse, urlunquote, urlquote
+    nativeString, unicode, urllib_parse as urlparse, urlunquote, urlquote
 )
 
-from twisted.python.url import URL as _URL
+from hyperlink import URL as _URL
 
 _allascii = b"".join([chr(x).encode('ascii') for x in range(1, 128)])
 
@@ -96,7 +95,7 @@ class URLPath(object):
         @return: a new L{URLPath}
         """
         self = cls.__new__(cls)
-        self._url = urlInstance.replace(path=urlInstance.path or [""])
+        self._url = urlInstance.replace(path=urlInstance.path or [u""])
         self._scheme = self._url.scheme.encode("ascii")
         self._netloc = self._url.authority().encode("ascii")
         self._path = (_URL(path=self._url.path,
@@ -137,7 +136,7 @@ class URLPath(object):
         @return: a new L{URLPath} derived from the given string.
         @rtype: L{URLPath}
         """
-        if not isinstance(url, str):
+        if not isinstance(url, (str, unicode)):
             raise ValueError("'url' must be a str or unicode")
         if isinstance(url, bytes):
             # On Python 2, accepting 'str' (for compatibility) means we might
@@ -200,7 +199,7 @@ class URLPath(object):
         @return: a new L{URLPath}
         """
         return self._fromURL(newURL.replace(
-            fragment='', query=self._url.query if keepQuery else ()
+            fragment=u'', query=self._url.query if keepQuery else ()
         ))
 
 
@@ -247,7 +246,7 @@ class URLPath(object):
 
         @return: a new L{URLPath}
         """
-        return self._mod(self._url.click(".."), keepQuery)
+        return self._mod(self._url.click(u".."), keepQuery)
 
 
     def here(self, keepQuery=False):
@@ -260,7 +259,7 @@ class URLPath(object):
 
         @return: a new L{URLPath}
         """
-        return self._mod(self._url.click("."), keepQuery)
+        return self._mod(self._url.click(u"."), keepQuery)
 
 
     def click(self, st):

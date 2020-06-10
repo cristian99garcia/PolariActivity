@@ -6,6 +6,7 @@ Tests for L{twisted.python.zipstream}
 """
 
 import random
+import struct
 import zipfile
 from hashlib import md5
 
@@ -13,7 +14,7 @@ from twisted.python import zipstream, filepath
 from twisted.trial import unittest
 
 
-class FileEntryMixin:
+class FileEntryMixin(object):
     """
     File entry classes should behave as file-like objects
     """
@@ -62,9 +63,9 @@ class FileEntryMixin:
         Zip file entries should implement the iterator protocol as files do.
         """
         with self.getFileEntry(b'ho\nhoho') as fileEntry:
-            self.assertEqual(next(fileEntry), b'ho\n')
-            self.assertEqual(next(fileEntry), b'hoho')
-            self.assertRaises(StopIteration, fileEntry.__next__)
+            self.assertEqual(fileEntry.next(), b'ho\n')
+            self.assertEqual(fileEntry.next(), b'hoho')
+            self.assertRaises(StopIteration, fileEntry.next)
 
 
     def test_readlines(self):
@@ -81,7 +82,7 @@ class FileEntryMixin:
         """
         with self.getFileEntry('') as fileEntry:
             self.assertIs(iter(fileEntry), fileEntry)
-            self.assertIs(fileEntry, fileEntry)
+            self.assertIs(fileEntry.xreadlines(), fileEntry)
 
 
     def test_readWhole(self):
@@ -248,7 +249,11 @@ class ZipstreamTests(unittest.TestCase):
         fn = self.mktemp()
         with zipfile.ZipFile(fn, 'w') as zf:
             zi = zipfile.ZipInfo("0")
-            zi.extra = b"hello, extra"
+            extra_data = b"hello, extra"
+            zi.extra = (
+                struct.pack('<hh', 42, len(extra_data))
+                + extra_data
+            )
             zf.writestr(zi, b"the real data")
         with zipstream.ChunkingZipFile(fn) as czf, czf.readfile("0") as zfe:
             self.assertEqual(zfe.read(), b"the real data")
@@ -266,7 +271,7 @@ class ZipstreamTests(unittest.TestCase):
         list(zipstream.unzipIterChunky(zpfilename, self.unzipdir.path))
         self.assertEqual(
             set(self.unzipdir.listdir()),
-            set(map(str, list(range(numfiles)))))
+            set(map(str, range(numfiles))))
 
         for child in self.unzipdir.children():
             num = int(child.basename())

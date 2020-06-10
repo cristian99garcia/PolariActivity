@@ -20,7 +20,6 @@ Then use twisted.internet APIs as usual.
 """
 
 
-
 import os
 
 from twisted.internet import gireactor
