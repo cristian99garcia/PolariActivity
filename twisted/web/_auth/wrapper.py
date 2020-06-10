@@ -13,7 +13,7 @@ denied, a 401 will be sent in the response along with I{WWW-Authenticate}
 headers for each of the allowed authentication schemes.
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface import implementer
 
@@ -44,7 +44,7 @@ class UnauthorizedResource(object):
         """
         def generateWWWAuthenticate(scheme, challenge):
             l = []
-            for k,v in challenge.items():
+            for k,v in list(challenge.items()):
                 l.append(networkString("%s=%s" % (k, quoteString(v))))
             return b" ".join([scheme, b", ".join(l)])
 

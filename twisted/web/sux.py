@@ -20,7 +20,7 @@ does not:
     option, they're not on by default).
 """
 
-from __future__ import print_function
+
 
 from twisted.internet.protocol import Protocol
 from twisted.python.reflect import prefixedMethodNames
@@ -44,13 +44,13 @@ def unionlist(*args):
     for x in args:
         l.extend(x)
     d = dict([(x, 1) for x in l])
-    return d.keys()
+    return list(d.keys())
 
 
 def zipfndict(*args, **kw):
     default = kw.get('default', nop)
     d = {}
-    for key in unionlist(*[fndict.keys() for fndict in args]):
+    for key in unionlist(*[list(fndict.keys()) for fndict in args]):
         d[key] = tuple([x.get(key, default) for x in args])
     return d
 
@@ -119,7 +119,7 @@ class XMLParser(Protocol):
         if self._prepend:
             data = self._prepend + data
         for encoding in self.encodings:
-            data = unicode(data, encoding)
+            data = str(data, encoding)
         return data
 
     def maybeBodyData(self):

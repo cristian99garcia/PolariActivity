@@ -7,7 +7,7 @@
 Protocol agnostic implementations of SASL authentication mechanisms.
 """
 
-from __future__ import absolute_import, division
+
 
 import binascii, random, time, os
 from hashlib import md5
@@ -76,9 +76,9 @@ class Plain(object):
         @type password: L{unicode}
         """
 
-        self.authzid = authzid or u''
-        self.authcid = authcid or u''
-        self.password = password or u''
+        self.authzid = authzid or ''
+        self.authcid = authcid or ''
+        self.password = password or ''
 
 
     def getInitialResponse(self):
@@ -122,9 +122,9 @@ class DigestMD5(object):
         self.password = password
         self.defaultRealm = host
 
-        self.digest_uri = u'%s/%s' % (serv_type, host)
+        self.digest_uri = '%s/%s' % (serv_type, host)
         if serv_name is not None:
-            self.digest_uri += u'/%s' % (serv_name,)
+            self.digest_uri += '/%s' % (serv_name,)
 
 
     def getInitialResponse(self):

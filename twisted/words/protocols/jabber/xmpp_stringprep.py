@@ -10,7 +10,7 @@ import stringprep
 # We require Unicode version 3.2.
 from unicodedata import ucd_3_2_0 as unicodedata
 
-from twisted.python.compat import unichr
+from twisted.python.compat import chr
 from twisted.python.deprecate import deprecatedModuleAttribute
 from incremental import Version
 
@@ -125,7 +125,7 @@ class Profile:
             if result_c is not None:
                 result.append(result_c)
 
-        return u"".join(result)
+        return "".join(result)
 
     def check_prohibiteds(self, string):
         for c in string:
@@ -179,11 +179,11 @@ class NamePrep:
     """
 
     # Prohibited characters.
-    prohibiteds = [unichr(n) for n in chain(range(0x00, 0x2c + 1),
-                                            range(0x2e, 0x2f + 1),
-                                            range(0x3a, 0x40 + 1),
-                                            range(0x5b, 0x60 + 1),
-                                            range(0x7b, 0x7f + 1))]
+    prohibiteds = [chr(n) for n in chain(list(range(0x00, 0x2c + 1)),
+                                            list(range(0x2e, 0x2f + 1)),
+                                            list(range(0x3a, 0x40 + 1)),
+                                            list(range(0x5b, 0x60 + 1)),
+                                            list(range(0x7b, 0x7f + 1)))]
 
     def prepare(self, string):
         result = []
@@ -191,15 +191,15 @@ class NamePrep:
         labels = idna.dots.split(string)
 
         if labels and len(labels[-1]) == 0:
-            trailing_dot = u'.'
+            trailing_dot = '.'
             del labels[-1]
         else:
-            trailing_dot = u''
+            trailing_dot = ''
 
         for label in labels:
             result.append(self.nameprep(label))
 
-        return u".".join(result) + trailing_dot
+        return ".".join(result) + trailing_dot
 
     def check_prohibiteds(self, string):
         for c in string:
@@ -209,9 +209,9 @@ class NamePrep:
     def nameprep(self, label):
         label = idna.nameprep(label)
         self.check_prohibiteds(label)
-        if label[0] == u'-':
+        if label[0] == '-':
             raise UnicodeError("Invalid leading hyphen-minus")
-        if label[-1] == u'-':
+        if label[-1] == '-':
             raise UnicodeError("Invalid trailing hyphen-minus")
         return label
 
@@ -234,8 +234,8 @@ B_2 = MappingTableFromFunction(stringprep.map_table_b2)
 nodeprep = Profile(mappings=[B_1, B_2],
                    prohibiteds=[C_11, C_12, C_21, C_22,
                                 C_3, C_4, C_5, C_6, C_7, C_8, C_9,
-                                LookupTable([u'"', u'&', u"'", u'/',
-                                             u':', u'<', u'>', u'@'])])
+                                LookupTable(['"', '&', "'", '/',
+                                             ':', '<', '>', '@'])])
 
 resourceprep = Profile(mappings=[B_1,],
                        prohibiteds=[C_12, C_21, C_22,

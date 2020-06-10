@@ -21,7 +21,7 @@ the latest version of Python directly from your code, if possible.
     Python 3)
 """
 
-from __future__ import absolute_import, division
+
 
 import inspect
 import os
@@ -322,15 +322,15 @@ def comparable(klass):
 
 
 if _PY3:
-    unicode = str
+    str = str
     long = int
 else:
-    unicode = unicode
-    long = long
+    str = str
+    long = int
 
 
 
-def ioType(fileIshObject, default=unicode):
+def ioType(fileIshObject, default=str):
     """
     Determine the type which will be returned from the given file object's
     read() and accepted by its write() method as an argument.
@@ -362,7 +362,7 @@ def ioType(fileIshObject, default=unicode):
     """
     if isinstance(fileIshObject, TextIOBase):
         # If it's for text I/O, then it's for text I/O.
-        return unicode
+        return str
     if isinstance(fileIshObject, IOBase):
         # If it's for I/O but it's _not_ for text I/O, it's for bytes I/O.
         return bytes
@@ -372,7 +372,7 @@ def ioType(fileIshObject, default=unicode):
         # On StreamReaderWriter, the 'encoding' attribute has special meaning;
         # it is unambiguously unicode.
         if encoding:
-            return unicode
+            return str
         else:
             return bytes
     if not _PY3:
@@ -380,11 +380,11 @@ def ioType(fileIshObject, default=unicode):
         # but we can't expect to *get* unicode.
         if isinstance(fileIshObject, file):
             if encoding is not None:
-                return basestring
+                return str
             else:
                 return bytes
-        from cStringIO import InputType, OutputType
-        from StringIO import StringIO
+        from io import InputType, OutputType
+        from io import StringIO
         if isinstance(fileIshObject, (StringIO, InputType, OutputType)):
             return bytes
     return default
@@ -399,7 +399,7 @@ def nativeString(s):
     @raise UnicodeError: The input string is not ASCII encodable/decodable.
     @raise TypeError: The input is neither C{bytes} nor C{unicode}.
     """
-    if not isinstance(s, (bytes, unicode)):
+    if not isinstance(s, (bytes, str)):
         raise TypeError("%r is neither bytes nor unicode" % s)
     if _PY3:
         if isinstance(s, bytes):
@@ -408,7 +408,7 @@ def nativeString(s):
             # Ensure we're limited to ASCII subset:
             s.encode("ascii")
     else:
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return s.encode("ascii")
         else:
             # Ensure we're limited to ASCII subset:
@@ -513,7 +513,7 @@ if _PY3:
 
 
     def networkString(s):
-        if not isinstance(s, unicode):
+        if not isinstance(s, str):
             raise TypeError("Can only convert text to bytes on Python 3")
         return s.encode('ascii')
 else:
@@ -574,7 +574,7 @@ interpolation.  For example, this is safe on Python 2 and Python 3:
 
 
 try:
-    StringType = basestring
+    StringType = str
 except NameError:
     # Python 3+
     StringType = str
@@ -598,20 +598,20 @@ if _PY3:
     from urllib.parse import unquote as urlunquote
     from http import cookiejar as cookielib
 else:
-    import urlparse as urllib_parse
+    import urllib.parse as urllib_parse
     from cgi import escape
-    from urllib import quote as urlquote
-    from urllib import unquote as urlunquote
-    import cookielib
+    from urllib.parse import quote as urlquote
+    from urllib.parse import unquote as urlunquote
+    import http.cookiejar
 
 
 # Dealing with the differences in items/iteritems
 if _PY3:
     def iteritems(d):
-        return d.items()
+        return list(d.items())
 
     def itervalues(d):
-        return d.values()
+        return list(d.values())
 
     def items(d):
         return list(d.items())
@@ -620,16 +620,16 @@ if _PY3:
     izip = zip
 else:
     def iteritems(d):
-        return d.iteritems()
+        return iter(d.items())
 
     def itervalues(d):
-        return d.itervalues()
+        return iter(d.values())
 
     def items(d):
-        return d.items()
+        return list(d.items())
 
     xrange = xrange
-    from itertools import izip
+    
     izip # shh pyflakes
 
 
@@ -664,7 +664,7 @@ def _keys(d):
     if _PY3:
         return list(d.keys())
     else:
-        return d.keys()
+        return list(d.keys())
 
 
 
@@ -681,7 +681,7 @@ def bytesEnviron():
         return dict(os.environ)
 
     target = dict()
-    for x, y in os.environ.items():
+    for x, y in list(os.environ.items()):
         target[os.environ.encodekey(x)] = os.environ.encodevalue(y)
 
     return target
@@ -794,7 +794,7 @@ def _maybeMBCS(s):
         using MBCS.
     """
     assert sys.platform == "win32", "only reasonable on Windows"
-    assert type(s) in [bytes, unicode], str(type(s)) + " is not a string"
+    assert type(s) in [bytes, str], str(type(s)) + " is not a string"
 
     if isinstance(s, bytes):
         return s.decode('mbcs')
@@ -803,10 +803,10 @@ def _maybeMBCS(s):
 
 
 if _PY3:
-    unichr = chr
+    chr = chr
     raw_input = input
 else:
-    unichr = unichr
+    chr = chr
     raw_input = raw_input
 
 

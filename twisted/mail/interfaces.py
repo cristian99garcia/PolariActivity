@@ -7,7 +7,7 @@ Interfaces for L{twisted.mail}.
 @since: 16.5
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import Interface
 

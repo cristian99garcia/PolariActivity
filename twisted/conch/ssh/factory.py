@@ -8,7 +8,7 @@ data sources as OpenSSH.
 Maintainer: Paul Swartz
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.internet import protocol
 from twisted.python import log
@@ -54,7 +54,7 @@ class SSHFactory(protocol.Factory):
         @return: The built transport.
         """
         t = protocol.Factory.buildProtocol(self, addr)
-        t.supportedPublicKeys = self.privateKeys.keys()
+        t.supportedPublicKeys = list(self.privateKeys.keys())
         if not self.primes:
             log.msg('disabling non-fixed-group key exchange algorithms '
                     'because we cannot find moduli file')
@@ -104,7 +104,7 @@ class SSHFactory(protocol.Factory):
         @type bits: L{int}
         @rtype:     L{tuple}
         """
-        primesKeys = sorted(self.primes.keys(), key=lambda i: abs(i - bits))
+        primesKeys = sorted(list(self.primes.keys()), key=lambda i: abs(i - bits))
         realBits = primesKeys[0]
         return random.choice(self.primes[realBits])
 

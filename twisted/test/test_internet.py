@@ -5,7 +5,7 @@
 Tests for lots of functionality provided by L{twisted.internet}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import sys
@@ -816,7 +816,7 @@ class TimeTests(unittest.TestCase):
         dc.cancel()
         str(dc)
 
-        dc = reactor.callLater(0, lambda: None, x=[({'hello': u'world'}, 10j), reactor], *range(10))
+        dc = reactor.callLater(0, lambda: None, x=[({'hello': 'world'}, 10j), reactor], *list(range(10)))
         str(dc)
         dc.cancel()
         str(dc)
@@ -894,11 +894,11 @@ class DelayedTests(unittest.TestCase):
         self.deferred = defer.Deferred()
 
     def tearDown(self):
-        for t in self.timers.values():
+        for t in list(self.timers.values()):
             t.cancel()
 
     def checkTimers(self):
-        l1 = self.timers.values()
+        l1 = list(self.timers.values())
         l2 = list(reactor.getDelayedCalls())
 
         # There should be at least the calls we put in.  There may be other

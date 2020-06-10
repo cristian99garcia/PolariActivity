@@ -144,7 +144,7 @@ Body of the message is such.
     def _checkModeratorMessage(self, messageText, sender, moderator, group, postingText):
         p = Parser()
         msg = p.parsestr(messageText)
-        headers = dict(msg.items())
+        headers = dict(list(msg.items()))
         del headers['Message-ID']
         self.assertEqual(
             headers,

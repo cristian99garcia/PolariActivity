@@ -579,7 +579,7 @@ class RegistrationTests(unittest.TestCase):
 
 
     def tearDown(self):
-        for d, uri in self.registry.users.values():
+        for d, uri in list(self.registry.users.values()):
             d.cancel()
         del self.proxy
 
@@ -722,7 +722,7 @@ class LiveTests(unittest.TestCase):
 
 
     def tearDown(self):
-        for d, uri in self.registry.users.values():
+        for d, uri in list(self.registry.users.values()):
             d.cancel()
         d1 = defer.maybeDeferred(self.clientPort.stopListening)
         d2 = defer.maybeDeferred(self.serverPort.stopListening)

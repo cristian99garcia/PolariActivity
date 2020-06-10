@@ -1,6 +1,6 @@
 # -*- test-case-name: twisted.conch.test.test_conch -*-
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer
 

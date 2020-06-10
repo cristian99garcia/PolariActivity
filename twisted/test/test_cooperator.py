@@ -6,7 +6,7 @@ This module contains tests for L{twisted.internet.task.Cooperator} and
 related functionality.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.internet import reactor, defer, task
 from twisted.trial import unittest
@@ -184,7 +184,7 @@ class CooperatorTests(unittest.TestCase):
             tasks.append(c.coiterate(myiter(stuff)))
 
         return defer.DeferredList(tasks).addCallback(
-            lambda ign: self.assertEqual(tuple(L), sum(zip(*groupsOfThings), ())))
+            lambda ign: self.assertEqual(tuple(L), sum(list(zip(*groupsOfThings)), ())))
 
 
     def testResourceExhaustion(self):

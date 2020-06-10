@@ -5,7 +5,7 @@
 Tests for loading tests by name.
 """
 
-from __future__ import absolute_import, division
+
 
 import os
 import sys
@@ -248,7 +248,7 @@ class LoaderTests(packages.SysPathManglingTest):
         self.assertEqual(['test_a', 'test_b', 'test_c'],
                              [test._testMethodName for test in suite._tests])
         newOrder = ['test_b', 'test_c', 'test_a']
-        sortDict = dict(zip(newOrder, range(3)))
+        sortDict = dict(list(zip(newOrder, list(range(3)))))
         self.loader.sorter = lambda x : sortDict.get(x.shortDescription(), -1)
         suite = self.loader.loadClass(sample.AlphabetTest)
         self.assertEqual(newOrder,
@@ -561,7 +561,7 @@ class LoaderTests(packages.SysPathManglingTest):
             "twisted.trial.test.sample.FooTest",
             "package.test_module"]
         suite1 = self.loader.loadByNames(modules)
-        suite2 = runner.TestSuite(map(self.loader.loadByName, modules))
+        suite2 = runner.TestSuite(list(map(self.loader.loadByName, modules)))
         self.assertEqual(testNames(suite1), testNames(suite2))
 
 
@@ -571,7 +571,7 @@ class LoaderTests(packages.SysPathManglingTest):
         """
         modules = ['goodpackage', 'package.test_module']
         suite1 = self.loader.loadByNames(modules)
-        suite2 = runner.TestSuite(map(self.loader.loadByName, modules))
+        suite2 = runner.TestSuite(list(map(self.loader.loadByName, modules)))
         self.assertSuitesEqual(suite1, suite2)
 
     def test_loadInheritedMethods(self):
@@ -582,7 +582,7 @@ class LoaderTests(packages.SysPathManglingTest):
         methods = ['inheritancepackage.test_x.A.test_foo',
                    'inheritancepackage.test_x.B.test_foo']
         suite1 = self.loader.loadByNames(methods)
-        suite2 = runner.TestSuite(map(self.loader.loadByName, methods))
+        suite2 = runner.TestSuite(list(map(self.loader.loadByName, methods)))
         self.assertSuitesEqual(suite1, suite2)
 
 

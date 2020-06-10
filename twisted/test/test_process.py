@@ -17,7 +17,7 @@ Test running processes.
     platforms and native L{str} keys/values on Windows.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 import gzip
 import os
@@ -590,7 +590,7 @@ class ProcessTests(unittest.TestCase):
         protocols = []
         deferreds = []
 
-        for i in xrange(CONCURRENT_PROCESS_TEST_COUNT):
+        for i in range(CONCURRENT_PROCESS_TEST_COUNT):
             p = TestManyProcessProtocol()
             protocols.append(p)
             reactor.spawnProcess(p, pyExe, args, env=properEnv)
@@ -664,7 +664,7 @@ class ProcessTests(unittest.TestCase):
         # Sanity check - this will fail for people who have mucked with
         # their site configuration in a stupid way, but there's nothing we
         # can do about that.
-        badUnicode = u'\N{SNOWMAN}'
+        badUnicode = '\N{SNOWMAN}'
         try:
             badUnicode.encode(sys.getdefaultencoding())
         except UnicodeEncodeError:
@@ -696,7 +696,7 @@ class ProcessTests(unittest.TestCase):
     # name: some versions of Windows only support upper case environment
     # variable names, and I think Python (as of 2.5) doesn't use the right
     # syscall for lowercase or mixed case names to work anyway.
-    okayUnicode = u"UNICODE"
+    okayUnicode = "UNICODE"
     encodedValue = b"UNICODE"
 
     def _deprecatedUnicodeSupportTest(self, processProtocolClass, argv=[],
@@ -2374,8 +2374,8 @@ class Win32UnicodeEnvironmentTests(unittest.TestCase):
     """
     Tests for Unicode environment on Windows
     """
-    goodKey = u'UNICODE'
-    goodValue = u'UNICODE'
+    goodKey = 'UNICODE'
+    goodValue = 'UNICODE'
 
     def test_encodableUnicodeEnvironment(self):
         """
@@ -2409,13 +2409,13 @@ class DumbWin32ProcTests(unittest.TestCase):
         from twisted.internet import _dumbwin32proc
         from twisted.test import mock_win32process
         self.patch(_dumbwin32proc, "win32process", mock_win32process)
-        scriptPath = FilePath(__file__).sibling(u"process_cmdline.py").path
+        scriptPath = FilePath(__file__).sibling("process_cmdline.py").path
         pyExe = FilePath(sys.executable).asTextMode().path
 
         d = defer.Deferred()
         processProto = TrivialProcessProtocol(d)
-        comspec = u"cmd.exe"
-        cmd = [comspec, u"/c", pyExe, scriptPath]
+        comspec = "cmd.exe"
+        cmd = [comspec, "/c", pyExe, scriptPath]
 
         p = _dumbwin32proc.Process(
             reactor, processProto, None, cmd, {}, None)

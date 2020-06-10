@@ -16,7 +16,7 @@ import os
 import time
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -353,7 +353,7 @@ class Queue:
         @rtype: L{list} of L{bytes}
         @return: The base filenames of messages waiting to be relayed.
         """
-        return self.waiting.keys()
+        return list(self.waiting.keys())
 
 
     def hasWaiting(self):
@@ -376,7 +376,7 @@ class Queue:
         @return: The base filenames of messages in the process of being
             relayed.
         """
-        return self.relayed.keys()
+        return list(self.relayed.keys())
 
 
     def setRelaying(self, message):
@@ -638,7 +638,7 @@ class _AttemptManager(object):
             log.msg("Backing off on delivery of " + str(msgs))
 
         def setWaiting(queue, messages):
-            map(queue.setWaiting, messages)
+            list(map(queue.setWaiting, messages))
         self.reactor.callLater(30, setWaiting, self.manager.queue, msgs)
         del self.manager.managed[relay]
 
@@ -787,10 +787,10 @@ class SmartHostSMTPRelayingManager:
             self.mxcalc = MXCalculator()
 
         relays = []
-        for (domain, msgs) in exchanges.iteritems():
+        for (domain, msgs) in exchanges.items():
             manager = _AttemptManager(self, self.queue.noisy)
             factory = self.factory(msgs, manager, *self.fArgs, **self.fKwArgs)
-            self.managed[factory] = map(os.path.basename, msgs)
+            self.managed[factory] = list(map(os.path.basename, msgs))
             relayAttemptDeferred = manager.getCompletionDeferred()
             connectSetupDeferred = self.mxcalc.getMX(domain)
             connectSetupDeferred.addCallback(lambda mx: str(mx.name))
@@ -845,7 +845,7 @@ class SmartHostSMTPRelayingManager:
         log.err(failure)
 
         def setWaiting(queue, messages):
-            map(queue.setWaiting, messages)
+            list(map(queue.setWaiting, messages))
 
         from twisted.internet import reactor
         reactor.callLater(30, setWaiting, self.queue, self.managed[factory])

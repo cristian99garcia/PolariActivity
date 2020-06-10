@@ -7,7 +7,7 @@ Standardized versions of various cool and/or strange things that you can do
 with Python's reflection capabilities.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 import sys
 import types
@@ -80,7 +80,7 @@ def addMethodNamesToDict(classObj, dict, prefix, baseClass=None):
         addMethodNamesToDict(base, dict, prefix, baseClass)
 
     if baseClass is None or baseClass in classObj.__bases__:
-        for name, method in classObj.__dict__.items():
+        for name, method in list(classObj.__dict__.items()):
             optName = name[len(prefix):]
             if ((type(method) is types.FunctionType)
                 and (name[:len(prefix)] == prefix)
@@ -135,7 +135,7 @@ def accumulateMethods(obj, dict, prefix='', curClass=None):
     for base in curClass.__bases__:
         accumulateMethods(obj, dict, prefix, base)
 
-    for name, method in curClass.__dict__.items():
+    for name, method in list(curClass.__dict__.items()):
         optName = name[len(prefix):]
         if ((type(method) is types.FunctionType)
             and (name[:len(prefix)] == prefix)
@@ -440,7 +440,7 @@ def safe_str(o):
         # On Python 2, attempt to encode a unicode representation
         # first.
         try:
-            return unicode(o).encode('ascii', 'backslashreplace')
+            return str(o).encode('ascii', 'backslashreplace')
         except:
             pass
     try:
@@ -581,7 +581,7 @@ if not _PY3:
         # objgrep for container objects.
         args = (paths, seen, showUnknowns, maxDepth)
         if isinstance(start, dict):
-            for k, v in start.items():
+            for k, v in list(start.items()):
                 objgrep(k, goal, eq, path+'{'+repr(v)+'}', *args)
                 objgrep(v, goal, eq, path+'['+repr(k)+']', *args)
         elif isinstance(start, (list, tuple, deque)):
@@ -593,7 +593,7 @@ if not _PY3:
             objgrep(start.__self__.__class__, goal, eq,
                     path+'.__self__.__class__', *args)
         elif hasattr(start, '__dict__'):
-            for k, v in start.__dict__.items():
+            for k, v in list(start.__dict__.items()):
                 objgrep(v, goal, eq, path+'.'+k, *args)
             if isinstance(start, compat.InstanceType):
                 objgrep(start.__class__, goal, eq, path+'.__class__', *args)

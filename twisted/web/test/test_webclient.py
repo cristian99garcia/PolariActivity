@@ -5,13 +5,13 @@
 Tests for the old L{twisted.web.client} APIs, C{getPage} and friends.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 from errno import ENOSPC
 
 try:
-    from urlparse import urlparse, urljoin
+    from urllib.parse import urlparse, urljoin
 except ImportError:
     from urllib.parse import urlparse, urljoin
 

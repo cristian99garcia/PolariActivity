@@ -9,7 +9,7 @@ to test that L{os.write} can be reliably used after
 L{twisted.internet.stdio.StandardIO} has finished.
 """
 
-from __future__ import absolute_import, division
+
 
 import sys
 

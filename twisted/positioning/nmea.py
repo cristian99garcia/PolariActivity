@@ -19,7 +19,7 @@ U{http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp}.
 @since: 14.0
 """
 
-from __future__ import absolute_import, division
+
 
 import operator
 import datetime
@@ -31,6 +31,7 @@ from twisted.positioning import base, ipositioning, _sentence
 from twisted.positioning.base import Angles
 from twisted.protocols.basic import LineReceiver
 from twisted.python.compat import reduce, izip, nativeString, iterbytes
+from functools import reduce
 
 
 class GPGGAFixQualities(Values):
@@ -200,7 +201,7 @@ class NMEAProtocol(LineReceiver, _sentence._PositioningSentenceProducerMixin):
             raise ValueError("unknown sentence type %s" % sentenceType)
 
         sentenceData = {"type": sentenceType}
-        for key, value in izip(keys, contents):
+        for key, value in zip(keys, contents):
             if key is not None and value != "":
                 sentenceData[key] = value
 
@@ -491,7 +492,7 @@ class NMEAAdapter(object):
             day, or 13th month, or 0th day or month.
         """
         date = self.currentSentence.datestamp
-        day, month, year = map(int, [date[0:2], date[2:4], date[4:6]])
+        day, month, year = list(map(int, [date[0:2], date[2:4], date[4:6]]))
 
         year += self.yearThreshold - (self.yearThreshold % 100)
         if year < self.yearThreshold:

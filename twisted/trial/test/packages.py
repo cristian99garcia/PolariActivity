@@ -7,7 +7,7 @@ Classes and functions used by L{twisted.trial.test.test_util}
 and L{twisted.trial.test.test_loader}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import os

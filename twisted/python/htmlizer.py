@@ -88,7 +88,7 @@ def filter(inp, out, writer=HTMLWriter):
 def main():
     import sys
     with open(sys.argv[1]) as f:
-        filter(f, sys.stdout)
+        list(filter(f, sys.stdout))
 
 if __name__ == '__main__':
    main()

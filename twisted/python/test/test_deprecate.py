@@ -5,7 +5,7 @@
 Tests for Twisted's deprecation framework, L{twisted.python.deprecate}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys, types, warnings, inspect
 from os.path import normcase
@@ -74,7 +74,7 @@ class ModuleProxyTests(SynchronousTestCase):
         @rtype: L{twistd.python.deprecate._ModuleProxy}
         """
         mod = types.ModuleType('foo')
-        for key, value in attrs.items():
+        for key, value in list(attrs.items()):
             setattr(mod, key, value)
         return deprecate._ModuleProxy(mod)
 
@@ -278,7 +278,7 @@ deprecatedModuleAttribute(
         """
         def makeSomeFiles(pathobj, dirdict):
             pathdict = {}
-            for (key, value) in dirdict.items():
+            for (key, value) in list(dirdict.items()):
                 child = pathobj.child(key)
                 if isinstance(value, bytes):
                     pathdict[key] = child

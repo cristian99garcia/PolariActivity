@@ -5,7 +5,7 @@
 Exceptions in L{twisted.mail}.
 """
 
-from __future__ import absolute_import, division
+
 
 
 class IMAP4Exception(Exception):

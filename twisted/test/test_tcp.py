@@ -5,7 +5,7 @@
 Tests for implementations of L{IReactorTCP}.
 """
 
-from __future__ import division, absolute_import
+
 
 import socket, random, errno
 from functools import wraps

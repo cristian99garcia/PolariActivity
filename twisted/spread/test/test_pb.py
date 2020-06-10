@@ -11,7 +11,7 @@ only specific tests for old API.
 # issue1195 TODOs: replace pump.pump() with something involving Deferreds.
 # Clean up warning suppression.
 
-from __future__ import absolute_import, division
+
 
 import sys, os, time, gc, weakref
 from collections import deque
@@ -705,7 +705,7 @@ class BrokerTests(unittest.TestCase):
         foo = NestedRemote()
         s.setNameForLocal("foo", foo)
         x = c.remoteForName("foo")
-        for igno in xrange(pb.MAX_BROKER_REFS + 10):
+        for igno in range(pb.MAX_BROKER_REFS + 10):
             if s.transport.closed or c.transport.closed:
                 break
             x.callRemote("getSimple").addCallbacks(l.append, e.append)
@@ -820,7 +820,7 @@ class BrokerTests(unittest.TestCase):
         self.assertEqual(len(coll), 2)
         cp = coll[0][0]
         self.assertIdentical(cp.checkMethod().__self__ if _PY3 else
-                             cp.checkMethod().im_self, cp,
+                             cp.checkMethod().__self__, cp,
                              "potential refcounting issue")
         self.assertIdentical(cp.checkSelf(), cp,
                              "other potential refcounting issue")

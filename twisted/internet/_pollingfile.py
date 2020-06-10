@@ -7,11 +7,11 @@ Implements a simple polling interface for file descriptors that don't work with
 select() - this is pretty much only useful on Windows.
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer
 from twisted.internet.interfaces import IConsumer, IPushProducer
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 
 
 MIN_TIMEOUT = 0.000000001
@@ -244,7 +244,7 @@ class _PollableWritePipe(_PollableResource):
 
         @raise TypeError: If C{seq} contains C{unicode}.
         """
-        if unicode in map(type, seq):
+        if str in list(map(type, seq)):
             raise TypeError("Unicode not allowed in output buffer.")
         self.outQueue.extend(seq)
 
@@ -258,7 +258,7 @@ class _PollableWritePipe(_PollableResource):
 
         @raise TypeError: If C{data} is C{unicode} instead of C{str}.
         """
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             raise TypeError("Unicode not allowed in output buffer.")
         if self.disconnecting:
             return

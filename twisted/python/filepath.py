@@ -6,7 +6,7 @@
 Object-oriented filesystem path representation.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import sys
@@ -30,7 +30,7 @@ from zope.interface import Interface, Attribute, implementer
 # things import this module, and it would be good if it could easily be
 # modified for inclusion in the standard library.  --glyph
 
-from twisted.python.compat import comparable, cmp, unicode
+from twisted.python.compat import comparable, cmp, str
 from twisted.python.deprecate import deprecated
 from twisted.python.runtime import platform
 from incremental import Version
@@ -378,7 +378,7 @@ class AbstractFilePath(object):
                 # sort of thing which should be handled normally. -glyph
                 raise
             raise UnlistableError(ose)
-        return map(self.child, subnames)
+        return list(map(self.child, subnames))
 
     def walk(self, descend=None):
         """
@@ -643,7 +643,7 @@ def _asFilesystemText(path, encoding=None):
 
     @return: L{unicode}
     """
-    if type(path) == unicode:
+    if type(path) == str:
         return path
     else:
         if encoding is None:
@@ -794,7 +794,7 @@ class FilePath(AbstractFilePath):
 
         @return: L{bytes} mode L{FilePath}
         """
-        if type(self.path) == unicode:
+        if type(self.path) == str:
             return self.clonePath(self._asBytesPath(encoding=encoding))
         return self
 

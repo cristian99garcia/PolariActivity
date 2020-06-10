@@ -5,7 +5,7 @@
 Tests for error handling in PB.
 """
 
-from StringIO import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 from twisted.spread import pb, flavors, jelly

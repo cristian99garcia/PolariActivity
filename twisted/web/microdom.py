@@ -20,7 +20,7 @@ Microdom mainly focuses on working with HTML and XHTML.
 
 # System Imports
 import re
-from cStringIO import StringIO
+from io import StringIO
 
 from types import StringTypes, UnicodeType
 
@@ -430,7 +430,7 @@ def _genprefix():
     while True:
         yield  'p' + str(i)
         i = i + 1
-genprefix = _genprefix().next
+genprefix = _genprefix().__next__
 
 class _Attr(CharacterData):
     "Support class for getAttributeNode."
@@ -454,7 +454,7 @@ class Element(Node):
             self.attributes = {}
         else:
             self.attributes = attributes
-            for k, v in self.attributes.items():
+            for k, v in list(self.attributes.items()):
                 self.attributes[k] = unescape(v)
 
         if caseInsensitive:
@@ -578,7 +578,7 @@ class Element(Node):
         w = stream.write
         if self.nsprefixes:
             newprefixes = self.nsprefixes.copy()
-            for ns in nsprefixes.keys():
+            for ns in list(nsprefixes.keys()):
                 if ns in newprefixes:
                     del newprefixes[ns]
         else:
@@ -637,7 +637,7 @@ class Element(Node):
                 assert val is not None
                 writeattr(attr, val)
         if newprefixes:
-            for ns, prefix in newprefixes.iteritems():
+            for ns, prefix in newprefixes.items():
                 if prefix:
                     writeattr('xmlns:'+prefix, ns)
             newprefixes.update(nsprefixes)
@@ -683,7 +683,7 @@ class Element(Node):
             rep += " line %s column %s" % self._markpos
         if self._filename or self._markpos:
             rep += ")"
-        for item in self.attributes.items():
+        for item in list(self.attributes.items()):
             rep += " %s=%r" % item
         if self.hasChildNodes():
             rep += " >...</%s>" % self.nodeName
@@ -693,13 +693,13 @@ class Element(Node):
 
 def _unescapeDict(d):
     dd = {}
-    for k, v in d.items():
+    for k, v in list(d.items()):
         dd[k] = unescape(v)
     return dd
 
 def _reverseDict(d):
     dd = {}
-    for k, v in d.items():
+    for k, v in list(d.items()):
         dd[v]=k
     return dd
 
@@ -744,7 +744,7 @@ class MicroDOMParser(XMLParser):
         # self.indentlevel = 0
 
     def shouldPreserveSpace(self):
-        for edx in xrange(len(self.elementstack)):
+        for edx in range(len(self.elementstack)):
             el = self.elementstack[-edx]
             if el.tagName == 'pre' or el.getAttribute("xml:space", '') == 'preserve':
                 return 1
@@ -810,7 +810,7 @@ class MicroDOMParser(XMLParser):
         attributes = _unescapeDict(attributes)
         namespaces = self.nsstack[-1][0]
         newspaces = {}
-        for k, v in attributes.items():
+        for k, v in list(attributes.items()):
             if k.startswith('xmlns'):
                 spacenames = k.split(':',1)
                 if len(spacenames) == 2:
@@ -821,7 +821,7 @@ class MicroDOMParser(XMLParser):
         if newspaces:
             namespaces = namespaces.copy()
             namespaces.update(newspaces)
-        for k, v in attributes.items():
+        for k, v in list(attributes.items()):
             ksplit = k.split(':', 1)
             if len(ksplit) == 2:
                 pfx, tv = ksplit
@@ -901,7 +901,7 @@ class MicroDOMParser(XMLParser):
             if self.beExtremelyLenient:
                 if self.elementstack:
                     lastEl = self.elementstack[0]
-                    for idx in xrange(len(self.elementstack)):
+                    for idx in range(len(self.elementstack)):
                         if self.elementstack[-(idx+1)].tagName == cname:
                             self.elementstack[-(idx+1)].endTag(name)
                             break
@@ -1019,7 +1019,7 @@ class lmx:
         newNode = Element(tagName, caseInsensitive=0, preserveCase=0)
         self.node.appendChild(newNode)
         xf = lmx(newNode)
-        for k, v in kw.items():
+        for k, v in list(kw.items()):
             if k[0] == '_':
                 k = k[1:]
             xf[k]=v

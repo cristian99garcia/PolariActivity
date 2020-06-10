@@ -2,7 +2,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division, print_function
+
 
 import gc
 import inspect
@@ -18,7 +18,7 @@ from twisted.application import app
 from twisted.python import usage, reflect, failure
 from twisted.python.filepath import FilePath
 from twisted.python.reflect import namedModule
-from twisted.python.compat import long
+from twisted.python.compat import int
 from twisted import plugin
 from twisted.trial import runner, itrial, reporter
 
@@ -336,7 +336,7 @@ class _BasicOptions(object):
 
     def opt_random(self, option):
         try:
-            self['random'] = long(option)
+            self['random'] = int(option)
         except ValueError:
             raise usage.UsageError(
                 "Argument to --random must be a positive integer")
@@ -345,7 +345,7 @@ class _BasicOptions(object):
                 raise usage.UsageError(
                     "Argument to --random must be a positive integer")
             elif self['random'] == 0:
-                self['random'] = long(time.time() * 100)
+                self['random'] = int(time.time() * 100)
 
 
     def opt_without_module(self, option):

@@ -36,14 +36,14 @@ class ErrorPageTests(TestCase):
     def _pageRenderingTest(self, page, code, brief, detail):
         request = DummyRequest([b''])
         template = (
-            u"\n"
-            u"<html>\n"
-            u"  <head><title>%s - %s</title></head>\n"
-            u"  <body>\n"
-            u"    <h1>%s</h1>\n"
-            u"    <p>%s</p>\n"
-            u"  </body>\n"
-            u"</html>\n")
+            "\n"
+            "<html>\n"
+            "  <head><title>%s - %s</title></head>\n"
+            "  <body>\n"
+            "    <h1>%s</h1>\n"
+            "    <p>%s</p>\n"
+            "  </body>\n"
+            "</html>\n")
         expected = template % (code, brief, brief, detail)
         self.assertEqual(
             page.render(request), expected.encode('utf-8'))

@@ -6,12 +6,12 @@
 An assortment of web server-related utilities.
 """
 
-from __future__ import division, absolute_import
+
 
 import linecache
 
 from twisted.python import urlpath
-from twisted.python.compat import _PY3, unicode, nativeString, escape
+from twisted.python.compat import _PY3, str, nativeString, escape
 from twisted.python.reflect import fullyQualifiedName
 
 from twisted.web import resource
@@ -57,7 +57,7 @@ def redirectTo(URL, request):
             def render_GET(self, request):
                 return redirectTo(b"http://example.com/", request)
     """
-    if isinstance(URL, unicode) :
+    if isinstance(URL, str) :
         raise TypeError("Unicode object not allowed as URL")
     request.setHeader(b"Content-Type", b"text/html; charset=utf-8")
     request.redirect(URL)
@@ -168,7 +168,7 @@ class _SourceLineElement(Element):
         """
         Render the line of source as a child of C{tag}.
         """
-        return tag(self.source.replace('  ', u' \N{NO-BREAK SPACE}'))
+        return tag(self.source.replace('  ', ' \N{NO-BREAK SPACE}'))
 
 
     @renderer
@@ -403,7 +403,7 @@ class FailureElement(Element):
         """
         Render the exception value as a child of C{tag}.
         """
-        return tag(unicode(self.failure.value).encode('utf8'))
+        return tag(str(self.failure.value).encode('utf8'))
 
 
     @renderer

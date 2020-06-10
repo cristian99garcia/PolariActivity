@@ -5,7 +5,7 @@
 TELNET implementation, with line-oriented command handling.
 """
 
-from __future__ import absolute_import, division
+
 
 import warnings
 warnings.warn(
@@ -135,7 +135,7 @@ iacBytes = {
 }
 
 def multireplace(st, dct):
-    for k, v in dct.items():
+    for k, v in list(dct.items()):
         st = st.replace(k, v)
     return st
 

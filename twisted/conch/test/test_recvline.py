@@ -619,9 +619,9 @@ class _StdioMixin(_BaseMixin):
         # Wait for the process protocol and test terminal to become
         # connected before proceeding.  The former should always
         # happen first, but it doesn't hurt to be safe.
-        return defer.gatherResults(filter(None, [
+        return defer.gatherResults([_f for _f in [
             processClient.onConnection,
-            testTerminal.expect(b">>> ")]))
+            testTerminal.expect(b">>> ")] if _f])
 
 
     def tearDown(self):

@@ -404,7 +404,7 @@ class ConnectionPool:
         self.shutdownID = None
         self.threadpool.stop()
         self.running = False
-        for conn in self.connections.values():
+        for conn in list(self.connections.values()):
             self._close(conn)
         self.connections.clear()
 

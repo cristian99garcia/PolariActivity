@@ -15,6 +15,7 @@ import linecache
 
 # Sibling Imports
 from twisted.python import log, reflect
+import importlib
 
 lastRebuild = time.time()
 
@@ -47,15 +48,15 @@ class Sensitive:
         if t == types.FunctionType:
             return latestFunction(anObject)
         elif t == types.MethodType:
-            if anObject.im_self is None:
-                return getattr(anObject.im_class, anObject.__name__)
+            if anObject.__self__ is None:
+                return getattr(anObject.__self__.__class__, anObject.__name__)
             else:
-                return getattr(anObject.im_self, anObject.__name__)
+                return getattr(anObject.__self__, anObject.__name__)
         elif t == types.InstanceType:
             # Kick it, if it's out of date.
             getattr(anObject, 'nothing', None)
             return anObject
-        elif t == types.ClassType:
+        elif t == type:
             return latestClass(anObject)
         else:
             log.msg('warning returning anObject!')
@@ -69,7 +70,7 @@ def latestFunction(oldFunc):
     """
     # This may be CPython specific, since I believe jython instantiates a new
     # module upon reload.
-    dictID = id(oldFunc.func_globals)
+    dictID = id(oldFunc.__globals__)
     module = _modDictIDMap.get(dictID)
     if module is None:
         return oldFunc
@@ -152,8 +153,8 @@ def rebuild(module, doLog=1):
     values = {}
     if doLog:
         log.msg('  (scanning %s): ' % str(module.__name__))
-    for k, v in d.items():
-        if type(v) == types.ClassType:
+    for k, v in list(d.items()):
+        if type(v) == type:
             # Failure condition -- instances of classes with buggy
             # __hash__/__cmp__ methods referenced at the module level...
             if v.__module__ == module.__name__:
@@ -162,7 +163,7 @@ def rebuild(module, doLog=1):
                     log.logfile.write("c")
                     log.logfile.flush()
         elif type(v) == types.FunctionType:
-            if v.func_globals is module.__dict__:
+            if v.__globals__ is module.__dict__:
                 functions[v] = 1
                 if doLog:
                     log.logfile.write("f")
@@ -177,16 +178,16 @@ def rebuild(module, doLog=1):
     values.update(classes)
     values.update(functions)
     fromOldModule = values.__contains__
-    newclasses = newclasses.keys()
-    classes = classes.keys()
-    functions = functions.keys()
+    newclasses = list(newclasses.keys())
+    classes = list(classes.keys())
+    functions = list(functions.keys())
 
     if doLog:
         log.msg('')
         log.msg('  (reload   %s)' % str(module.__name__))
 
     # Boom.
-    reload(module)
+    importlib.reload(module)
     # Make sure that my traceback printing will at least be recent...
     linecache.clearcache()
 
@@ -218,7 +219,7 @@ def rebuild(module, doLog=1):
         log.msg('')
         log.msg('  (fixing   %s): ' % str(module.__name__))
     modcount = 0
-    for mk, mod in sys.modules.items():
+    for mk, mod in list(sys.modules.items()):
         modcount = modcount + 1
         if mod == module or mod is None:
             continue
@@ -235,13 +236,13 @@ def rebuild(module, doLog=1):
 
         changed = 0
 
-        for k, v in mod.__dict__.items():
+        for k, v in list(mod.__dict__.items()):
             try:
                 hash(v)
             except Exception:
                 continue
             if fromOldModule(v):
-                if type(v) == types.ClassType:
+                if type(v) == type:
                     if doLog:
                         log.logfile.write("c")
                         log.logfile.flush()
@@ -255,7 +256,7 @@ def rebuild(module, doLog=1):
                 setattr(mod, k, nv)
             else:
                 # Replace bases of non-module classes just to be sure.
-                if type(v) == types.ClassType:
+                if type(v) == type:
                     for base in v.__bases__:
                         if fromOldModule(base):
                             latestClass(v)

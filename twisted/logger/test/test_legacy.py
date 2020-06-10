@@ -99,7 +99,7 @@ class LegacyLogObserverWrapperTests(unittest.TestCase):
         observed = self.observe(dict(event))
 
         # Don't expect modifications
-        for key, value in event.items():
+        for key, value in list(event.items()):
             self.assertIn(key, observed)
 
         return observed

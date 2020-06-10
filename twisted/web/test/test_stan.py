@@ -6,7 +6,7 @@ Tests for L{twisted.web._stan} portion of the L{twisted.web.template}
 implementation.
 """
 
-from __future__ import absolute_import, division
+
 
 from twisted.web.template import Comment, CDATA, CharRef, Tag
 from twisted.trial.unittest import TestCase
@@ -119,7 +119,7 @@ class TagTests(TestCase):
         L{Comment.__repr__} returns a value which makes it easy to see what's
         in the comment.
         """
-        self.assertEqual(repr(Comment(u"hello there")),
+        self.assertEqual(repr(Comment("hello there")),
                           "Comment(u'hello there')")
 
 
@@ -128,7 +128,7 @@ class TagTests(TestCase):
         L{CDATA.__repr__} returns a value which makes it easy to see what's in
         the comment.
         """
-        self.assertEqual(repr(CDATA(u"test data")),
+        self.assertEqual(repr(CDATA("test data")),
                           "CDATA(u'test data')")
 
 
@@ -137,7 +137,7 @@ class TagTests(TestCase):
         L{Comment.__repr__} returns a value which makes it easy to see what's
         in the comment.
         """
-        self.assertEqual(repr(Comment(u"hello there")),
+        self.assertEqual(repr(Comment("hello there")),
                           "Comment('hello there')")
 
 
@@ -146,7 +146,7 @@ class TagTests(TestCase):
         L{CDATA.__repr__} returns a value which makes it easy to see what's in
         the comment.
         """
-        self.assertEqual(repr(CDATA(u"test data")),
+        self.assertEqual(repr(CDATA("test data")),
                           "CDATA('test data')")
 
     if not _PY3:
@@ -162,5 +162,5 @@ class TagTests(TestCase):
         L{CharRef.__repr__} returns a value which makes it easy to see what
         character is referred to.
         """
-        snowman = ord(u"\N{SNOWMAN}")
+        snowman = ord("\N{SNOWMAN}")
         self.assertEqual(repr(CharRef(snowman)), "CharRef(9731)")

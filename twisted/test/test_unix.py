@@ -5,7 +5,7 @@
 Tests for implementations of L{IReactorUNIX} and L{IReactorUNIXDatagram}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import sys
@@ -228,7 +228,7 @@ class UnixSocketTests(unittest.TestCase):
                 pass
 
         # Sanity check
-        self.assertIsInstance(ClassicFactory, types.ClassType)
+        self.assertIsInstance(ClassicFactory, type)
 
         return self._reprTest(
             ClassicFactory(), "twisted.test.test_unix.ClassicFactory")
@@ -390,7 +390,7 @@ class DatagramUnixSocketTests(unittest.TestCase):
                 pass
 
         # Sanity check
-        self.assertIsInstance(ClassicProtocol, types.ClassType)
+        self.assertIsInstance(ClassicProtocol, type)
 
         return self._reprTest(
             ClassicProtocol(), "twisted.test.test_unix.ClassicProtocol")

@@ -5,7 +5,7 @@
 Tests for L{twisted.web._newclient}.
 """
 
-from __future__ import division, absolute_import
+
 __metaclass__ = type
 
 from zope.interface import implementer
@@ -444,7 +444,7 @@ class HTTPClientParserTests(TestCase):
         protocol.response._bodyDataFinished = (
             lambda: bodyDataFinished.append(True))
         protocol.dataReceived(response)
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
         self.assertEqual(protocol.state, DONE)
         self.assertEqual(body, [])
         self.assertEqual(finished, [b''])
@@ -575,7 +575,7 @@ class HTTPClientParserTests(TestCase):
 
         # Incidentally, the transport should be paused now.  It is the response
         # object's responsibility to resume this when it is ready for bytes.
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
 
         self.assertEqual(protocol.state, BODY)
         protocol.dataReceived(b'x' * 6)
@@ -727,7 +727,7 @@ class HTTPClientParserTests(TestCase):
         protocol.dataReceived(b'foo')
         protocol.dataReceived(b'bar')
         self.assertEqual(body, [b'foo', b'bar'])
-        protocol.connectionLost(ConnectionDone(u"simulated end of connection"))
+        protocol.connectionLost(ConnectionDone("simulated end of connection"))
         self.assertEqual(finished, [b''])
 
 
@@ -1058,7 +1058,7 @@ class HTTP11ClientProtocolTests(TestCase):
         the protocol has been disconnected.
         """
         self.protocol.connectionLost(
-            Failure(ConnectionDone(u"sad transport")))
+            Failure(ConnectionDone("sad transport")))
         def cbNotSent(ignored):
             self.assertEqual(self.transport.value(), b'')
         d = self.assertFailure(
@@ -1085,7 +1085,7 @@ class HTTP11ClientProtocolTests(TestCase):
             # Simulate what would happen if the protocol had a real transport
             # and make sure no exception is raised.
             self.protocol.connectionLost(
-                Failure(ConnectionDone(u"you asked for it")))
+                Failure(ConnectionDone("you asked for it")))
         d = assertRequestGenerationFailed(self, d, [ArbitraryException])
         d.addCallback(cbFailed)
         return d
@@ -1170,9 +1170,9 @@ class HTTP11ClientProtocolTests(TestCase):
 
         def check(ignore):
             error = errors[0]
-            self.assertEqual(error[u'why'],
-                              u'Error writing request, but not in valid state '
-                              u'to finalize request: CONNECTION_LOST')
+            self.assertEqual(error['why'],
+                              'Error writing request, but not in valid state '
+                              'to finalize request: CONNECTION_LOST')
 
         return self.test_connectionLostDuringRequestGeneration(
             'errback').addCallback(check)
@@ -1189,7 +1189,7 @@ class HTTP11ClientProtocolTests(TestCase):
             self.assertEqual(response.code, 200)
             self.assertEqual(response.headers, Headers())
             self.assertTrue(self.transport.disconnecting)
-            self.assertEqual(self.protocol.state, u'QUIESCENT')
+            self.assertEqual(self.protocol.state, 'QUIESCENT')
         d.addCallback(cbRequest)
         self.protocol.dataReceived(
             b"HTTP/1.1 200 OK\r\n"
@@ -1245,7 +1245,7 @@ class HTTP11ClientProtocolTests(TestCase):
             whenFinished = p.closedDeferred = Deferred()
             response.deliverBody(p)
             self.assertEqual(
-                protocol.state, u'TRANSMITTING_AFTER_RECEIVING_RESPONSE')
+                protocol.state, 'TRANSMITTING_AFTER_RECEIVING_RESPONSE')
             self.assertTrue(transport.disconnecting)
             self.assertEqual(quiescentResult, [])
             return whenFinished.addCallback(
@@ -1291,7 +1291,7 @@ class HTTP11ClientProtocolTests(TestCase):
             request.finished.callback(None)
             # Nothing dire will happen when the connection is lost
             self.protocol.connectionLost(Failure(ArbitraryException()))
-            self.assertEqual(self.protocol._state, u'CONNECTION_LOST')
+            self.assertEqual(self.protocol._state, 'CONNECTION_LOST')
         d.addCallback(cbAllResponse)
         return d
 
@@ -1362,7 +1362,7 @@ class HTTP11ClientProtocolTests(TestCase):
 
         self.assertEqual(protocol.data, b"foobar")
         self.protocol.connectionLost(
-            Failure(ConnectionDone(u"low-level transport disconnected")))
+            Failure(ConnectionDone("low-level transport disconnected")))
 
         protocol.closedReason.trap(PotentialDataLoss)
 
@@ -1419,7 +1419,7 @@ class HTTP11ClientProtocolTests(TestCase):
             # have, call connectionLost on the HTTP11ClientProtocol.  Nothing
             # is asserted about this, but it's important for it to not raise an
             # exception.
-            self.protocol.connectionLost(Failure(ConnectionDone(u"it is done")))
+            self.protocol.connectionLost(Failure(ConnectionDone("it is done")))
 
         d.addCallback(cbFailed)
         return d
@@ -1436,7 +1436,7 @@ class HTTP11ClientProtocolTests(TestCase):
         transport = self.protocol._parser.transport
         self.assertIdentical(transport._producer, self.transport)
         self.protocol._disconnectParser(
-            Failure(ConnectionDone(u"connection done")))
+            Failure(ConnectionDone("connection done")))
         self.assertIdentical(transport._producer, None)
         return assertResponseFailed(self, requestDeferred, [ConnectionDone])
 
@@ -1476,7 +1476,7 @@ class HTTP11ClientProtocolTests(TestCase):
         result = []
         protocol.abort().addCallback(result.append)
         self.assertEqual(result, [None])
-        self.assertEqual(protocol._state, u"CONNECTION_LOST")
+        self.assertEqual(protocol._state, "CONNECTION_LOST")
 
 
     def test_abortBeforeResponseBody(self):
@@ -1575,7 +1575,7 @@ class HTTP11ClientProtocolTests(TestCase):
         quiescentResult = []
         def callback(p):
             self.assertEqual(p, protocol)
-            self.assertEqual(p.state, u"QUIESCENT")
+            self.assertEqual(p.state, "QUIESCENT")
             quiescentResult.append(p)
 
         transport = StringTransport()
@@ -1601,14 +1601,14 @@ class HTTP11ClientProtocolTests(TestCase):
         bodyProtocol = AccumulatingProtocol()
         bodyProtocol.closedDeferred = Deferred()
         bodyProtocol.closedDeferred.addCallback(
-            lambda ign: quiescentResult.append(u"response done"))
+            lambda ign: quiescentResult.append("response done"))
 
         response.deliverBody(bodyProtocol)
         protocol.dataReceived(b"abc")
         bodyProtocol.closedReason.trap(ResponseDone)
         # Quiescent callback called *before* protocol handling the response
         # body gets its connectionLost called:
-        self.assertEqual(quiescentResult, [protocol, u"response done"])
+        self.assertEqual(quiescentResult, [protocol, "response done"])
 
         # Make sure everything was cleaned up:
         self.assertEqual(protocol._parser, None)
@@ -1632,7 +1632,7 @@ class HTTP11ClientProtocolTests(TestCase):
         quiescentResult = []
         def callback(p):
             self.assertEqual(p, protocol)
-            self.assertEqual(p.state, u"QUIESCENT")
+            self.assertEqual(p.state, "QUIESCENT")
             quiescentResult.append(p)
 
         transport = StringTransport()
@@ -1650,7 +1650,7 @@ class HTTP11ClientProtocolTests(TestCase):
         response = self.successResultOf(requestDeferred)
         # Sanity check: response should have full response body, just waiting
         # for deliverBody
-        self.assertEqual(response._state, u'DEFERRED_CLOSE')
+        self.assertEqual(response._state, 'DEFERRED_CLOSE')
 
         # The transport is quiescent, because the response has been received.
         # If we were connection pooling here, it would have been returned to
@@ -1660,7 +1660,7 @@ class HTTP11ClientProtocolTests(TestCase):
         # And that transport is totally still reading, right? Because it would
         # leak forever if it were sitting there disconnected from the
         # reactor...
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
 
 
     def test_quiescentCallbackCalledEmptyResponse(self):
@@ -1671,7 +1671,7 @@ class HTTP11ClientProtocolTests(TestCase):
         quiescentResult = []
         def callback(p):
             self.assertEqual(p, protocol)
-            self.assertEqual(p.state, u"QUIESCENT")
+            self.assertEqual(p.state, "QUIESCENT")
             quiescentResult.append(p)
 
         transport = StringTransport()
@@ -2322,7 +2322,7 @@ class RequestTests(TestCase):
         """
         producer = StringProducer(3)
         def brokenStopProducing():
-            raise ArbitraryException(u"stopProducing is busted")
+            raise ArbitraryException("stopProducing is busted")
         producer.stopProducing = brokenStopProducing
 
         request = Request(b'GET', b'/', _boringHeaders, producer)
@@ -2426,7 +2426,7 @@ class LengthEnforcingConsumerTests(TestCase):
         """
         def brokenStopProducing():
             StringProducer.stopProducing(self.producer)
-            raise ArbitraryException(u"stopProducing is busted")
+            raise ArbitraryException("stopProducing is busted")
         self.producer.stopProducing = brokenStopProducing
 
         def cbFinished(ignored):
@@ -2520,17 +2520,17 @@ class TransportProxyProducerTests(TestCase):
 
         proxy = TransportProxyProducer(transport)
         # The transport should still be paused.
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
         proxy.resumeProducing()
         # The transport should now be resumed.
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
 
         transport.pauseProducing()
         proxy._stopProxying()
 
         # The proxy should no longer do anything to the transport.
         proxy.resumeProducing()
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
 
 
     def test_pauseProducing(self):
@@ -2542,17 +2542,17 @@ class TransportProxyProducerTests(TestCase):
 
         proxy = TransportProxyProducer(transport)
         # The transport should still be producing.
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
         proxy.pauseProducing()
         # The transport should now be paused.
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
 
         transport.resumeProducing()
         proxy._stopProxying()
 
         # The proxy should no longer do anything to the transport.
         proxy.pauseProducing()
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
 
 
     def test_stopProducing(self):
@@ -2563,17 +2563,17 @@ class TransportProxyProducerTests(TestCase):
         transport = StringTransport()
         proxy = TransportProxyProducer(transport)
         # The transport should still be producing.
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
         proxy.stopProducing()
         # The transport should now be stopped.
-        self.assertEqual(transport.producerState, u'stopped')
+        self.assertEqual(transport.producerState, 'stopped')
 
         transport = StringTransport()
         proxy = TransportProxyProducer(transport)
         proxy._stopProxying()
         proxy.stopProducing()
         # The transport should not have been stopped.
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
 
 
 
@@ -2607,9 +2607,9 @@ class ResponseTests(TestCase):
         response.deliverBody(consumer)
         [theProducer] = producers
         theProducer.pauseProducing()
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
         theProducer.resumeProducing()
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transport.producerState, 'producing')
 
 
     def test_dataReceived(self):
@@ -2757,10 +2757,10 @@ class ResponseTests(TestCase):
         transport.pauseProducing()
         protocol = ListConsumer()
         response = justTransportResponse(transport)
-        self.assertEqual(transport.producerState, u'paused')
+        self.assertEqual(transport.producerState, 'paused')
         response.deliverBody(protocol)
-        self.assertEqual(transportState, [u'paused'])
-        self.assertEqual(transport.producerState, u'producing')
+        self.assertEqual(transportState, ['paused'])
+        self.assertEqual(transport.producerState, 'producing')
 
 
     def test_bodyDataFinishedBeforeStartProducing(self):
@@ -2796,7 +2796,7 @@ class ResponseTests(TestCase):
         response.deliverBody(protocol)
 
         # Sanity check - this test is for the connected state
-        self.assertEqual(response._state, u'CONNECTED')
+        self.assertEqual(response._state, 'CONNECTED')
         response._bodyDataFinished(Failure(ArbitraryException()))
 
         protocol.closedReason.trap(ArbitraryException)
@@ -2813,7 +2813,7 @@ class ResponseTests(TestCase):
         response = justTransportResponse(transport)
 
         # Sanity check - this test is for the initial state
-        self.assertEqual(response._state, u'INITIAL')
+        self.assertEqual(response._state, 'INITIAL')
         response._bodyDataFinished(Failure(ArbitraryException()))
 
         protocol = AccumulatingProtocol()

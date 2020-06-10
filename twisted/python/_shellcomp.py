@@ -609,7 +609,7 @@ class ZshArgumentsGenerator(object):
                 methodToShort[methodsDict[name]] = name
                 del methodsDict[name]
 
-        for methodName, methodObj in methodsDict.items():
+        for methodName, methodObj in list(methodsDict.items()):
             longname = methodName.replace('_', '-') # t.p.usage does this
             # if this option is already defined by the optFlags or
             # optParameters then we don't want to override that data

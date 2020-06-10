@@ -1,7 +1,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+
 
 import sys
 from functools import partial
@@ -10,14 +10,14 @@ from io import BytesIO
 from twisted.trial import unittest
 from twisted.spread import banana
 from twisted.python import failure
-from twisted.python.compat import long, iterbytes, _bytesChr as chr, _PY3
+from twisted.python.compat import int, iterbytes, _bytesChr as chr, _PY3
 from twisted.internet import protocol, main
 from twisted.test.proto_helpers import StringTransport
 
 if _PY3:
     _maxint = 9223372036854775807
 else:
-    from sys import maxint as _maxint
+    from sys import maxsize as _maxint
 
 
 class MathTests(unittest.TestCase):
@@ -121,9 +121,9 @@ class BananaTests(BananaTestBase):
         ``BananaError`` if called with an instance of ``unicode``.
         """
         if _PY3:
-            self._unsupportedTypeTest(u"hello", "builtins.str")
+            self._unsupportedTypeTest("hello", "builtins.str")
         else:
-            self._unsupportedTypeTest(u"hello", "__builtin__.unicode")
+            self._unsupportedTypeTest("hello", "__builtin__.unicode")
 
 
     def test_unsupportedBuiltinType(self):
@@ -171,7 +171,7 @@ class BananaTests(BananaTestBase):
         banana without changing value and should come out represented
         as an C{int} (regardless of the type which was encoded).
         """
-        for value in (10151, long(10151)):
+        for value in (10151, int(10151)):
             self.enc.sendEncoded(value)
             self.enc.dataReceived(self.io.getvalue())
             self.assertEqual(self.result, 10151)
@@ -192,7 +192,7 @@ class BananaTests(BananaTestBase):
                     self.enc.dataReceived(self.encode(n))
                     self.assertEqual(self.result, n)
                     if n > _maxint or n < -_maxint - 1:
-                        self.assertIsInstance(self.result, long)
+                        self.assertIsInstance(self.result, int)
                     else:
                         self.assertIsInstance(self.result, int)
 

@@ -10,7 +10,7 @@ End users shouldn't use this module directly - use the reactor APIs instead.
 Maintainer: Itamar Shtull-Trauring
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import stat
@@ -232,7 +232,7 @@ def _inFilesystemNamespace(path):
     path is stored in the filesystem and C{False} if the path is in this
     abstract namespace.
     """
-    return path[:1] not in (b"\0", u"\0")
+    return path[:1] not in (b"\0", "\0")
 
 
 class _UNIXPort(object):

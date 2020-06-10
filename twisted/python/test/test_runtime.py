@@ -5,7 +5,7 @@
 Tests for L{twisted.python.runtime}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 

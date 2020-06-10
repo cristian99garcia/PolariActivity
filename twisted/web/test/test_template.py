@@ -5,7 +5,7 @@
 Tests for L{twisted.web.template}
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface.verify import verifyObject
 
@@ -241,7 +241,7 @@ class XMLLoaderTestsMixin(object):
             self.assertEqual(len(warnings), 0)
 
         self.assertEqual(tag.tagName, 'p')
-        self.assertEqual(tag.children, [u'Hello, world.'])
+        self.assertEqual(tag.children, ['Hello, world.'])
 
 
     def test_loadTwice(self):

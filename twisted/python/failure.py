@@ -11,7 +11,7 @@ Asynchronous-friendly error mechanism.
 See L{Failure}.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 # System Imports
 import sys
@@ -271,8 +271,8 @@ class Failure:
                 for d in globalz, localz:
                     if "__builtins__" in d:
                         del d["__builtins__"]
-                localz = localz.items()
-                globalz = globalz.items()
+                localz = list(localz.items())
+                globalz = list(globalz.items())
             else:
                 localz = globalz = ()
             stack.insert(0, (
@@ -386,7 +386,7 @@ class Failure:
         @raise StopIteration: If there are no more values in the generator.
         @raise anything else: Anything that the generator raises.
         """
-        return g.throw(self.type, self.value, self.tb)
+        return g.throw(self.type(self.value).with_traceback(self.tb))
 
 
     def _findFailure(cls):

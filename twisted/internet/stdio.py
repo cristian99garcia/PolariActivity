@@ -22,7 +22,7 @@ Future Plans::
 Maintainer: James Y Knight
 """
 
-from __future__ import absolute_import, division
+
 
 from twisted.python.runtime import platform
 

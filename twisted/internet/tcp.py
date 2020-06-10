@@ -8,7 +8,7 @@ Various asynchronous TCP/IP classes.
 End users shouldn't use this module directly - use the reactor APIs instead.
 """
 
-from __future__ import division, absolute_import
+
 
 # System Imports
 import socket
@@ -97,7 +97,7 @@ _AI_NUMERICSERV = getattr(socket, "AI_NUMERICSERV", 0)
 if _PY3:
     _portNameType = str
 else:
-    _portNameType = (str, unicode)
+    _portNameType = (str, str)
 
 
 

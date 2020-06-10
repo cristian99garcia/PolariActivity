@@ -6,7 +6,7 @@
 Exception definitions for L{twisted.web}.
 """
 
-from __future__ import division, absolute_import
+
 try:
     from future_builtins import ascii
 except ImportError:
@@ -22,7 +22,7 @@ __all__ = [
 from collections import Sequence
 
 from twisted.web._responses import RESPONSES
-from twisted.python.compat import unicode, nativeString, intToBytes
+from twisted.python.compat import str, nativeString, intToBytes
 
 
 def _codeToMessage(code):
@@ -329,15 +329,15 @@ class FlattenerError(Exception):
         # only for an isinstance() check.
         from twisted.web.template import Tag
 
-        if isinstance(obj, (bytes, str, unicode)):
+        if isinstance(obj, (bytes, str)):
             # It's somewhat unlikely that there will ever be a str in the roots
             # list.  However, something like a MemoryError during a str.replace
             # call (eg, replacing " with &quot;) could possibly cause this.
             # Likewise, UTF-8 encoding a unicode string to a byte string might
             # fail like this.
             if len(obj) > 40:
-                if isinstance(obj, unicode):
-                    ellipsis = u'<...>'
+                if isinstance(obj, str):
+                    ellipsis = '<...>'
                 else:
                     ellipsis = b'<...>'
                 return ascii(obj[:20] + ellipsis + obj[-20:])

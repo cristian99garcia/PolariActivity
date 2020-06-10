@@ -6,7 +6,7 @@
 Static resources for L{twisted.web}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import warnings
@@ -36,7 +36,7 @@ from twisted.python.deprecate import deprecated
 if _PY3:
     from urllib.parse import quote, unquote
 else:
-    from urllib import quote, unquote
+    from urllib.parse import quote, unquote
 
 dangerousPathError = resource.NoResource("Invalid request URL.")
 
@@ -86,7 +86,7 @@ def _addSlash(request):
     """
     url = URL.fromText(request.uri.decode('ascii'))
     # Add an empty path segment at the end, so that it adds a trailing slash
-    url = url.replace(path=list(url.path) + [u""])
+    url = url.replace(path=list(url.path) + [""])
     return url.asText().encode('ascii')
 
 
@@ -329,7 +329,7 @@ class File(resource.Resource, filepath.FilePath):
         kind = kind.strip()
         if kind != b'bytes':
             raise ValueError("Unsupported Bytes-Unit: %r" % (kind,))
-        unparsedRanges = list(filter(None, map(bytes.strip, value.split(b','))))
+        unparsedRanges = list([_f for _f in map(bytes.strip, value.split(b',')) if _f])
         parsedRanges = []
         for byteRange in unparsedRanges:
             try:

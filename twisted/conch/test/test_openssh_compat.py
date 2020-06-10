@@ -72,7 +72,7 @@ class OpenSSHFactoryTests(TestCase):
         """
         keys = self.factory.getPublicKeys()
         self.assertEqual(len(keys), 1)
-        keyTypes = keys.keys()
+        keyTypes = list(keys.keys())
         self.assertEqual(list(keyTypes), [b'ssh-rsa'])
 
 
@@ -83,7 +83,7 @@ class OpenSSHFactoryTests(TestCase):
         """
         keys = self.factory.getPrivateKeys()
         self.assertEqual(len(keys), 2)
-        keyTypes = keys.keys()
+        keyTypes = list(keys.keys())
         self.assertEqual(set(keyTypes), set([b'ssh-rsa', b'ssh-dss']))
         self.assertEqual(self.mockos.seteuidCalls, [])
         self.assertEqual(self.mockos.setegidCalls, [])
@@ -106,7 +106,7 @@ class OpenSSHFactoryTests(TestCase):
         self.patch(os, "seteuid", seteuid)
         keys = self.factory.getPrivateKeys()
         self.assertEqual(len(keys), 2)
-        keyTypes = keys.keys()
+        keyTypes = list(keys.keys())
         self.assertEqual(set(keyTypes), set([b'ssh-rsa', b'ssh-dss']))
         self.assertEqual(self.mockos.seteuidCalls, [0, os.geteuid()])
         self.assertEqual(self.mockos.setegidCalls, [0, os.getegid()])

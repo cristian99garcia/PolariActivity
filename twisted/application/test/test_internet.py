@@ -9,7 +9,7 @@ Tests for (new code in) L{twisted.application.internet}.
     one attempt.
 """
 
-from __future__ import absolute_import, division
+
 
 import pickle
 

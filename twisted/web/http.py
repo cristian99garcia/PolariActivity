@@ -25,7 +25,7 @@ also useful for HTTP clients (such as the chunked encoding parser).
     indicate that the server has not taken the requested action.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = [
     'SWITCHING', 'OK', 'CREATED', 'ACCEPTED', 'NON_AUTHORITATIVE_INFORMATION',
@@ -67,9 +67,9 @@ import os
 from io import BytesIO as StringIO
 
 try:
-    from urlparse import (
+    from urllib.parse import (
         ParseResult as ParseResultBytes, urlparse as _urlparse)
-    from urllib import unquote
+    from urllib.parse import unquote
     from cgi import parse_header as _parseHeader
 except ImportError:
     from urllib.parse import (
@@ -82,7 +82,7 @@ except ImportError:
         # We want the key as bytes, and cgi.parse_multipart (which consumes
         # pdict) expects a dict of str keys but bytes values
         key = key.encode('charmap')
-        pdict = {x:y.encode('charmap') for x, y in pdict.items()}
+        pdict = {x:y.encode('charmap') for x, y in list(pdict.items())}
         return (key, pdict)
 
 
@@ -90,7 +90,7 @@ from zope.interface import implementer, provider
 
 # twisted imports
 from twisted.python.compat import (
-    _PY3, unicode, intToBytes, networkString, nativeString)
+    _PY3, str, intToBytes, networkString, nativeString)
 from twisted.python.deprecate import deprecated
 from twisted.python import log
 from incremental import Version
@@ -135,7 +135,7 @@ from twisted.web._responses import (
 if _PY3:
     _intTypes = int
 else:
-    _intTypes = (int, long)
+    _intTypes = (int, int)
 
 protocol_version = "HTTP/1.1"
 
@@ -171,10 +171,10 @@ def urlparse(url):
         of the URL - all as C{bytes}.
     @rtype: C{ParseResultBytes}
     """
-    if isinstance(url, unicode):
+    if isinstance(url, str):
         raise TypeError("url must be bytes, not unicode")
     scheme, netloc, path, params, query, fragment = _urlparse(url)
-    if isinstance(scheme, unicode):
+    if isinstance(scheme, str):
         scheme = scheme.encode('ascii')
         netloc = netloc.encode('ascii')
         path = path.encode('ascii')
@@ -315,7 +315,7 @@ def stringToDatetime(dateString):
     day = int(day)
     month = int(monthname_lower.index(month.lower()))
     year = int(year)
-    hour, min, sec = map(int, time.split(':'))
+    hour, min, sec = list(map(int, time.split(':')))
     return int(timegm(year, month, day, hour, min, sec))
 
 
@@ -363,7 +363,7 @@ def parseContentRange(header):
     if kind.lower() != "bytes":
         raise ValueError("a range of type %r is not supported")
     startend, realLength = other.split("/")
-    start, end = map(int, startend.split("-"))
+    start, end = list(map(int, startend.split("-")))
     if realLength == "*":
         realLength = None
     else:
@@ -754,7 +754,7 @@ class Request:
                         # as iso-8859-1 and returns a str key -- we want bytes
                         # so encode it back
                         self.args.update({x.encode('iso-8859-1'): y
-                                          for x, y in cgiArgs.items()})
+                                          for x, y in list(cgiArgs.items())})
                     else:
                         self.args.update(cgiArgs)
                 except:
@@ -1008,7 +1008,7 @@ class Request:
 
             if isinstance(val, bytes):
                 return val
-            elif isinstance(val, unicode):
+            elif isinstance(val, str):
                 return val.encode('utf8')
 
             # Not bytes or unicode, relying on string conversion legacy
@@ -2123,12 +2123,12 @@ def _escape(s):
         s = s.encode("ascii")
 
     r = repr(s)
-    if not isinstance(r, unicode):
+    if not isinstance(r, str):
         r = r.decode("ascii")
-    if r.startswith(u"b"):
+    if r.startswith("b"):
         r = r[1:]
-    if r.startswith(u"'"):
-        return r[1:-1].replace(u'"', u'\\"').replace(u"\\'", u"'")
+    if r.startswith("'"):
+        return r[1:-1].replace('"', '\\"').replace("\\'", "'")
     return r[1:-1]
 
 
@@ -2143,15 +2143,15 @@ def combinedLogFormatter(timestamp, request):
     referrer = _escape(request.getHeader(b"referer") or b"-")
     agent = _escape(request.getHeader(b"user-agent") or b"-")
     line = (
-        u'"%(ip)s" - - %(timestamp)s "%(method)s %(uri)s %(protocol)s" '
-        u'%(code)d %(length)s "%(referrer)s" "%(agent)s"' % dict(
+        '"%(ip)s" - - %(timestamp)s "%(method)s %(uri)s %(protocol)s" '
+        '%(code)d %(length)s "%(referrer)s" "%(agent)s"' % dict(
             ip=_escape(request.getClientIP() or b"-"),
             timestamp=timestamp,
             method=_escape(request.method),
             uri=_escape(request.uri),
             protocol=_escape(request.clientproto),
             code=request.code,
-            length=request.sentLength or u"-",
+            length=request.sentLength or "-",
             referrer=referrer,
             agent=agent,
             ))
@@ -2459,7 +2459,7 @@ class HTTPFactory(protocol.ServerFactory):
         except AttributeError:
             pass
         else:
-            line = self._logFormatter(self._logDateTime, request) + u"\n"
+            line = self._logFormatter(self._logDateTime, request) + "\n"
             if self._nativeize:
                 line = nativeString(line)
             else:

@@ -6,9 +6,9 @@
 An API for storing HTTP header names and values.
 """
 
-from __future__ import division, absolute_import
 
-from twisted.python.compat import comparable, cmp, unicode
+
+from twisted.python.compat import comparable, cmp, str
 
 
 def _dashCapitalize(name):
@@ -59,7 +59,7 @@ class Headers(object):
     def __init__(self, rawHeaders=None):
         self._rawHeaders = {}
         if rawHeaders is not None:
-            for name, values in rawHeaders.items():
+            for name, values in list(rawHeaders.items()):
                 self.setRawHeaders(name, values)
 
 
@@ -93,7 +93,7 @@ class Headers(object):
         @return: C{name}, encoded if required, lowercased
         @rtype: L{bytes}
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             return name.lower().encode('iso-8859-1')
         return name.lower()
 
@@ -108,7 +108,7 @@ class Headers(object):
         @return: C{value}, encoded if required
         @rtype: L{bytes}
         """
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             return value.encode('utf8')
         return value
 
@@ -243,7 +243,7 @@ class Headers(object):
         encodedName = self._encodeName(name)
         values = self._rawHeaders.get(encodedName, default)
 
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             return self._decodeValues(values)
         return values
 
@@ -254,7 +254,7 @@ class Headers(object):
         object, as L{bytes}.  The keys are capitalized in canonical
         capitalization.
         """
-        for k, v in self._rawHeaders.items():
+        for k, v in list(self._rawHeaders.items()):
             yield self._canonicalNameCaps(k), v
 
 

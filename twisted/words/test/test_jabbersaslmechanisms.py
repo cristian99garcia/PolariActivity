@@ -5,7 +5,7 @@
 Tests for L{twisted.words.protocols.jabber.sasl_mechanisms}.
 """
 
-from __future__ import absolute_import, division
+
 
 from twisted.trial import unittest
 
@@ -20,7 +20,7 @@ class PlainTests(unittest.TestCase):
         """
         Test the initial response.
         """
-        m = sasl_mechanisms.Plain(None, u'test', u'secret')
+        m = sasl_mechanisms.Plain(None, 'test', 'secret')
         self.assertEqual(m.getInitialResponse(), b'\x00test\x00secret')
 
 
@@ -44,7 +44,7 @@ class DigestMD5Tests(unittest.TestCase):
     """
     def setUp(self):
         self.mechanism = sasl_mechanisms.DigestMD5(
-            u'xmpp', u'example.org', None, u'test', u'secret')
+            'xmpp', 'example.org', None, 'test', 'secret')
 
 
     def test_getInitialResponse(self):
@@ -107,7 +107,7 @@ class DigestMD5Tests(unittest.TestCase):
         the host part of the JID as the realm.
         """
         self.mechanism = sasl_mechanisms.DigestMD5(
-            u'xmpp', u'\u00e9chec.example.org', None, u'test', u'secret')
+            'xmpp', '\u00e9chec.example.org', None, 'test', 'secret')
         challenge = b'nonce="1234",qop="auth",charset=utf-8,algorithm=md5-sess'
         directives = self.mechanism._parse(
             self.mechanism.getResponse(challenge))
@@ -134,10 +134,10 @@ class DigestMD5Tests(unittest.TestCase):
         nc = networkString('%08x' % (1,))
         cnonce = b'OA6MHXh6VqTrRk'
 
-        username = u'\u0418chris'
-        password = u'\u0418secret'
-        host = u'\u0418elwood.innosoft.com'
-        digestURI = u'imap/\u0418elwood.innosoft.com'.encode(charset)
+        username = '\u0418chris'
+        password = '\u0418secret'
+        host = '\u0418elwood.innosoft.com'
+        digestURI = 'imap/\u0418elwood.innosoft.com'.encode(charset)
 
         mechanism = sasl_mechanisms.DigestMD5(
             b'imap', host, None, username, password)

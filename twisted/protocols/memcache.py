@@ -25,7 +25,7 @@ See U{http://code.sixapart.com/svn/memcached/trunk/server/doc/protocol.txt} for
 more information about the protocol.
 """
 
-from __future__ import absolute_import, division
+
 
 from collections import deque
 
@@ -88,7 +88,7 @@ class Command(object):
         """
         self.command = command
         self._deferred = Deferred()
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             setattr(self, k, v)
 
 

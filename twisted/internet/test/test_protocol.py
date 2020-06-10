@@ -5,7 +5,7 @@
 Tests for L{twisted.internet.protocol}.
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface.verify import verifyObject
 from zope.interface import implementer

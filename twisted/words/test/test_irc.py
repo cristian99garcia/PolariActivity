@@ -11,7 +11,7 @@ import time
 
 from twisted.internet import protocol, task
 from twisted.python.filepath import FilePath
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.test.proto_helpers import StringTransport, StringIOWithoutClosing
 from twisted.trial.unittest import TestCase
 from twisted.words.protocols import irc
@@ -30,11 +30,11 @@ class IRCTestCase(TestCase):
         @type val: L{bytes} or L{unicode} or L{list}
         """
         bufferValue = buf
-        if isinstance(val, unicode):
+        if isinstance(val, str):
             bufferValue = bufferValue.decode("utf-8")
 
         if isinstance(bufferValue, list):
-            if isinstance(val[0], unicode):
+            if isinstance(val[0], str):
                 bufferValue = [b.decode("utf8") for b in bufferValue]
         self.assertEqual(bufferValue, val)
 
@@ -1425,7 +1425,7 @@ class ClientImplementationTests(IRCTestCase):
         given by the server or defaults, to determine which channel modes
         require arguments when being added or removed.
         """
-        add, remove = map(sorted, self.client.getChannelModeParams())
+        add, remove = list(map(sorted, self.client.getChannelModeParams()))
         self.assertEqual(add, ['b', 'h', 'k', 'l', 'o', 'v'])
         self.assertEqual(remove, ['b', 'h', 'o', 'v'])
 
@@ -1441,13 +1441,13 @@ class ClientImplementationTests(IRCTestCase):
         # Remove CHANMODES feature, causing getFeature('CHANMODES') to return
         # None.
         removeFeature('CHANMODES')
-        add, remove = map(sorted, self.client.getChannelModeParams())
+        add, remove = list(map(sorted, self.client.getChannelModeParams()))
         self.assertEqual(add, ['h', 'o', 'v'])
         self.assertEqual(remove, ['h', 'o', 'v'])
 
         # Remove PREFIX feature, causing getFeature('PREFIX') to return None.
         removeFeature('PREFIX')
-        add, remove = map(sorted, self.client.getChannelModeParams())
+        add, remove = list(map(sorted, self.client.getChannelModeParams()))
         self.assertEqual(add, [])
         self.assertEqual(remove, [])
 
@@ -1463,7 +1463,7 @@ class ClientImplementationTests(IRCTestCase):
         the user sets on themself, outside of channel modes) that require
         parameters when added and removed, respectively.
         """
-        add, remove = map(sorted, self.client.getUserModeParams())
+        add, remove = list(map(sorted, self.client.getUserModeParams()))
         self.assertEqual(add, [])
         self.assertEqual(remove, [])
 
@@ -1658,7 +1658,7 @@ class BasicServerFunctionalityTests(IRCTestCase):
         @type s: L{bytes} or L{unicode}
         """
         bufferValue = self.f.getvalue()
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             bufferValue = bufferValue.decode("utf-8")
         self.assertEqual(bufferValue, s)
 
@@ -1682,7 +1682,7 @@ class BasicServerFunctionalityTests(IRCTestCase):
         The format is described in more detail in
         U{RFC 1459 <https://tools.ietf.org/html/rfc1459.html#section-2.3>}.
         """
-        self.p.sendCommand(u"CMD", (u"param1", u"param2"))
+        self.p.sendCommand("CMD", ("param1", "param2"))
         self.check("CMD param1 param2\r\n")
 
 
@@ -1691,7 +1691,7 @@ class BasicServerFunctionalityTests(IRCTestCase):
         Passing unicode parameters to L{IRC.sendCommand} encodes the parameters
         in UTF-8.
         """
-        self.p.sendCommand(u"CMD", (u"param\u00b9", u"param\u00b2"))
+        self.p.sendCommand("CMD", ("param\u00b9", "param\u00b2"))
         self.check(b"CMD param\xc2\xb9 param\xc2\xb2\r\n")
 
 
@@ -1711,7 +1711,7 @@ class BasicServerFunctionalityTests(IRCTestCase):
         C{ValueError}.
         """
         error = self.assertRaises(ValueError, self.p.sendCommand, None,
-            (u"param1", u"param2"))
+            ("param1", "param2"))
         self.assertEqual(error.args[0], "IRC message requires a command.")
 
 
@@ -1732,8 +1732,8 @@ class BasicServerFunctionalityTests(IRCTestCase):
         Passing an invalid string command to L{IRC.sendCommand} raises a
         C{ValueError}.
         """
-        error = self.assertRaises(ValueError, self.p.sendCommand, u" ",
-            (u"param1", u"param2"))
+        error = self.assertRaises(ValueError, self.p.sendCommand, " ",
+            ("param1", "param2"))
         self.assertEqual(error.args[0], 'Invalid command: " "')
 
 
@@ -1743,7 +1743,7 @@ class BasicServerFunctionalityTests(IRCTestCase):
         L{IRC.sendCommand} results in a proper query string including the
         specified line prefix.
         """
-        self.p.sendCommand(u"CMD", (u"param1", u"param2"), u"irc.example.com")
+        self.p.sendCommand("CMD", ("param1", "param2"), "irc.example.com")
         self.check(b":irc.example.com CMD param1 param2\r\n")
 
 
@@ -1760,12 +1760,12 @@ class BasicServerFunctionalityTests(IRCTestCase):
         <https://ircv3.net/specs/core/message-tags-3.2.html>}.
         """
         sendTags = {
-            u"aaa": u"bbb",
-            u"ccc": None,
-            u"example.com/ddd": u"eee"
+            "aaa": "bbb",
+            "ccc": None,
+            "example.com/ddd": "eee"
         }
         expectedTags = (b"aaa=bbb", b"ccc", b"example.com/ddd=eee")
-        self.p.sendCommand(u"CMD", (u"param1", u"param2"), u"irc.example.com",
+        self.p.sendCommand("CMD", ("param1", "param2"), "irc.example.com",
             sendTags)
         outMsg = self.f.getvalue()
         outTagStr, outLine = outMsg.split(b' ', 1)
@@ -1783,12 +1783,12 @@ class BasicServerFunctionalityTests(IRCTestCase):
         Passing empty tag names to L{IRC.sendCommand} raises a C{ValueError}.
         """
         sendTags = {
-            u"aaa": u"bbb",
-            u"ccc": None,
-            u"": u""
+            "aaa": "bbb",
+            "ccc": None,
+            "": ""
         }
-        error = self.assertRaises(ValueError, self.p.sendCommand, u"CMD",
-            (u"param1", u"param2"), u"irc.example.com", sendTags)
+        error = self.assertRaises(ValueError, self.p.sendCommand, "CMD",
+            ("param1", "param2"), "irc.example.com", sendTags)
         self.assertEqual(error.args[0], "A tag name is required.")
 
 
@@ -1798,12 +1798,12 @@ class BasicServerFunctionalityTests(IRCTestCase):
         C{ValueError}.
         """
         sendTags = {
-            u"aaa": u"bbb",
-            u"ccc": None,
-            None: u"beep"
+            "aaa": "bbb",
+            "ccc": None,
+            None: "beep"
         }
-        error = self.assertRaises(ValueError, self.p.sendCommand, u"CMD",
-            (u"param1", u"param2"), u"irc.example.com", sendTags)
+        error = self.assertRaises(ValueError, self.p.sendCommand, "CMD",
+            ("param1", "param2"), "irc.example.com", sendTags)
         self.assertEqual(error.args[0], "A tag name is required.")
 
 
@@ -1813,10 +1813,10 @@ class BasicServerFunctionalityTests(IRCTestCase):
         C{ValueError}.
         """
         sendTags = {
-            u"aaa bbb": u"ccc"
+            "aaa bbb": "ccc"
         }
-        error = self.assertRaises(ValueError, self.p.sendCommand, u"CMD",
-            (u"param1", u"param2"), u"irc.example.com", sendTags)
+        error = self.assertRaises(ValueError, self.p.sendCommand, "CMD",
+            ("param1", "param2"), "irc.example.com", sendTags)
         self.assertEqual(error.args[0], "Tag contains invalid characters.")
 
 
@@ -1826,10 +1826,10 @@ class BasicServerFunctionalityTests(IRCTestCase):
         raises a C{ValueError}.
         """
         sendTags = {
-            u"aaa_b^@": u"ccc"
+            "aaa_b^@": "ccc"
         }
-        error = self.assertRaises(ValueError, self.p.sendCommand, u"CMD",
-            (u"param1", u"param2"), u"irc.example.com", sendTags)
+        error = self.assertRaises(ValueError, self.p.sendCommand, "CMD",
+            ("param1", "param2"), "irc.example.com", sendTags)
         self.assertEqual(error.args[0], "Tag contains invalid characters.")
 
 
@@ -1839,11 +1839,11 @@ class BasicServerFunctionalityTests(IRCTestCase):
         L{IRC.sendCommand} are escaped.
         """
         sendTags = {
-            u"aaa": u"bbb",
-            u"ccc": u"test\r\n \\;;"
+            "aaa": "bbb",
+            "ccc": "test\r\n \\;;"
         }
         expectedTags = (b"aaa=bbb", b"ccc=test\\r\\n\\s\\\\\\:\\:")
-        self.p.sendCommand(u"CMD", (u"param1", u"param2"), u"irc.example.com",
+        self.p.sendCommand("CMD", ("param1", "param2"), "irc.example.com",
             sendTags)
         outMsg = self.f.getvalue()
         outTagStr, outLine = outMsg.split(b" ", 1)
@@ -2942,6 +2942,6 @@ class DccFileReceiveTests(IRCTestCase):
         """
         L{IOError} is raised when failing to open the requested path.
         """
-        fp = FilePath(self.mktemp()).child(u'child-with-no-existing-parent')
+        fp = FilePath(self.mktemp()).child('child-with-no-existing-parent')
 
         self.assertRaises(IOError, self.makeConnectedDccFileReceive, fp.path)

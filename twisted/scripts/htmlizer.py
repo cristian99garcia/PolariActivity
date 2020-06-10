@@ -5,7 +5,7 @@
 
 """HTML pretty-printing for Python source code."""
 
-from __future__ import print_function
+
 
 __version__ = '$Revision: 1.8 $'[11:-2]
 

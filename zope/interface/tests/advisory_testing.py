@@ -29,14 +29,12 @@ def ping(log, value):
 try:
     from types import ClassType
     
-    class ClassicClass:
-        __metaclass__ = ClassType
+    class ClassicClass(metaclass=ClassType):
         classLevelFrameInfo = getFrameInfo(sys._getframe())
 except ImportError:
     ClassicClass = None
 
-class NewStyleClass:
-    __metaclass__ = type
+class NewStyleClass(metaclass=type):
     classLevelFrameInfo = getFrameInfo(sys._getframe())
 
 moduleLevelFrameInfo = getFrameInfo(sys._getframe())

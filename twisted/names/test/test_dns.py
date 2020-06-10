@@ -6,7 +6,7 @@
 Tests for twisted.names.dns.
 """
 
-from __future__ import division, absolute_import
+
 
 from io import BytesIO
 
@@ -136,7 +136,7 @@ class NameTests(unittest.TestCase):
         L{dns.Name} automatically encodes unicode domain name using C{idna}
         encoding.
         """
-        name = dns.Name(u'\u00e9chec.example.org')
+        name = dns.Name('\u00e9chec.example.org')
         self.assertIsInstance(name.name, bytes)
         self.assertEqual(b'xn--chec-9oa.example.org', name.name)
 
@@ -1171,9 +1171,9 @@ class DatagramProtocolTests(unittest.TestCase):
         Test content received after a query.
         """
         d = self.proto.query(('127.0.0.1', 21345), [dns.Query(b'foo')])
-        self.assertEqual(len(self.proto.liveMessages.keys()), 1)
+        self.assertEqual(len(list(self.proto.liveMessages.keys())), 1)
         m = dns.Message()
-        m.id = next(iter(self.proto.liveMessages.keys()))
+        m.id = next(iter(list(self.proto.liveMessages.keys())))
         m.answers = [dns.RRHeader(payload=dns.Record_A(address='1.2.3.4'))]
         def cb(result):
             self.assertEqual(result.answers[0].payload.dottedQuad(), '1.2.3.4')
@@ -1307,9 +1307,9 @@ class DNSProtocolTests(unittest.TestCase):
         Test content received after a query.
         """
         d = self.proto.query([dns.Query(b'foo')])
-        self.assertEqual(len(self.proto.liveMessages.keys()), 1)
+        self.assertEqual(len(list(self.proto.liveMessages.keys())), 1)
         m = dns.Message()
-        m.id = next(iter(self.proto.liveMessages.keys()))
+        m.id = next(iter(list(self.proto.liveMessages.keys())))
         m.answers = [dns.RRHeader(payload=dns.Record_A(address='1.2.3.4'))]
         def cb(result):
             self.assertEqual(result.answers[0].payload.dottedQuad(), '1.2.3.4')

@@ -5,7 +5,7 @@
 Tests for L{twisted.words.protocols.jabber.xmlstream}.
 """
 
-from __future__ import absolute_import, division
+
 
 from twisted.trial import unittest
 
@@ -15,7 +15,7 @@ from twisted.internet import defer, task
 from twisted.internet.error import ConnectionLost
 from twisted.internet.interfaces import IProtocolFactory
 from twisted.python import failure
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.test import proto_helpers
 from twisted.words.test.test_xmlstream import GenericXmlStreamFactoryTestsMixin
 from twisted.words.xish import domish
@@ -36,7 +36,7 @@ class HashPasswordTests(unittest.TestCase):
         """
         The sid and secret are concatenated to calculate sha1 hex digest.
         """
-        hash = xmlstream.hashPassword(u"12345", u"secret")
+        hash = xmlstream.hashPassword("12345", "secret")
         self.assertEqual('99567ee91b2c7cabf607f10cb9f4a3634fa820e0', hash)
 
 
@@ -45,14 +45,14 @@ class HashPasswordTests(unittest.TestCase):
         The session identifier must be a unicode object.
         """
         self.assertRaises(TypeError, xmlstream.hashPassword, b"\xc2\xb92345",
-                                                             u"secret")
+                                                             "secret")
 
 
     def test_passwordNotUnicode(self):
         """
         The password must be a unicode object.
         """
-        self.assertRaises(TypeError, xmlstream.hashPassword, u"12345",
+        self.assertRaises(TypeError, xmlstream.hashPassword, "12345",
                                                              b"secr\xc3\xa9t")
 
 
@@ -60,7 +60,7 @@ class HashPasswordTests(unittest.TestCase):
         """
         The concatenated sid and password must be encoded to UTF-8 before hashing.
         """
-        hash = xmlstream.hashPassword(u"12345", u"secr\u00e9t")
+        hash = xmlstream.hashPassword("12345", "secr\u00e9t")
         self.assertEqual('659bf88d8f8e179081f7f3b4a8e7d224652d2853', hash)
 
 
@@ -654,7 +654,7 @@ class ListenAuthenticatorTests(unittest.TestCase):
                          "xmlns:stream='http://etherx.jabber.org/streams' "
                          "from='example.org' to='example.com' id='12345' "
                          "version='1.0'>")
-        self.assertIsInstance(xs.sid, unicode)
+        self.assertIsInstance(xs.sid, str)
 
 
 

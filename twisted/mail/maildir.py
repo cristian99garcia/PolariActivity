@@ -15,9 +15,9 @@ from hashlib import md5
 from zope.interface import implementer
 
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except ImportError:
-    import StringIO
+    import io
 
 from twisted.mail import pop3
 from twisted.mail import smtp
@@ -368,7 +368,7 @@ class _MaildirMailboxAppendMessageTask:
         self.defer = defer.Deferred()
         self.openCall = None
         if not hasattr(msg, "read"):
-            msg = StringIO.StringIO(msg)
+            msg = io.StringIO(msg)
         self.msg = msg
 
 
@@ -624,7 +624,7 @@ class MaildirMailbox(pop3.Mailbox):
         Move each message marked for deletion from the I{.Trash/} subfolder back
         to its original position.
         """
-        for (real, trash) in self.deleted.items():
+        for (real, trash) in list(self.deleted.items()):
             try:
                 os.rename(trash, real)
             except OSError as e:
@@ -716,7 +716,7 @@ class StringListMailbox:
         @raise IndexError: When the index does not correspond to a message in
             the mailbox.
         """
-        return StringIO.StringIO(self.msgs[i])
+        return io.StringIO(self.msgs[i])
 
 
     def getUidl(self, i):

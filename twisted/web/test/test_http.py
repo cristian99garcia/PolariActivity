@@ -5,18 +5,18 @@
 Test HTTP support.
 """
 
-from __future__ import absolute_import, division
+
 
 import random, cgi, base64, calendar
 
 try:
-    from urlparse import urlparse, urlunsplit, clear_cache
+    from urllib.parse import urlparse, urlunsplit, clear_cache
 except ImportError:
     from urllib.parse import urlparse, urlunsplit, clear_cache
 
 from zope.interface import provider
 
-from twisted.python.compat import (_PY3, iterbytes, networkString, unicode,
+from twisted.python.compat import (_PY3, iterbytes, networkString, str,
                                    intToBytes, NativeStringIO)
 from twisted.python.failure import Failure
 from twisted.trial import unittest
@@ -644,7 +644,7 @@ def _prequest(**headers):
     Make a request with the given request headers for the persistence tests.
     """
     request = http.Request(DummyChannel(), False)
-    for headerName, v in headers.items():
+    for headerName, v in list(headers.items()):
         request.requestHeaders.setRawHeaders(networkString(headerName), v)
     return request
 
@@ -1672,7 +1672,7 @@ class QueryArgumentsTests(unittest.TestCase):
             # able to compare the values meaningfully, if it gives back unicode,
             # convert all the values to bytes.
             standardResult = urlparse(urlToStandardImplementation)
-            if isinstance(standardResult.scheme, unicode):
+            if isinstance(standardResult.scheme, str):
                 # The choice of encoding is basically irrelevant.  The values
                 # are all in ASCII.  UTF-8 is, of course, the correct choice.
                 expected = (standardResult.scheme.encode('utf-8'),
@@ -1723,7 +1723,7 @@ class QueryArgumentsTests(unittest.TestCase):
         """
         L{http.urlparse} should reject unicode input early.
         """
-        self.assertRaises(TypeError, http.urlparse, u'http://example.org/path')
+        self.assertRaises(TypeError, http.urlparse, 'http://example.org/path')
 
 
 
@@ -1874,7 +1874,7 @@ class RequestTests(unittest.TestCase, ResponseTestMixin):
         channel = DummyChannel()
         req = http.Request(channel, False)
         self.assertRaises(TypeError, req.setResponseCode,
-                          202, u"not happily accepted")
+                          202, "not happily accepted")
 
 
     def test_setResponseCodeAcceptsIntegers(self):
@@ -1893,7 +1893,7 @@ class RequestTests(unittest.TestCase, ResponseTestMixin):
         parameter.
         """
         req = http.Request(DummyChannel(), False)
-        req.setResponseCode(long(1))
+        req.setResponseCode(int(1))
     if _PY3:
         test_setResponseCodeAcceptsLongIntegers.skip = (
             "Python 3 has no separate long integer type.")
@@ -2095,7 +2095,7 @@ class RequestTests(unittest.TestCase, ResponseTestMixin):
         """
         expectedCookieValue = b"foo=bar"
 
-        self._checkCookie(expectedCookieValue, u"foo", u"bar")
+        self._checkCookie(expectedCookieValue, "foo", "bar")
 
 
     def test_addCookieWithAllArgumentsUnicode(self):
@@ -2109,9 +2109,9 @@ class RequestTests(unittest.TestCase, ResponseTestMixin):
             b"Comment=test; Secure; HttpOnly")
 
         self._checkCookie(expectedCookieValue,
-            u"foo", u"bar", expires=u"Fri, 31 Dec 9999 23:59:59 GMT",
-            domain=u".example.com", path=u"/", max_age=u"31536000",
-            comment=u"test", secure=True, httpOnly=True)
+            "foo", "bar", expires="Fri, 31 Dec 9999 23:59:59 GMT",
+            domain=".example.com", path="/", max_age="31536000",
+            comment="test", secure=True, httpOnly=True)
 
 
     def test_addCookieWithMinimumArgumentsBytes(self):

@@ -18,14 +18,15 @@ from hashlib import md5
 
 from twisted.internet import reactor, defer, protocol
 from twisted.python import log
+from functools import reduce
 
 def logPacketData(data):
     lines = len(data)/16
     if lines*16 != len(data): lines=lines+1
     for i in range(lines):
         d = tuple(data[16*i:16*i+16])
-        hex = map(lambda x: "%02X"%ord(x),d)
-        text = map(lambda x: (len(repr(x))>3 and '.') or x, d)
+        hex = ["%02X"%ord(x) for x in d]
+        text = [(len(repr(x))>3 and '.') or x for x in d]
         log.msg(' '.join(hex)+ ' '*3*(16-len(d)) +''.join(text))
     log.msg('')
 
@@ -66,7 +67,7 @@ def encryptPasswordMD5(password,key):
 
 def encryptPasswordICQ(password):
     key=[0xF3,0x26,0x81,0xC4,0x39,0x86,0xDB,0x92,0x71,0xA3,0xB9,0xE6,0x53,0x7A,0x95,0x7C]
-    bytes=map(ord,password)
+    bytes=list(map(ord,password))
     r=""
     for i in range(len(bytes)):
         r=r+chr(bytes[i]^key[i%len(key)])
@@ -99,7 +100,7 @@ class OSCARUser:
         self.warning = warn
         self.flags = []
         self.caps = []
-        for k,v in tlvs.items():
+        for k,v in list(tlvs.items()):
             if k == 1: # user flags
                 v=struct.unpack('!H',v)[0]
                 for o, f in [(1,'trial'),
@@ -207,7 +208,7 @@ class SSIBuddy:
     def __init__(self, name, tlvs = {}):
         self.name = name
         self.tlvs = tlvs
-        for k,v in tlvs.items():
+        for k,v in list(tlvs.items()):
             if k == 0x013c: # buddy comment
                 self.buddyComment = v
             elif k == 0x013d: # buddy alerts
@@ -231,7 +232,7 @@ class SSIBuddy:
     def oscarRep(self, groupID, buddyID):
         # Result is a tuple of (k, v)
         tlvData = reduce(lambda x,y: x+y,
-            map(lambda result: TLV(result[0],result[1]), self.tlvs.items()),
+            [TLV(result[0],result[1]) for result in list(self.tlvs.items())],
             '\000\000')
         return struct.pack('!H', len(self.name)) + self.name + \
                struct.pack('!HH', groupID, buddyID) + '\000\000' + tlvData
@@ -541,7 +542,7 @@ class BOSConnection(SNACBased):
         if channel == 1: # message
             flags = []
             multiparts = []
-            for k, v in tlvs.items():
+            for k, v in list(tlvs.items()):
                 if k == 2:
                     while v:
                         v = v[2:] # skip bad data
@@ -617,7 +618,7 @@ class BOSConnection(SNACBased):
             log.msg(tlvs)
 
     def _cbGetChatInfoForInvite(self, info, user, message):
-        apply(self.receiveChatInvite, (user,message)+info)
+        self.receiveChatInvite(*(user,message)+info)
 
     def oscar_09_03(self, snac):
         """
@@ -809,7 +810,7 @@ class BOSConnection(SNACBased):
         data = data + '\x00\x01' + chr(len(user)) + user
         if not type(message) in (tuple, list):
             message = [[message,]]
-            if type(message[0][0]) == unicode:
+            if type(message[0][0]) == str:
                 message[0].append('unicode')
         messageData = ''
         for part in message:
@@ -980,7 +981,7 @@ class OSCARService(SNACBased):
         self.d = d
 
     def connectionLost(self, reason):
-        for k,v in self.bos.services.items():
+        for k,v in list(self.bos.services.items()):
             if v == self:
                 del self.bos.services[k]
                 return

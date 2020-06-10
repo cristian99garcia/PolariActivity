@@ -3,7 +3,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import division, absolute_import
+
 
 import errno
 import struct
@@ -84,7 +84,7 @@ class FileTransferBase(protocol.Protocol):
         if flags & FILEXFER_ATTR_EXTENDED == FILEXFER_ATTR_EXTENDED:
             extended_count ,= struct.unpack('!L', data[:4])
             data = data[4:]
-            for i in xrange(extended_count):
+            for i in range(extended_count):
                 extended_type, data = getNS(data)
                 extended_data, data = getNS(data)
                 attrs['ext_%s' % nativeString(extended_type)] = extended_data
@@ -136,7 +136,7 @@ class FileTransferServer(FileTransferBase):
             ext[ext_name] = ext_data
         our_ext = self.client.gotVersion(version, ext)
         our_ext_data = b""
-        for (k,v) in our_ext.items():
+        for (k,v) in list(our_ext.items()):
             our_ext_data += NS(k) + NS(v)
         self.sendPacket(FXP_VERSION, struct.pack('!L', self.version) + \
                                      our_ext_data)
@@ -290,7 +290,7 @@ class FileTransferServer(FileTransferBase):
     def _scanDirectory(self, dirIter, f):
         while len(f) < 250:
             try:
-                info = dirIter.next()
+                info = next(dirIter)
             except StopIteration:
                 if not f:
                     raise EOFError
@@ -458,10 +458,10 @@ class FileTransferServer(FileTransferBase):
         """
         Clean all opened files and directories.
         """
-        for fileObj in self.openFiles.values():
+        for fileObj in list(self.openFiles.values()):
             fileObj.close()
         self.openFiles = {}
-        for (dirObj, dirIter) in self.openDirs.values():
+        for (dirObj, dirIter) in list(self.openDirs.values()):
             dirObj.close()
         self.openDirs = {}
 
@@ -831,7 +831,7 @@ class ClientDirectory:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.filesCache:
             return self.filesCache.pop(0)
         d = self.read()

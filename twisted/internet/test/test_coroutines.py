@@ -6,7 +6,7 @@ A wrapper for L{twisted.internet.test._awaittests}, as that test module
 includes keywords not valid in Pythons before 3.5.
 """
 
-from __future__ import absolute_import, division
+
 
 import sys
 from twisted.python.compat import _PY3, execfile
@@ -16,7 +16,7 @@ if sys.version_info >= (3, 5, 0):
     _path = FilePath(__file__).parent().child("_awaittests.py.3only")
 
     _g = {}
-    execfile(_path.path, _g)
+    exec(compile(open(_path.path, "rb").read(), _path.path, 'exec'), _g)
     AwaitTests = _g["AwaitTests"]
 else:
     from twisted.trial.unittest import TestCase
@@ -38,7 +38,7 @@ if _PY3:
     _path = FilePath(__file__).parent().child("_yieldfromtests.py.3only")
 
     _g = {}
-    execfile(_path.path, _g)
+    exec(compile(open(_path.path, "rb").read(), _path.path, 'exec'), _g)
     YieldFromTests = _g["YieldFromTests"]
 else:
     from twisted.trial.unittest import TestCase

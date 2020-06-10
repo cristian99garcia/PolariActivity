@@ -6,7 +6,7 @@
 I contain PythonScript, which is a very simple python script resource.
 """
 
-from __future__ import division, absolute_import
+
 
 import os, traceback
 
@@ -61,7 +61,7 @@ def ResourceScript(path, registry):
             'cache': cs.cache,
             'recache': cs.recache}
     try:
-        execfile(path, glob, glob)
+        exec(compile(open(path, "rb").read(), path, 'exec'), glob, glob)
     except AlreadyCached as ac:
         return ac.args[0]
     rsrc = glob['resource']
@@ -166,7 +166,7 @@ class PythonScript(resource.Resource):
                      '__file__': _coerceToFilesystemEncoding("", self.filename),
                      'registry': self.registry}
         try:
-            execfile(self.filename, namespace, namespace)
+            exec(compile(open(self.filename, "rb").read(), self.filename, 'exec'), namespace, namespace)
         except IOError as e:
             if e.errno == 2: #file not found
                 request.setResponseCode(http.NOT_FOUND)

@@ -5,7 +5,7 @@
 Test cases for twisted.python._shellcomp
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 from io import BytesIO
@@ -38,7 +38,7 @@ class ZshScriptTestMeta(type):
 
 
 
-class ZshScriptTestMixin(object):
+class ZshScriptTestMixin(object, metaclass=ZshScriptTestMeta):
     """
     Integration test helper to show that C{usage.Options} classes can have zsh
     completion functions generated for them without raising errors.
@@ -55,7 +55,6 @@ class ZshScriptTestMixin(object):
     subclass which also inherits from this mixin, and contains a C{generateFor}
     list appropriate for the scripts in that package.
     """
-    __metaclass__ = ZshScriptTestMeta
 
 
 

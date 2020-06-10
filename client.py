@@ -178,7 +178,7 @@ class Client(irc.IRCClient, GObject.GObject):
         pass
 
     def actions(self, *args):
-        print "actions", args
+        print("actions", args)
 
     def me(self, channel, message):
         self.describe(channel, message)

@@ -18,7 +18,7 @@ Maintainer: Jonathan Lange
     asynchronous (ie, Deferred-returning) test methods, in seconds.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 from random import randrange
 

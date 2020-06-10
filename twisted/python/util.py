@@ -2,7 +2,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import division, absolute_import, print_function
+
 
 import os, sys, errno, warnings
 try:
@@ -16,7 +16,7 @@ except ImportError:
 
 from functools import wraps
 
-from twisted.python.compat import _PY3, unicode
+from twisted.python.compat import _PY3, str
 from incremental import Version
 from twisted.python.deprecate import deprecatedModuleAttribute
 
@@ -61,7 +61,7 @@ class InsensitiveDict:
 
 
     def _lowerOrReturn(self, key):
-        if isinstance(key, bytes) or isinstance(key, unicode):
+        if isinstance(key, bytes) or isinstance(key, str):
             return key.lower()
         else:
             return key
@@ -96,7 +96,7 @@ class InsensitiveDict:
 
     def _doPreserve(self, key):
         if not self.preserve and (isinstance(key, bytes)
-                                  or isinstance(key, unicode)):
+                                  or isinstance(key, str)):
             return key.lower()
         else:
             return key
@@ -106,21 +106,21 @@ class InsensitiveDict:
         """
         List of keys in their original case.
         """
-        return list(self.iterkeys())
+        return list(self.keys())
 
 
     def values(self):
         """
         List of values.
         """
-        return list(self.itervalues())
+        return list(self.values())
 
 
     def items(self):
         """
         List of (key,value) pairs.
         """
-        return list(self.iteritems())
+        return list(self.items())
 
 
     def get(self, key, default=None):
@@ -139,7 +139,7 @@ class InsensitiveDict:
         If 'key' doesn't exist, associate it with the 'default' value.
         Return value associated with 'key'.
         """
-        if not self.has_key(key):
+        if key not in self:
             self[key] = default
         return self[key]
 
@@ -148,7 +148,7 @@ class InsensitiveDict:
         """
         Copy (key,value) pairs from 'dict'.
         """
-        for k,v in dict.items():
+        for k,v in list(dict.items()):
             self[k] = v
 
 
@@ -156,33 +156,33 @@ class InsensitiveDict:
         """
         String representation of the dictionary.
         """
-        items = ", ".join([("%r: %r" % (k,v)) for k,v in self.items()])
+        items = ", ".join([("%r: %r" % (k,v)) for k,v in list(self.items())])
         return "InsensitiveDict({%s})" % items
 
 
     def iterkeys(self):
-        for v in self.data.values():
+        for v in list(self.data.values()):
             yield self._doPreserve(v[0])
 
 
     def itervalues(self):
-        for v in self.data.values():
+        for v in list(self.data.values()):
             yield v[1]
 
 
     def iteritems(self):
-        for (k, v) in self.data.values():
+        for (k, v) in list(self.data.values()):
             yield self._doPreserve(k), v
 
 
     def popitem(self):
-        i=self.items()[0]
+        i=list(self.items())[0]
         del self[i[0]]
         return i
 
 
     def clear(self):
-        for k in self.keys():
+        for k in list(self.keys()):
             del self[k]
 
 
@@ -195,7 +195,7 @@ class InsensitiveDict:
 
 
     def __eq__(self, other):
-        for k,v in self.items():
+        for k,v in list(self.items()):
             if not (k in other) or not (other[k]==v):
                 return 0
         return len(self)==len(other)
@@ -250,7 +250,7 @@ def getPluginDirs():
                             os.path.abspath(twisted.__file__))), 'plugins')
     userPlugins = os.path.expanduser("~/TwistedPlugins")
     confPlugins = os.path.expanduser("~/.twisted")
-    allPlugins = filter(os.path.isdir, [systemPlugins, userPlugins, confPlugins])
+    allPlugins = list(filter(os.path.isdir, [systemPlugins, userPlugins, confPlugins]))
     return allPlugins
 
 
@@ -461,11 +461,11 @@ class LineLog:
 
 
     def str(self):
-        return '\n'.join(filter(None,self.log))
+        return '\n'.join([_f for _f in self.log if _f])
 
 
     def __getitem__(self, item):
-        return filter(None,self.log)[item]
+        return [_f for _f in self.log if _f][item]
 
 
     def clear(self):
@@ -528,7 +528,7 @@ class IntervalDifferential(object):
 class _IntervalDifferentialIterator(object):
     def __init__(self, i, d):
 
-        self.intervals = [[e, e, n] for (e, n) in zip(i, range(len(i)))]
+        self.intervals = [[e, e, n] for (e, n) in zip(i, list(range(len(i))))]
         self.default = d
         self.last = 0
 
@@ -723,7 +723,7 @@ class SubclassableCStringIO(object):
     __csio = None
 
     def __init__(self, *a, **kw):
-        from cStringIO import StringIO
+        from io import StringIO
         self.__csio = StringIO(*a, **kw)
 
 
@@ -731,8 +731,8 @@ class SubclassableCStringIO(object):
         return self.__csio.__iter__()
 
 
-    def next(self):
-        return self.__csio.next()
+    def __next__(self):
+        return next(self.__csio)
 
 
     def close(self):

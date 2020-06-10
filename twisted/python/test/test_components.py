@@ -6,7 +6,7 @@
 Test cases for Twisted component architecture.
 """
 
-from __future__ import division, absolute_import
+
 
 from functools import wraps
 

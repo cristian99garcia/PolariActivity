@@ -7,7 +7,7 @@ FTP tests.
 
 import os
 import errno
-from StringIO import StringIO
+from io import StringIO
 import getpass
 
 from zope.interface import implementer
@@ -354,7 +354,7 @@ class BasicFTPServerTests(FTPServerTestCase):
     def testDecodeHostPort(self):
         self.assertEqual(ftp.decodeHostPort('25,234,129,22,100,23'),
                 ('25.234.129.22', 25623))
-        nums = range(6)
+        nums = list(range(6))
         for i in range(6):
             badValue = list(nums)
             badValue[i] = 256
@@ -464,11 +464,11 @@ class BasicFTPServerTests(FTPServerTestCase):
         port = self.serverProtocol.getDTPPort(protocol.Factory())
         self.assertEqual(port, 0)
 
-        self.serverProtocol.passivePortRange = xrange(22032, 65536)
+        self.serverProtocol.passivePortRange = range(22032, 65536)
         port = self.serverProtocol.getDTPPort(protocol.Factory())
         self.assertEqual(port, 22035)
 
-        self.serverProtocol.passivePortRange = xrange(22032, 22035)
+        self.serverProtocol.passivePortRange = range(22032, 22035)
         self.assertRaises(error.CannotListenError,
                           self.serverProtocol.getDTPPort,
                           protocol.Factory())
@@ -480,7 +480,7 @@ class BasicFTPServerTests(FTPServerTestCase):
         their C{passivePortRange} attribute set to the same object the
         factory's C{passivePortRange} attribute is set to.
         """
-        portRange = xrange(2017, 2031)
+        portRange = range(2017, 2031)
         self.factory.passivePortRange = portRange
         protocol = self.factory.buildProtocol(None)
         self.assertEqual(portRange, protocol.wrappedProtocol.passivePortRange)
@@ -880,7 +880,7 @@ class FTPServerPasvDataConnectionTests(FTPServerTestCase):
         """
         return self._listTestHelper(
             "LIST",
-            (u'my resum\xe9', (
+            ('my resum\xe9', (
                 0, 1, filepath.Permissions(0o777), 0, 0, 'user', 'group')),
             'drwxrwxrwx   0 user      group                   '
             '0 Jan 01  1970 my resum\xc3\xa9\r\n')
@@ -989,7 +989,7 @@ class FTPServerPasvDataConnectionTests(FTPServerTestCase):
         """
         return self._listTestHelper(
             "NLST",
-            (u'my resum\xe9', (
+            ('my resum\xe9', (
                 0, 1, filepath.Permissions(0o777), 0, 0, 'user', 'group')),
             'my resum\xc3\xa9\r\n')
 
@@ -2351,7 +2351,7 @@ class FTPClientTests(unittest.TestCase):
         d = self.client.removeFile("/tmp/test")
         response = ['250-perhaps a progress report',
                     '250 okay']
-        map(self.client.lineReceived, response)
+        list(map(self.client.lineReceived, response))
         return d.addCallback(self.assertTrue)
 
 
@@ -2411,7 +2411,7 @@ class FTPClientTests(unittest.TestCase):
         d = self.client.removeDirectory("/tmp/test")
         response = ['250-perhaps a progress report',
                     '250 okay']
-        map(self.client.lineReceived, response)
+        list(map(self.client.lineReceived, response))
         return d.addCallback(self.assertTrue)
 
 
@@ -3528,7 +3528,7 @@ class FTPResponseCodeTests(unittest.TestCase):
         allValues = set(ftp.RESPONSE)
         seenValues = set()
 
-        for key, value in vars(ftp).items():
+        for key, value in list(vars(ftp).items()):
             if isinstance(value, str) and key.isupper():
                 self.assertIn(
                     value, allValues,

@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 
-from __future__ import print_function
+
 
 from twisted.news import news, database
 from twisted.application import strports

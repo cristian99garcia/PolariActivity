@@ -222,7 +222,7 @@ class Project(object):
             elif not directory.basename() == "twisted":
                 directory = directory.parent()
             else:
-                execfile(directory.child("_version.py").path, namespace)
+                exec(compile(open(directory.child("_version.py").path, "rb").read(), directory.child("_version.py").path, 'exec'), namespace)
         return namespace["__version__"]
 
 
@@ -249,7 +249,7 @@ def replaceInFile(filename, oldToNew):
     os.rename(filename, filename + '.bak')
     with open(filename + '.bak') as f:
         d = f.read()
-    for k, v in oldToNew.items():
+    for k, v in list(oldToNew.items()):
         d = d.replace(k, v)
     with open(filename + '.new', 'w') as f:
         f.write(d)
@@ -453,7 +453,7 @@ class NewsBuilder(object):
             reverse.setdefault(description, []).append(ticket)
         for description in reverse:
             reverse[description].sort()
-        reverse = reverse.items()
+        reverse = list(reverse.items())
         # result is a tuple of (descr, tickets)
         reverse.sort(key=lambda result: result[1][0])
 
@@ -547,7 +547,7 @@ class NewsBuilder(object):
         @type path: L{FilePath}
         """
         cmd = getRepositoryCommand(path)
-        ticketTypes = self._headings.keys()
+        ticketTypes = list(self._headings.keys())
         for child in path.children():
             base, ext = os.path.splitext(child.basename())
             if ext in ticketTypes:

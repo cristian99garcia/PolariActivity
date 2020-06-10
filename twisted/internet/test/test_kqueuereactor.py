@@ -5,7 +5,7 @@
 Tests for L{twisted.internet.kqueuereactor}.
 """
 
-from __future__ import division, absolute_import
+
 
 import errno
 

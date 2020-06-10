@@ -97,7 +97,7 @@ with warnings.catch_warnings():
 from zope.interface import implementer
 
 # Twisted Imports
-from twisted.python.compat import unicode, long, nativeString
+from twisted.python.compat import str, int, nativeString
 from twisted.python.reflect import namedObject, qual, namedAny
 from twisted.persisted.crefutil import NotKnown, _Tuple, _InstanceMethod
 from twisted.persisted.crefutil import _DictKeyAndValue, _Dereference
@@ -468,7 +468,7 @@ class _Jellier:
             self.preserved[id(object)] = sexp
         return sexp
 
-    constantTypes = {bytes: 1, unicode: 1, int: 1, float: 1, long: 1}
+    constantTypes = {bytes: 1, str: 1, int: 1, float: 1, int: 1}
 
 
     def _checkMutable(self,obj):
@@ -491,16 +491,16 @@ class _Jellier:
             # "Immutable" Types
             if ((objType is bytes) or
                 (objType is int) or
-                (objType is long) or
+                (objType is int) or
                 (objType is float)):
                 return obj
             elif objType is types.MethodType:
-                aSelf = obj.__self__ if _PY3 else obj.im_self
-                aFunc = obj.__func__ if _PY3 else obj.im_func
-                aClass = aSelf.__class__ if _PY3 else obj.im_class
+                aSelf = obj.__self__ if _PY3 else obj.__self__
+                aFunc = obj.__func__ if _PY3 else obj.__func__
+                aClass = aSelf.__class__ if _PY3 else obj.__self__.__class__
                 return [b"method", aFunc.__name__, self.jelly(aSelf),
                         self.jelly(aClass)]
-            elif objType is unicode:
+            elif objType is str:
                 return [b'unicode', obj.encode('UTF-8')]
             elif objType is type(None):
                 return [b'None']
@@ -515,7 +515,7 @@ class _Jellier:
                 if obj.tzinfo:
                     raise NotImplementedError(
                         "Currently can't jelly datetime objects with tzinfo")
-                return [b'datetime', ' '.join([unicode(x) for x in (
+                return [b'datetime', ' '.join([str(x) for x in (
                     obj.year, obj.month, obj.day, obj.hour,
                     obj.minute, obj.second, obj.microsecond)]
                 ).encode('utf-8')]
@@ -546,7 +546,7 @@ class _Jellier:
                     sxp.extend(self._jellyIterable(tuple_atom, obj))
                 elif objType in DictTypes:
                     sxp.append(dictionary_atom)
-                    for key, val in obj.items():
+                    for key, val in list(obj.items()):
                         sxp.append([self.jelly(key), self.jelly(val)])
                 elif objType in _SetTypes:
                     sxp.extend(self._jellyIterable(set_atom, obj))
@@ -712,7 +712,7 @@ class _Unjellier:
 
 
     def _unjelly_unicode(self, exp):
-        return unicode(exp[0], "UTF-8")
+        return str(exp[0], "UTF-8")
 
 
     def _unjelly_decimal(self, exp):
@@ -738,19 +738,19 @@ class _Unjellier:
 
 
     def _unjelly_datetime(self, exp):
-        return datetime.datetime(*map(int, exp[0].split()))
+        return datetime.datetime(*list(map(int, exp[0].split())))
 
 
     def _unjelly_date(self, exp):
-        return datetime.date(*map(int, exp[0].split()))
+        return datetime.date(*list(map(int, exp[0].split())))
 
 
     def _unjelly_time(self, exp):
-        return datetime.time(*map(int, exp[0].split()))
+        return datetime.time(*list(map(int, exp[0].split())))
 
 
     def _unjelly_timedelta(self, exp):
-        days, seconds, microseconds = map(int, exp[0].split())
+        days, seconds, microseconds = list(map(int, exp[0].split()))
         return datetime.timedelta(
             days=days, seconds=seconds, microseconds=microseconds)
 
@@ -1029,7 +1029,7 @@ class SecurityOptions:
         name.
         """
         for typ in types:
-            if isinstance(typ, unicode):
+            if isinstance(typ, str):
                 typ = typ.encode('utf-8')
             if not isinstance(typ, bytes):
                 typ = qual(typ)

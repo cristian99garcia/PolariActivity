@@ -5,7 +5,7 @@
 Tests for L{twisted.python.threadpool}
 """
 
-from __future__ import division, absolute_import
+
 
 import pickle, time, weakref, gc, threading
 
@@ -74,9 +74,9 @@ class ThreadPoolTests(unittest.SynchronousTestCase):
         # We could just use range(), but then we use an extra 30MB of memory
         # on Python 2:
         if _PY3:
-            items = range(1000000)
+            items = list(range(1000000))
         else:
-            items = xrange(1000000)
+            items = range(1000000)
         for i in items:
             if lock.acquire(False):
                 break

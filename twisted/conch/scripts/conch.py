@@ -8,7 +8,7 @@
 
 #""" Implementation module for the `conch` command.
 #"""
-from __future__ import print_function
+
 
 from twisted.conch.client import connect, default, options
 from twisted.conch.error import ConchError
@@ -407,7 +407,7 @@ class SSHSession(channel.SSHChannel):
                 return
             elif char == '#': # display connections
                 self.stdio.write('\r\nThe following connections are open:\r\n')
-                channels = self.conn.channels.keys()
+                channels = list(self.conn.channels.keys())
                 channels.sort()
                 for channelId in channels:
                     self.stdio.write('  #%i %s\r\n' % (channelId, str(self.conn.channels[channelId])))

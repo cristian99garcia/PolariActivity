@@ -6,7 +6,7 @@ Tests for L{twisted.application} and its interaction with
 L{twisted.persisted.sob}.
 """
 
-from __future__ import absolute_import, division
+
 
 import copy
 import os

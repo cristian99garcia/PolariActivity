@@ -8,7 +8,7 @@ News server backend implementations.
 
 import getpass, pickle, time, socket
 import os
-import StringIO
+import io
 from hashlib import md5
 from email.Message import Message
 from email.Generator import Generator
@@ -22,7 +22,7 @@ from twisted.persisted import dirdbm
 
 
 
-ERR_NOGROUP, ERR_NOARTICLE = range(2, 4)  # XXX - put NNTP values here (I guess?)
+ERR_NOGROUP, ERR_NOARTICLE = list(range(2, 4))  # XXX - put NNTP values here (I guess?)
 
 OVERVIEW_FMT = [
     'Subject', 'From', 'Date', 'Message-ID', 'References',
@@ -30,7 +30,7 @@ OVERVIEW_FMT = [
 ]
 
 def hexdigest(md5): #XXX: argh. 1.5.2 doesn't have this.
-    return ''.join(map(lambda x: hex(ord(x))[2:], md5.digest()))
+    return ''.join([hex(ord(x))[2:] for x in md5.digest()])
 
 class Article:
     def __init__(self, head, body):
@@ -75,7 +75,7 @@ class Article:
 
     def textHeaders(self):
         headers = []
-        for i in self.headers.values():
+        for i in list(self.headers.values()):
             headers.append('%s: %s' % i)
         return '\r\n'.join(headers) + '\r\n'
 
@@ -264,13 +264,13 @@ class _ModerationMixin:
         msg['Content-Type'] = 'message/rfc822'
 
         payload = Message()
-        for header, value in article.headers.values():
+        for header, value in list(article.headers.values()):
             payload.add_header(header, value)
         payload.set_payload(article.body)
 
         msg.attach(payload)
 
-        out = StringIO.StringIO()
+        out = io.StringIO()
         gen = Generator(out, False)
         gen.flatten(msg)
         msg = out.getvalue()
@@ -311,7 +311,7 @@ class PickleStorage(_ModerationMixin):
         moderators = []
         for group in groups:
             moderators.extend(self.db['moderators'].get(group, None))
-        return filter(None, moderators)
+        return [_f for _f in moderators if _f]
 
 
     def listRequest(self):
@@ -319,7 +319,7 @@ class PickleStorage(_ModerationMixin):
         l = self.db['groups']
         r = []
         for i in l:
-            if len(self.db[i].keys()):
+            if len(list(self.db[i].keys())):
                 low = min(self.db[i].keys())
                 high = max(self.db[i].keys()) + 1
             else:
@@ -349,7 +349,7 @@ class PickleStorage(_ModerationMixin):
 
         for group in groups:
             if group in self.db:
-                if len(self.db[group].keys()):
+                if len(list(self.db[group].keys())):
                     index = max(self.db[group].keys()) + 1
                 else:
                     index = 1
@@ -361,7 +361,7 @@ class PickleStorage(_ModerationMixin):
 
         a.putHeader('Xref', '%s %s' % (
             socket.gethostname().split()[0],
-            ''.join(map(lambda x: ':'.join(x), xref))
+            ''.join([':'.join(x) for x in xref])
         ))
 
         self.flush()
@@ -376,7 +376,7 @@ class PickleStorage(_ModerationMixin):
         if group not in self.db:
             return defer.succeed([])
         r = []
-        for i in self.db[group].keys():
+        for i in list(self.db[group].keys()):
             if (low is None or i >= low) and (high is None or i <= high):
                 r.append([str(i)] + self.db[group][i].overview())
         return defer.succeed(r)
@@ -386,7 +386,7 @@ class PickleStorage(_ModerationMixin):
         if group not in self.db:
             return defer.succeed([])
         r = []
-        for i in self.db[group].keys():
+        for i in list(self.db[group].keys()):
             if low is None or i >= low and high is None or i <= high:
                 r.append((i, self.db[group][i].getHeader(header)))
         return defer.succeed(r)
@@ -394,14 +394,14 @@ class PickleStorage(_ModerationMixin):
 
     def listGroupRequest(self, group):
         if group in self.db:
-            return defer.succeed((group, self.db[group].keys()))
+            return defer.succeed((group, list(self.db[group].keys())))
         else:
             return defer.fail(None)
 
     def groupRequest(self, group):
         if group in self.db:
-            if len(self.db[group].keys()):
-                num = len(self.db[group].keys())
+            if len(list(self.db[group].keys())):
+                num = len(list(self.db[group].keys()))
                 low = min(self.db[group].keys())
                 high = max(self.db[group].keys())
             else:
@@ -414,7 +414,7 @@ class PickleStorage(_ModerationMixin):
 
     def articleExistsRequest(self, id):
         for group in self.db['groups']:
-            for a in self.db[group].values():
+            for a in list(self.db[group].values()):
                 if a.getHeader('Message-ID') == id:
                     return defer.succeed(1)
         return defer.succeed(0)
@@ -430,7 +430,7 @@ class PickleStorage(_ModerationMixin):
                 return defer.succeed((
                     index,
                     a.getHeader('Message-ID'),
-                    StringIO.StringIO(a.textHeaders() + '\r\n' + a.body)
+                    io.StringIO(a.textHeaders() + '\r\n' + a.body)
                 ))
             else:
                 return defer.fail(ERR_NOARTICLE)
@@ -453,7 +453,7 @@ class PickleStorage(_ModerationMixin):
         if group in self.db:
             if index in self.db[group]:
                 a = self.db[group][index]
-                return defer.succeed((index, a.getHeader('Message-ID'), StringIO.StringIO(a.body)))
+                return defer.succeed((index, a.getHeader('Message-ID'), io.StringIO(a.body)))
             else:
                 return defer.fail(ERR_NOARTICLE)
         else:
@@ -518,7 +518,7 @@ class NewsShelf(_ModerationMixin):
             os.mkdir(path)
 
         self.dbm = dirdbm.Shelf(os.path.join(path, "newsshelf"))
-        if not len(self.dbm.keys()):
+        if not len(list(self.dbm.keys())):
             self.initialize()
 
 
@@ -550,7 +550,7 @@ class NewsShelf(_ModerationMixin):
 
     def listRequest(self):
         result = []
-        for g in self.dbm['groups'].values():
+        for g in list(self.dbm['groups'].values()):
             result.append((g.name, g.maxArticle, g.minArticle, g.flags))
         return defer.succeed(result)
 
@@ -608,7 +608,7 @@ class NewsShelf(_ModerationMixin):
         if not xref:
             return defer.fail(NewsServerError("No groups carried: " + ' '.join(groups)))
 
-        article.putHeader('Xref', '%s %s' % (socket.gethostname().split()[0], ' '.join(map(lambda x: ':'.join(x), xref))))
+        article.putHeader('Xref', '%s %s' % (socket.gethostname().split()[0], ' '.join([':'.join(x) for x in xref])))
         self.dbm['Message-IDs'][article.getHeader('Message-ID')] = xref
         return defer.succeed(None)
 
@@ -649,7 +649,7 @@ class NewsShelf(_ModerationMixin):
 
     def listGroupRequest(self, group):
         if group in self.dbm['groups']:
-            return defer.succeed((group, self.dbm['groups'][group].articles.keys()))
+            return defer.succeed((group, list(self.dbm['groups'][group].articles.keys())))
         return defer.fail(NewsServerError("No such group: " + group))
 
 
@@ -688,7 +688,7 @@ class NewsShelf(_ModerationMixin):
             return defer.succeed((
                 index,
                 a.getHeader('Message-ID'),
-                StringIO.StringIO(a.textHeaders() + '\r\n' + a.body)
+                io.StringIO(a.textHeaders() + '\r\n' + a.body)
             ))
 
 
@@ -725,7 +725,7 @@ class NewsShelf(_ModerationMixin):
         except KeyError:
             return defer.fail(NewsServerError("No such group: " + group))
         else:
-            return defer.succeed((index, a.getHeader('Message-ID'), StringIO.StringIO(a.body)))
+            return defer.succeed((index, a.getHeader('Message-ID'), io.StringIO(a.body)))
 
 
 @implementer(INewsStorage)
@@ -994,7 +994,7 @@ class NewsStorageAugmentation:
             lambda result: (
                 result[0][0],
                 result[0][1],
-                StringIO.StringIO(result[0][2] + '\r\n' + result[0][3])
+                io.StringIO(result[0][2] + '\r\n' + result[0][3])
             )
         )
 
@@ -1026,7 +1026,7 @@ class NewsStorageAugmentation:
             lambda result: result[0]
         ).addCallback(
             # result is a tuple of (index, id, body)
-            lambda result: (result[0], result[1], StringIO.StringIO(result[2]))
+            lambda result: (result[0], result[1], io.StringIO(result[2]))
         )
 
 ####

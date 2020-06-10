@@ -307,7 +307,7 @@ class ChatBox(Gtk.VBox):
             self.topic_labels[channel].set_topic(topic)
 
     def remove_nickname_from_all_channels(self, nickname):
-        for channel in self.nicks.keys():
+        for channel in list(self.nicks.keys()):
             if nickname in self.nicks[channel]:
                 self.remove_nickname(channel, nickname)
 
@@ -319,7 +319,7 @@ class ChatBox(Gtk.VBox):
         self.emit("change-topic", self.current_channel, topic)
 
     def set_user_afk(self, nickname, afk):
-        for channel in self.nicks.keys():
+        for channel in list(self.nicks.keys()):
             if nickname in self.nicks[channel]:
                 self.nicks_listboxs[channel].set_afk(nickname, afk)
 

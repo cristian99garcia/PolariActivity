@@ -69,7 +69,7 @@ class DirDbmTests(unittest.TestCase):
             assert 0, "didn't raise KeyError on non-existent key"
 
         # Check keys(), values() and items()
-        dbkeys = d.keys()
+        dbkeys = list(d.keys())
         dbvalues = set(d.values())
         dbitems = set(d.items())
         dbkeys.sort()
@@ -87,7 +87,7 @@ class DirDbmTests(unittest.TestCase):
         copyPath = self.mktemp()
         d2 = d.copyTo(copyPath)
 
-        copykeys = d.keys()
+        copykeys = list(d.keys())
         copyvalues = set(d.values())
         copyitems = set(d.items())
         copykeys.sort()
@@ -103,8 +103,8 @@ class DirDbmTests(unittest.TestCase):
                          (repr(dbkeys), repr(copyitems)))
 
         d2.clear()
-        self.assertTrue(len(d2.keys()) == len(d2.values()) ==
-                        len(d2.items()) == len(d2) == 0, ".clear() failed")
+        self.assertTrue(len(list(d2.keys())) == len(list(d2.values())) ==
+                        len(list(d2.items())) == len(d2) == 0, ".clear() failed")
         self.assertNotEqual(len(d), len(d2))
         shutil.rmtree(copyPath)
 
@@ -112,9 +112,9 @@ class DirDbmTests(unittest.TestCase):
         for k, v in self.items:
             del d[k]
             self.assertNotIn(k, d, "key is still in database, even though we deleted it")
-        self.assertEqual(len(d.keys()), 0, "database has keys")
-        self.assertEqual(len(d.values()), 0, "database has values")
-        self.assertEqual(len(d.items()), 0, "database has items")
+        self.assertEqual(len(list(d.keys())), 0, "database has keys")
+        self.assertEqual(len(list(d.values())), 0, "database has values")
+        self.assertEqual(len(list(d.items())), 0, "database has items")
         self.assertEqual(len(d), 0, "database has items")
 
 

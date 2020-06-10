@@ -6,7 +6,7 @@
 Utilities to assist in the "flag day" new-style object transition.
 """
 
-from __future__ import absolute_import, division
+
 
 import types
 
@@ -35,7 +35,7 @@ def _ensureOldClass(cls):
     @return: The class, if it is an old-style class.
     @raises: L{ValueError} if it is a new-style class.
     """
-    if not type(cls) is types.ClassType:
+    if not type(cls) is type:
         from twisted.python.reflect import fullyQualifiedName
 
         raise ValueError(

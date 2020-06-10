@@ -193,7 +193,7 @@ has several features:
 @type ERROR_DESCRIPTION: L{bytes}
 """
 
-from __future__ import absolute_import, division
+
 
 __metaclass__ = type
 
@@ -222,7 +222,7 @@ from twisted.internet.error import ConnectionClosed
 from twisted.internet.defer import Deferred, maybeDeferred, fail
 from twisted.protocols.basic import Int16StringReceiver, StatefulStringProtocol
 from twisted.python.compat import (
-    iteritems, unicode, nativeString, intToBytes, _PY3, long,
+    iteritems, str, nativeString, intToBytes, _PY3, int,
 )
 
 try:
@@ -690,9 +690,9 @@ class AmpBox(dict):
         L = []
         w = L.append
         for k, v in i:
-            if type(k) == unicode:
+            if type(k) == str:
                 raise TypeError("Unicode key not allowed: %r" % k)
-            if type(v) == unicode:
+            if type(v) == str:
                 raise TypeError(
                     "Unicode value for key %r not allowed: %r" % (k, v))
             if len(k) > MAX_KEY_LENGTH:
@@ -812,7 +812,7 @@ class BoxDispatcher:
 
     _failAllReason = None
     _outstandingRequests = None
-    _counter = long(0)
+    _counter = int(0)
     boxSender = None
 
     def __init__(self, locator):
@@ -845,7 +845,7 @@ class BoxDispatcher:
         @param reason: the Failure instance to pass to those errbacks.
         """
         self._failAllReason = reason
-        OR = self._outstandingRequests.items()
+        OR = list(self._outstandingRequests.items())
         self._outstandingRequests = None # we can never send another request
         for key, value in OR:
             value.errback(reason)
@@ -861,7 +861,7 @@ class BoxDispatcher:
         if _PY3:
             # Python 3.4 cannot do % interpolation on byte strings so we must
             # work with a Unicode string and then encode.
-            return (u'%x' % (self._counter,)).encode("ascii")
+            return ('%x' % (self._counter,)).encode("ascii")
         else:
             return (b'%x' % (self._counter,))
 
@@ -1024,7 +1024,7 @@ class BoxDispatcher:
             if error.check(RemoteAmpError):
                 code = error.value.errorCode
                 desc = error.value.description
-                if isinstance(desc, unicode):
+                if isinstance(desc, str):
                     desc = desc.encode("utf-8", "replace")
                 if error.value.fatal:
                     errorBox = QuitBox()
@@ -2884,7 +2884,7 @@ class DateTime(Argument):
 
         # Python 3.4 cannot do % interpolation on byte strings so we pack into
         # an explicitly Unicode string then encode as ASCII.
-        packed = u'%04i-%02i-%02iT%02i:%02i:%02i.%06i%s%02i:%02i' % (
+        packed = '%04i-%02i-%02iT%02i:%02i:%02i.%06i%s%02i:%02i' % (
             i.year,
             i.month,
             i.day,

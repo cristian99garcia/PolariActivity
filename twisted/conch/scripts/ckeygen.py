@@ -6,17 +6,18 @@
 Implementation module for the `ckeygen` command.
 """
 
-from __future__ import print_function
+
 
 import sys, os, getpass, socket
 from functools import wraps
+import importlib
 if getpass.getpass == getpass.unix_getpass:
     try:
         import termios # hack around broken termios
         termios.tcgetattr, termios.tcsetattr
     except (ImportError, AttributeError):
         sys.modules['termios'] = None
-        reload(getpass)
+        importlib.reload(getpass)
 
 from twisted.conch.ssh import keys
 from twisted.python import failure, filepath, log, usage
@@ -78,7 +79,7 @@ def run():
         else:
             sys.exit(
                 'Key type was %s, must be one of %s'
-                    % (options['type'], ', '.join(supportedKeyTypes.keys())))
+                    % (options['type'], ', '.join(list(supportedKeyTypes.keys()))))
     elif options['fingerprint']:
         printFingerprint(options)
     elif options['changepass']:
@@ -165,7 +166,7 @@ def generateECDSAkey(options):
 def printFingerprint(options):
     if not options['filename']:
         filename = os.path.expanduser('~/.ssh/id_rsa')
-        options['filename'] = raw_input('Enter file in which the key is (%s): ' % filename)
+        options['filename'] = input('Enter file in which the key is (%s): ' % filename)
     if os.path.exists(options['filename']+'.pub'):
         options['filename'] += '.pub'
     options = enumrepresentation(options)
@@ -183,7 +184,7 @@ def printFingerprint(options):
 def changePassPhrase(options):
     if not options['filename']:
         filename = os.path.expanduser('~/.ssh/id_rsa')
-        options['filename'] = raw_input(
+        options['filename'] = input(
             'Enter file in which the key is (%s): ' % filename)
     try:
         key = keys.Key.fromFile(options['filename'])
@@ -231,7 +232,7 @@ def changePassPhrase(options):
 def displayPublicKey(options):
     if not options['filename']:
         filename = os.path.expanduser('~/.ssh/id_rsa')
-        options['filename'] = raw_input('Enter file in which the key is (%s): ' % filename)
+        options['filename'] = input('Enter file in which the key is (%s): ' % filename)
     try:
         key = keys.Key.fromFile(options['filename'])
     except keys.EncryptedKeyError:
@@ -259,15 +260,15 @@ def _saveKey(key, options):
     KeyTypeMapping = {'EC': 'ecdsa', 'RSA': 'rsa', 'DSA': 'dsa'}
     keyTypeName = KeyTypeMapping[key.type()]
     if not options['filename']:
-        defaultPath = os.path.expanduser(u'~/.ssh/id_%s' % (keyTypeName,))
-        newPath = raw_input(
+        defaultPath = os.path.expanduser('~/.ssh/id_%s' % (keyTypeName,))
+        newPath = input(
             'Enter file in which to save the key (%s): ' % (defaultPath,))
 
         options['filename'] = newPath.strip() or defaultPath
 
     if os.path.exists(options['filename']):
         print('%s already exists.' % (options['filename'],))
-        yn = raw_input('Overwrite (y/n)? ')
+        yn = input('Overwrite (y/n)? ')
         if yn[0].lower() != 'y':
             sys.exit()
 

@@ -83,7 +83,7 @@ classImplements(ReferenceError, IReferenceError)
 classImplements(RuntimeError, IRuntimeError)
 classImplements(RuntimeWarning, IRuntimeWarning)
 try:
-    classImplements(StandardError, IStandardError)
+    classImplements(Exception, IStandardError)
 except NameError:  #pragma NO COVER
     pass # StandardError does not exist in Python 3
 classImplements(StopIteration, IStopIteration)

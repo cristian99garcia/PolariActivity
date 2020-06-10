@@ -1,12 +1,12 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer
 
 from twisted.internet import defer
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.trial import unittest
 from twisted.words.protocols.jabber import sasl, sasl_mechanisms, xmlstream, jid
 from twisted.words.xish import domish
@@ -29,7 +29,7 @@ class DummySASLMechanism(object):
     """
 
     challenge = None
-    name = u"DUMMY"
+    name = "DUMMY"
     response = b""
 
     def __init__(self, initialResponse):
@@ -104,9 +104,9 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         self.init.start()
         auth = self.output[0]
         self.assertEqual(NS_XMPP_SASL, auth.uri)
-        self.assertEqual(u'auth', auth.name)
-        self.assertEqual(u'DUMMY', auth['mechanism'])
-        self.assertEqual(u'ZHVtbXk=', unicode(auth))
+        self.assertEqual('auth', auth.name)
+        self.assertEqual('DUMMY', auth['mechanism'])
+        self.assertEqual('ZHVtbXk=', str(auth))
 
 
     def test_sendAuthNoInitialResponse(self):
@@ -116,7 +116,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         self.init.initialResponse = None
         self.init.start()
         auth = self.output[0]
-        self.assertEqual(u'', str(auth))
+        self.assertEqual('', str(auth))
 
 
     def test_sendAuthEmptyInitialResponse(self):
@@ -126,7 +126,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         self.init.initialResponse = b""
         self.init.start()
         auth = self.output[0]
-        self.assertEqual('=', unicode(auth))
+        self.assertEqual('=', str(auth))
 
 
     def test_onChallenge(self):
@@ -135,7 +135,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         """
         d = self.init.start()
         challenge = domish.Element((NS_XMPP_SASL, 'challenge'))
-        challenge.addContent(u'bXkgY2hhbGxlbmdl')
+        challenge.addContent('bXkgY2hhbGxlbmdl')
         self.init.onChallenge(challenge)
         self.assertEqual(b'my challenge', self.init.mechanism.challenge)
         self.init.onSuccess(None)
@@ -148,11 +148,11 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         """
         d = self.init.start()
         challenge = domish.Element((NS_XMPP_SASL, 'challenge'))
-        challenge.addContent(u'bXkgY2hhbGxlbmdl')
+        challenge.addContent('bXkgY2hhbGxlbmdl')
         self.init.mechanism.response = b"response"
         self.init.onChallenge(challenge)
         response = self.output[1]
-        self.assertEqual(u'cmVzcG9uc2U=', unicode(response))
+        self.assertEqual('cmVzcG9uc2U=', str(response))
         self.init.onSuccess(None)
         return d
 
@@ -175,7 +175,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         """
         d = self.init.start()
         challenge = domish.Element((NS_XMPP_SASL, 'challenge'))
-        challenge.addContent(u'bXkg=Y2hhbGxlbmdl')
+        challenge.addContent('bXkg=Y2hhbGxlbmdl')
         self.init.onChallenge(challenge)
         self.assertFailure(d, sasl.SASLIncorrectEncodingError)
         return d
@@ -187,7 +187,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         """
         d = self.init.start()
         challenge = domish.Element((NS_XMPP_SASL, 'challenge'))
-        challenge.addContent(u'bXkg*Y2hhbGxlbmdl')
+        challenge.addContent('bXkg*Y2hhbGxlbmdl')
         self.init.onChallenge(challenge)
         self.assertFailure(d, sasl.SASLIncorrectEncodingError)
         return d
@@ -199,7 +199,7 @@ class SASLInitiatingInitializerTests(unittest.TestCase):
         """
         d = self.init.start()
         challenge = domish.Element((NS_XMPP_SASL, 'challenge'))
-        challenge.addContent(u'a')
+        challenge.addContent('a')
         self.init.onChallenge(challenge)
         self.assertFailure(d, sasl.SASLIncorrectEncodingError)
         return d
@@ -242,7 +242,7 @@ class SASLInitiatingInitializerSetMechanismTests(unittest.TestCase):
         """
         self.authenticator.jid = jid.JID('example.com')
         self.authenticator.password = None
-        name = u"ANONYMOUS"
+        name = "ANONYMOUS"
 
         self.assertEqual(name, self._setMechanism(name))
 
@@ -253,7 +253,7 @@ class SASLInitiatingInitializerSetMechanismTests(unittest.TestCase):
         """
         self.authenticator.jid = jid.JID('test@example.com')
         self.authenticator.password = 'secret'
-        name = u"PLAIN"
+        name = "PLAIN"
 
         self.assertEqual(name, self._setMechanism(name))
 
@@ -264,7 +264,7 @@ class SASLInitiatingInitializerSetMechanismTests(unittest.TestCase):
         """
         self.authenticator.jid = jid.JID('test@example.com')
         self.authenticator.password = 'secret'
-        name = u"DIGEST-MD5"
+        name = "DIGEST-MD5"
 
         self.assertEqual(name, self._setMechanism(name))
 
@@ -275,10 +275,10 @@ class SASLInitiatingInitializerSetMechanismTests(unittest.TestCase):
         """
 
         self.authenticator.jid = jid.JID('test@example.com')
-        self.authenticator.password = u'secret'
+        self.authenticator.password = 'secret'
 
         self.assertRaises(sasl.SASLNoAcceptableMechanism,
-                          self._setMechanism, u'SOMETHING_UNACCEPTABLE')
+                          self._setMechanism, 'SOMETHING_UNACCEPTABLE')
 
 
     def test_notAcceptableWithoutUser(self):
@@ -286,7 +286,7 @@ class SASLInitiatingInitializerSetMechanismTests(unittest.TestCase):
         Test using an unacceptable SASL authentication mechanism with no JID.
         """
         self.authenticator.jid = jid.JID('example.com')
-        self.authenticator.password = u'secret'
+        self.authenticator.password = 'secret'
 
         self.assertRaises(sasl.SASLNoAcceptableMechanism,
-                          self._setMechanism, u'SOMETHING_UNACCEPTABLE')
+                          self._setMechanism, 'SOMETHING_UNACCEPTABLE')

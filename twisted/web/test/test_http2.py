@@ -5,7 +5,7 @@
 Test HTTP/2 support.
 """
 
-from __future__ import absolute_import, division
+
 
 import itertools
 
@@ -69,7 +69,7 @@ class FrameFactory(object):
         for flag in flags:
             f.flags.add(flag)
 
-        for k, v in priorityKwargs.items():
+        for k, v in list(priorityKwargs.items()):
             setattr(f, k, v)
 
         return f
@@ -184,7 +184,7 @@ class FrameBuffer(object):
         return self
 
 
-    def next(self):
+    def __next__(self):
         if len(self._data) < 9:
             raise StopIteration()
 
@@ -618,7 +618,7 @@ class HTTP2ServerTests(unittest.TestCase, HTTP2TestHelpers):
 
         # Interleave the frames. That is, send one frame from each stream at a
         # time. This wacky line lets us do that.
-        frames = itertools.chain.from_iterable(zip(*frames))
+        frames = itertools.chain.from_iterable(list(zip(*frames)))
         requestBytes += b''.join(frame.serialize() for frame in frames)
         a.makeConnection(b)
         # one byte at a time, to stress the implementation.

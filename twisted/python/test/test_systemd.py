@@ -5,7 +5,7 @@
 Tests for L{twisted.python.systemd}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 
@@ -52,7 +52,7 @@ class MemoryOnlyMixin(object):
         new L{ListenFDs} which will claim those integers represent inherited
         file descriptors.
         """
-        return ListenFDs(range(start, start + count))
+        return ListenFDs(list(range(start, start + count)))
 
 
 

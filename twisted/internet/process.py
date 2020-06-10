@@ -10,7 +10,7 @@ Do NOT use this module directly - use reactor.spawnProcess() instead.
 Maintainer: Itamar Shtull-Trauring
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 from twisted.python.runtime import platform
 
@@ -375,7 +375,7 @@ class _BaseProcess(BaseProcess, object):
         # that responds to signals normally, we need to reset our
         # child process's signal handling (just) after we fork and
         # before we execvpe.
-        for signalnum in xrange(1, signal.NSIG):
+        for signalnum in range(1, signal.NSIG):
             if signal.getsignal(signalnum) == signal.SIG_IGN:
                 # Reset signal handling to the default
                 signal.signal(signalnum, signal.SIG_DFL)
@@ -466,7 +466,7 @@ class _BaseProcess(BaseProcess, object):
                         traceback.print_exc(file=stderr)
                         stderr.flush()
 
-                        for fd in xrange(3):
+                        for fd in range(3):
                             os.close(fd)
                     except:
                         # Handle all errors during the error-reporting process
@@ -621,7 +621,7 @@ class _FDDetector(object):
             # OS-X should get the /dev/fd implementation instead, so mostly
             # this check probably isn't necessary.
             maxfds = min(1024, resource.getrlimit(resource.RLIMIT_NOFILE)[1])
-        return range(maxfds)
+        return list(range(maxfds))
 
 
 
@@ -674,8 +674,8 @@ class Process(_BaseProcess):
         or real UID is 0.)
         """
         if not proto:
-            assert 'r' not in childFDs.values()
-            assert 'w' not in childFDs.values()
+            assert 'r' not in list(childFDs.values())
+            assert 'w' not in list(childFDs.values())
         _BaseProcess.__init__(self, proto)
 
         self.pipes = {}
@@ -796,7 +796,7 @@ class Process(_BaseProcess):
             errfd = sys.stderr
             errfd.write("starting _setupChild\n")
 
-        destList = fdmap.values()
+        destList = list(fdmap.values())
         for fd in _listOpenFDs():
             if fd in destList:
                 continue
@@ -819,7 +819,7 @@ class Process(_BaseProcess):
                 if debug: print("%d already in place" % target, file=errfd)
                 fdesc._unsetCloseOnExec(child)
             else:
-                if child in fdmap.values():
+                if child in list(fdmap.values()):
                     # we can't replace child-fd yet, as some other mapping
                     # still needs the fd it wants to target. We must preserve
                     # that old fd by duping it to a new home.
@@ -843,9 +843,9 @@ class Process(_BaseProcess):
         # need to remove duplicates first.
 
         old = []
-        for fd in fdmap.values():
+        for fd in list(fdmap.values()):
             if not fd in old:
-                if not fd in fdmap.keys():
+                if not fd in list(fdmap.keys()):
                     old.append(fd)
         if debug: print("old", old, file=errfd)
         for fd in old:
@@ -866,12 +866,12 @@ class Process(_BaseProcess):
             self.pipes[childFD].loseConnection()
 
     def pauseProducing(self):
-        for p in self.pipes.itervalues():
+        for p in self.pipes.values():
             if isinstance(p, ProcessReader):
                 p.stopReading()
 
     def resumeProducing(self):
-        for p in self.pipes.itervalues():
+        for p in self.pipes.values():
             if isinstance(p, ProcessReader):
                 p.startReading()
 

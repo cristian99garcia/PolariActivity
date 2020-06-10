@@ -2,7 +2,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+
 
 import random
 
@@ -11,7 +11,7 @@ from zope.interface import implementer
 from twisted.internet import error, interfaces
 from twisted.names import client, dns
 from twisted.names.error import DNSNameError
-from twisted.python.compat import nativeString, unicode
+from twisted.python.compat import nativeString, str
 
 
 class _SRVConnector_ClientFactoryWrapper:
@@ -72,7 +72,7 @@ class SRVConnector:
         """
         self.reactor = reactor
         self.service = service
-        if isinstance(domain, unicode):
+        if isinstance(domain, str):
             domain = domain.encode('idna')
         self.domain = nativeString(domain)
         self.factory = factory

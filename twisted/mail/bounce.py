@@ -7,7 +7,7 @@
 """
 Support for bounce message generation.
 """
-import StringIO
+import io
 import email.utils
 import time
 import os
@@ -75,7 +75,7 @@ I've given up, and I will not retry the message again.
         'transcript': transcript,
         }
 
-    fp = StringIO.StringIO()
+    fp = io.StringIO()
     fp.write(BOUNCE_FORMAT % data)
     orig = message.tell()
     message.seek(2, 0)

@@ -51,7 +51,7 @@ with wxPython, or the PyObjCTools.AppHelper.stopEventLoop function.
 """
 
 from threading import Thread
-from Queue import Queue, Empty
+from queue import Queue, Empty
 import sys
 
 from zope.interface import implementer
@@ -115,8 +115,8 @@ class ThreadedSelectReactor(posixbase.PosixReactorBase):
 
     def _preenDescriptorsInThread(self):
         log.msg("Malformed file descriptor found.  Preening lists.")
-        readers = self.reads.keys()
-        writers = self.writes.keys()
+        readers = list(self.reads.keys())
+        writers = list(self.writes.keys())
         self.reads.clear()
         self.writes.clear()
         for selDict, selList in ((self.reads, readers), (self.writes, writers)):
@@ -151,8 +151,8 @@ class ThreadedSelectReactor(posixbase.PosixReactorBase):
         writes = self.writes
         while 1:
             try:
-                r, w, ignored = _select(reads.keys(),
-                                        writes.keys(),
+                r, w, ignored = _select(list(reads.keys()),
+                                        list(writes.keys()),
                                         [], timeout)
                 break
             except ValueError:
@@ -245,9 +245,9 @@ class ThreadedSelectReactor(posixbase.PosixReactorBase):
         loop = self._interleave()
         def mainWaker(waker=waker, loop=loop):
             #print >>sys.stderr, "mainWaker()"
-            waker(loop.next)
+            waker(loop.__next__)
         self.mainWaker = mainWaker
-        loop.next()
+        next(loop)
         self.ensureWorkerThread()
 
     def _mainLoopShutdown(self):
@@ -317,11 +317,11 @@ class ThreadedSelectReactor(posixbase.PosixReactorBase):
 
 
     def getReaders(self):
-        return self.reads.keys()
+        return list(self.reads.keys())
 
 
     def getWriters(self):
-        return self.writes.keys()
+        return list(self.writes.keys())
 
 
     def stop(self):

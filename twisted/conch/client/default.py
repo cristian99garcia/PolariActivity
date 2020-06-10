@@ -11,7 +11,7 @@ you are sitting at an interactive terminal.  For example, to programmatically
 interact with a known_hosts database, use L{twisted.conch.client.knownhosts}.
 """
 
-from __future__ import print_function
+
 
 from twisted.python import log
 from twisted.python.compat import (
@@ -282,7 +282,7 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
             for prompt, echo in prompts:
                 prompt = prompt.decode("utf-8")
                 if echo:
-                    responses.append(raw_input(prompt))
+                    responses.append(input(prompt))
                 else:
                     responses.append(getpass.getpass(prompt))
         return defer.succeed(responses)

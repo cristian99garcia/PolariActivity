@@ -6,7 +6,7 @@
 Handling of RSA, DSA, and EC keys.
 """
 
-from __future__ import absolute_import, division
+
 
 import binascii
 import itertools
@@ -42,7 +42,7 @@ from twisted.conch.ssh import common, sexpy
 from twisted.conch.ssh.common import int_from_bytes, int_to_bytes
 from twisted.python import randbytes
 from twisted.python.compat import (
-    iterbytes, long, izip, nativeString, unicode, _PY3,
+    iterbytes, int, izip, nativeString, str, _PY3,
     _b64decodebytes as decodebytes, _b64encodebytes as encodebytes)
 from twisted.python.constants import NamedConstant, Names
 from twisted.python.deprecate import deprecated, getDeprecationWarningString
@@ -180,9 +180,9 @@ class Key(object):
         @rtype: L{Key}
         @return: The loaded key.
         """
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             data = data.encode("utf-8")
-        if isinstance(passphrase, unicode):
+        if isinstance(passphrase, str):
              passphrase = passphrase.encode("utf-8")
         if type is None:
             type = cls._guessStringType(data)
@@ -434,7 +434,7 @@ class Key(object):
                 raise BadKeyError('RSA key failed to decode properly')
 
             n, e, d, p, q, dmp1, dmq1, iqmp = [
-                long(value) for value in decodedKey[1:9]
+                int(value) for value in decodedKey[1:9]
             ]
             if p > q:  # Make p smaller than q
                 p, q = q, p
@@ -450,7 +450,7 @@ class Key(object):
                 ).private_key(default_backend())
             )
         elif kind == b'DSA':
-            p, q, g, y, x = [long(value) for value in decodedKey[1: 6]]
+            p, q, g, y, x = [int(value) for value in decodedKey[1: 6]]
             if len(decodedKey) < 6:
                 raise BadKeyError('DSA key failed to decode properly')
             return cls(
@@ -819,12 +819,12 @@ class Key(object):
             if isPublic:
                 keyObject = RSA.construct((
                     keyData['n'],
-                    long(keyData['e']),
+                    int(keyData['e']),
                     ))
             else:
                 keyObject = RSA.construct((
                     keyData['n'],
-                    long(keyData['e']),
+                    int(keyData['e']),
                     keyData['d'],
                     keyData['p'],
                     keyData['q'],
@@ -1179,7 +1179,7 @@ class Key(object):
 
         @rtype: L{bytes}
         """
-        if isinstance(extra, unicode):
+        if isinstance(extra, str):
             extra = extra.encode("utf-8")
         method = getattr(self, '_toString_%s' % (type.upper(),), None)
         if method is None:
@@ -1243,7 +1243,7 @@ class Key(object):
                 objData = (0, data['p'], data['q'], data['g'], data['y'],
                            data['x'])
             asn1Sequence = univ.Sequence()
-            for index, value in izip(itertools.count(), objData):
+            for index, value in zip(itertools.count(), objData):
                 asn1Sequence.setComponentByPosition(index, univ.Integer(value))
             asn1Data = berEncoder.encode(asn1Sequence)
             if extra:

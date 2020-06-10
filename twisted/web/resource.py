@@ -6,7 +6,7 @@
 Implementation of the lowest-level Resource class.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = [
     'IResource', 'getChildForRequest',
@@ -17,7 +17,7 @@ import warnings
 
 from zope.interface import Attribute, Interface, implementer
 
-from twisted.python.compat import nativeString, unicode
+from twisted.python.compat import nativeString, str
 from twisted.python.reflect import prefixedMethodNames
 from twisted.python.components import proxyForInterface
 
@@ -325,7 +325,7 @@ class ErrorPage(Resource):
         request.setHeader(b"content-type", b"text/html; charset=utf-8")
         interpolated = self.template % dict(
             code=self.code, brief=self.brief, detail=self.detail)
-        if isinstance(interpolated, unicode):
+        if isinstance(interpolated, str):
             return interpolated.encode('utf-8')
         return interpolated
 

@@ -130,8 +130,7 @@ class AdviceTests(unittest.TestCase):
         class Metaclass(type):
             pass
 
-        class Concrete(Metaclass):
-            __metaclass__ = Metaclass
+        class Concrete(Metaclass, metaclass=Metaclass):
             ping([],1)
 
         Concrete, = Concrete
@@ -148,11 +147,11 @@ class AdviceTests(unittest.TestCase):
         class Metaclass2(type):
             pass
 
-        class Base1:
-            __metaclass__ = Metaclass1
+        class Base1(metaclass=Metaclass1):
+            pass
 
-        class Base2:
-            __metaclass__ = Metaclass2
+        class Base2(metaclass=Metaclass2):
+            pass
 
         try:
             class Derived(Base1, Base2):
@@ -166,8 +165,7 @@ class AdviceTests(unittest.TestCase):
         class Metaclass3(Metaclass1, Metaclass2):
             pass
 
-        class Derived(Base1, Base2):
-            __metaclass__ = Metaclass3
+        class Derived(Base1, Base2, metaclass=Metaclass3):
             ping([], 1)
 
         self.assertTrue(isinstance(Derived, list))
@@ -234,8 +232,8 @@ class Test_determineMetaclass(unittest.TestCase):
         class Metameta(type):
             pass
 
-        class Meta(type):
-            __metaclass__ = Metameta
+        class Meta(type, metaclass=Metameta):
+            pass
 
         self.assertEqual(self._callFUT((Meta, type)), Metameta)
 
@@ -261,10 +259,10 @@ class Test_determineMetaclass(unittest.TestCase):
             pass
         class Meta_B(Meta_A):
             pass
-        class A(type):
-            __metaclass__ = Meta_A
-        class B(type):
-            __metaclass__ = Meta_B
+        class A(type, metaclass=Meta_A):
+            pass
+        class B(type, metaclass=Meta_B):
+            pass
         self.assertEqual(self._callFUT((A, B,)), Meta_B)
 
     @_skip_under_py2
@@ -294,10 +292,10 @@ class Test_determineMetaclass(unittest.TestCase):
             pass
         class Meta_B(type):
             pass
-        class A(type):
-            __metaclass__ = Meta_A
-        class B(type):
-            __metaclass__ = Meta_B
+        class A(type, metaclass=Meta_A):
+            pass
+        class B(type, metaclass=Meta_B):
+            pass
         self.assertRaises(TypeError, self._callFUT, (A, B,))
 
     @_skip_under_py2

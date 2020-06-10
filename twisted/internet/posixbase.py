@@ -6,7 +6,7 @@
 Posix reactor base class
 """
 
-from __future__ import division, absolute_import
+
 
 import socket
 import errno

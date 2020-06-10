@@ -301,7 +301,7 @@ class SerializationTests(FlattenTestCase, XMLAssertionMixin):
         Test that unicode is encoded correctly in the appropriate places, and
         raises an error when it occurs in inappropriate place.
         """
-        snowman = u'\N{SNOWMAN}'
+        snowman = '\N{SNOWMAN}'
         return gatherResults([
             self.assertFlattensTo(snowman, b'\xe2\x98\x83'),
             self.assertFlattensTo(tags.p(snowman), b'<p>\xe2\x98\x83</p>'),
@@ -319,7 +319,7 @@ class SerializationTests(FlattenTestCase, XMLAssertionMixin):
         A character reference is flattened to a string using the I{&#NNNN;}
         syntax.
         """
-        ref = CharRef(ord(u"\N{SNOWMAN}"))
+        ref = CharRef(ord("\N{SNOWMAN}"))
         return self.assertFlattensTo(ref, b"&#9731;")
 
 

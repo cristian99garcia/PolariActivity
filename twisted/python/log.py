@@ -6,7 +6,7 @@
 Logging and metrics infrastructure.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import time
@@ -16,7 +16,7 @@ from datetime import datetime
 
 from zope.interface import Interface
 
-from twisted.python.compat import unicode, _PY3
+from twisted.python.compat import str, _PY3
 from twisted.python import context
 from twisted.python import reflect
 from twisted.python import util
@@ -408,7 +408,7 @@ def _safeFormat(fmtString, fmtDict):
         if isinstance(text, bytes):
             text = text.decode("utf-8")
     else:
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             text = text.encode("utf-8")
 
     return text
@@ -643,7 +643,7 @@ class StdioOnnaStick:
 
 
     def write(self, data):
-        if not _PY3 and isinstance(data, unicode):
+        if not _PY3 and isinstance(data, str):
             data = data.encode(self.encoding)
         d = (self.buf + data).split('\n')
         self.buf = d[-1]
@@ -654,7 +654,7 @@ class StdioOnnaStick:
 
     def writelines(self, lines):
         for line in lines:
-            if not _PY3 and isinstance(line, unicode):
+            if not _PY3 and isinstance(line, str):
                 line = line.encode(self.encoding)
             msg(line, printed=1, isError=self.isError)
 

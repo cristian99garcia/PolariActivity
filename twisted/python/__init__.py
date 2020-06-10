@@ -5,10 +5,10 @@
 Twisted Python: Utilities and Enhancements for Python.
 """
 
-from __future__ import absolute_import, division
+
 
 # Deprecating twisted.python.constants.
-from .compat import unicode
+from .compat import str
 from .versions import Version
 from .deprecate import deprecatedModuleAttribute
 
@@ -19,4 +19,4 @@ deprecatedModuleAttribute(
 
 del Version
 del deprecatedModuleAttribute
-del unicode
+del str

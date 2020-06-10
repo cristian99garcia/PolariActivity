@@ -16,7 +16,7 @@ connections, listeners or connectors are added)::
    kqreactor.install()
 """
 
-from __future__ import division, absolute_import
+
 
 import errno
 import select
@@ -172,7 +172,7 @@ class KQueueReactor(posixbase.PosixReactorBase):
         except:
             fd = -1
         if fd == -1:
-            for fd, fdes in self._selectables.items():
+            for fd, fdes in list(self._selectables.items()):
                 if reader is fdes:
                     wasLost = True
                     break
@@ -199,7 +199,7 @@ class KQueueReactor(posixbase.PosixReactorBase):
         except:
             fd = -1
         if fd == -1:
-            for fd, fdes in self._selectables.items():
+            for fd, fdes in list(self._selectables.items()):
                 if writer is fdes:
                     wasLost = True
                     break

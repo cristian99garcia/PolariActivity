@@ -3,7 +3,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import division, absolute_import
+
 
 import itertools
 import warnings
@@ -217,7 +217,7 @@ from twisted.internet.interfaces import (
 
 from twisted.python import reflect, util
 from twisted.python.deprecate import _mutuallyExclusiveArguments
-from twisted.python.compat import nativeString, networkString, unicode
+from twisted.python.compat import nativeString, networkString, str
 from twisted.python.failure import Failure
 from twisted.python.util import FancyEqMixin
 
@@ -355,7 +355,7 @@ class DistinguishedName(dict):
     __slots__ = ()
 
     def __init__(self, **kw):
-        for k, v in kw.items():
+        for k, v in list(kw.items()):
             setattr(self, k, v)
 
 
@@ -367,7 +367,7 @@ class DistinguishedName(dict):
 
 
     def _copyInto(self, x509name):
-        for k, v in self.items():
+        for k, v in list(self.items()):
             setattr(x509name, k, nativeString(v))
 
 
@@ -1321,7 +1321,7 @@ def optionsForClientTLS(hostname, trustRoot=None, clientCertificate=None,
                 arg=kw.popitem()[0]
             )
         )
-    if not isinstance(hostname, unicode):
+    if not isinstance(hostname, str):
         raise TypeError(
             "optionsForClientTLS requires text for host names, not "
             + hostname.__class__.__name__
@@ -1566,13 +1566,13 @@ class OpenSSLCertificateOptions(object):
         if acceptableCiphers is None:
             acceptableCiphers = defaultCiphers
         # This needs to run when method and _options are finalized.
-        self._cipherString = u':'.join(
+        self._cipherString = ':'.join(
             c.fullName
             for c in acceptableCiphers.selectCiphers(
-                _expandCipherString(u'ALL', self.method, self._options)
+                _expandCipherString('ALL', self.method, self._options)
             )
         )
-        if self._cipherString == u'':
+        if self._cipherString == '':
             raise ValueError(
                 'Supplied IAcceptableCiphers yielded no usable ciphers '
                 'on this platform.'
@@ -1802,7 +1802,7 @@ def _expandCipherString(cipherString, method, options):
             raise
     conn = SSL.Connection(ctx, None)
     ciphers = conn.get_cipher_list()
-    if isinstance(ciphers[0], unicode):
+    if isinstance(ciphers[0], str):
         return [OpenSSLCipher(cipher) for cipher in ciphers]
     else:
         return [OpenSSLCipher(cipher.decode('ascii')) for cipher in ciphers]
@@ -1866,7 +1866,7 @@ defaultCiphers = OpenSSLAcceptableCiphers.fromOpenSSLCipherString(
     "ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:"
     "!aNULL:!MD5:!DSS"
 )
-_defaultCurveName = u"prime256v1"
+_defaultCurveName = "prime256v1"
 
 
 

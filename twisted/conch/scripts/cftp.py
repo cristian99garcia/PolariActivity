@@ -5,7 +5,7 @@
 """
 Implementation module for the I{cftp} command.
 """
-from __future__ import division, print_function
+
 import os, sys, getpass, struct, tty, fcntl, stat
 import fnmatch, pwd, glob
 
@@ -585,9 +585,7 @@ class StdioClient(basic.LineReceiver):
     def cmd_LN(self, rest):
         linkpath, rest = self._getFilename(rest)
         targetpath, rest = self._getFilename(rest)
-        linkpath, targetpath = map(
-                lambda x: os.path.join(self.currentDirectory, x),
-                (linkpath, targetpath))
+        linkpath, targetpath = [os.path.join(self.currentDirectory, x) for x in (linkpath, targetpath)]
         return self.client.makeLink(linkpath, targetpath).addCallback(_ignore)
 
     def cmd_LS(self, rest):
@@ -652,9 +650,7 @@ class StdioClient(basic.LineReceiver):
     def cmd_RENAME(self, rest):
         oldpath, rest = self._getFilename(rest)
         newpath, rest = self._getFilename(rest)
-        oldpath, newpath = map (
-                lambda x: os.path.join(self.currentDirectory, x),
-                (oldpath, newpath))
+        oldpath, newpath = [os.path.join(self.currentDirectory, x) for x in (oldpath, newpath)]
         return self.client.renameFile(oldpath, newpath).addCallback(_ignore)
 
     def cmd_EXIT(self, ignored):

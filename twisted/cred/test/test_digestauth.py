@@ -6,7 +6,7 @@ Tests for L{twisted.cred._digest} and the associated bits in
 L{twisted.cred.credentials}.
 """
 
-from __future__ import division, absolute_import
+
 
 import base64
 
@@ -280,7 +280,7 @@ class DigestAuthTests(TestCase):
         return b', '.join([
                 b"".join((networkString(k), b"=", quote, v, quote))
                 for (k, v)
-                in kw.items()
+                in list(kw.items())
                 if v is not None])
 
 

@@ -11,7 +11,7 @@ listeners or connectors are added)::
     epollreactor.install()
 """
 
-from __future__ import division, absolute_import
+
 
 from select import epoll, EPOLLHUP, EPOLLERR, EPOLLIN, EPOLLOUT
 import errno
@@ -144,7 +144,7 @@ class EPollReactor(posixbase.PosixReactorBase, posixbase._PollLikeMixin):
         """
         fd = xer.fileno()
         if fd == -1:
-            for fd, fdes in selectables.items():
+            for fd, fdes in list(selectables.items()):
                 if xer is fdes:
                     break
             else:

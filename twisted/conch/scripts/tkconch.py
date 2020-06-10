@@ -6,9 +6,9 @@
 Implementation module for the `tkconch` command.
 """
 
-from __future__ import print_function
 
-import Tkinter, tkFileDialog, tkMessageBox
+
+import tkinter, tkinter.filedialog, tkinter.messagebox
 from twisted.conch import error
 from twisted.conch.ui import tkvt100
 from twisted.conch.ssh import transport, userauth, connection, common, keys
@@ -19,66 +19,66 @@ from twisted.python import usage, log
 
 import os, sys, getpass, struct, base64, signal
 
-class TkConchMenu(Tkinter.Frame):
+class TkConchMenu(tkinter.Frame):
     def __init__(self, *args, **params):
         ## Standard heading: initialization
-        apply(Tkinter.Frame.__init__, (self,) + args, params)
+        tkinter.Frame.__init__(*(self,) + args, **params)
 
         self.master.title('TkConch')
-        self.localRemoteVar = Tkinter.StringVar()
+        self.localRemoteVar = tkinter.StringVar()
         self.localRemoteVar.set('local')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Hostname').grid(column=1, row=1, sticky='w')
-        self.host = Tkinter.Entry(self)
+        tkinter.Label(self, anchor='w', justify='left', text='Hostname').grid(column=1, row=1, sticky='w')
+        self.host = tkinter.Entry(self)
         self.host.grid(column=2, columnspan=2, row=1, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Port').grid(column=1, row=2, sticky='w')
-        self.port = Tkinter.Entry(self)
+        tkinter.Label(self, anchor='w', justify='left', text='Port').grid(column=1, row=2, sticky='w')
+        self.port = tkinter.Entry(self)
         self.port.grid(column=2, columnspan=2, row=2, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Username').grid(column=1, row=3, sticky='w')
-        self.user = Tkinter.Entry(self)
+        tkinter.Label(self, anchor='w', justify='left', text='Username').grid(column=1, row=3, sticky='w')
+        self.user = tkinter.Entry(self)
         self.user.grid(column=2, columnspan=2, row=3, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Command').grid(column=1, row=4, sticky='w')
-        self.command = Tkinter.Entry(self)
+        tkinter.Label(self, anchor='w', justify='left', text='Command').grid(column=1, row=4, sticky='w')
+        self.command = tkinter.Entry(self)
         self.command.grid(column=2, columnspan=2, row=4, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Identity').grid(column=1, row=5, sticky='w')
-        self.identity = Tkinter.Entry(self)
+        tkinter.Label(self, anchor='w', justify='left', text='Identity').grid(column=1, row=5, sticky='w')
+        self.identity = tkinter.Entry(self)
         self.identity.grid(column=2, row=5, sticky='nesw')
-        Tkinter.Button(self, command=self.getIdentityFile, text='Browse').grid(column=3, row=5, sticky='nesw')
+        tkinter.Button(self, command=self.getIdentityFile, text='Browse').grid(column=3, row=5, sticky='nesw')
 
-        Tkinter.Label(self, text='Port Forwarding').grid(column=1, row=6, sticky='w')
-        self.forwards = Tkinter.Listbox(self, height=0, width=0)
+        tkinter.Label(self, text='Port Forwarding').grid(column=1, row=6, sticky='w')
+        self.forwards = tkinter.Listbox(self, height=0, width=0)
         self.forwards.grid(column=2, columnspan=2, row=6, sticky='nesw')
-        Tkinter.Button(self, text='Add', command=self.addForward).grid(column=1, row=7)
-        Tkinter.Button(self, text='Remove', command=self.removeForward).grid(column=1, row=8)
-        self.forwardPort = Tkinter.Entry(self)
+        tkinter.Button(self, text='Add', command=self.addForward).grid(column=1, row=7)
+        tkinter.Button(self, text='Remove', command=self.removeForward).grid(column=1, row=8)
+        self.forwardPort = tkinter.Entry(self)
         self.forwardPort.grid(column=2, row=7, sticky='nesw')
-        Tkinter.Label(self, text='Port').grid(column=3, row=7, sticky='nesw')
-        self.forwardHost = Tkinter.Entry(self)
+        tkinter.Label(self, text='Port').grid(column=3, row=7, sticky='nesw')
+        self.forwardHost = tkinter.Entry(self)
         self.forwardHost.grid(column=2, row=8, sticky='nesw')
-        Tkinter.Label(self, text='Host').grid(column=3, row=8, sticky='nesw')
-        self.localForward = Tkinter.Radiobutton(self, text='Local', variable=self.localRemoteVar, value='local')
+        tkinter.Label(self, text='Host').grid(column=3, row=8, sticky='nesw')
+        self.localForward = tkinter.Radiobutton(self, text='Local', variable=self.localRemoteVar, value='local')
         self.localForward.grid(column=2, row=9)
-        self.remoteForward = Tkinter.Radiobutton(self, text='Remote', variable=self.localRemoteVar, value='remote')
+        self.remoteForward = tkinter.Radiobutton(self, text='Remote', variable=self.localRemoteVar, value='remote')
         self.remoteForward.grid(column=3, row=9)
 
-        Tkinter.Label(self, text='Advanced Options').grid(column=1, columnspan=3, row=10, sticky='nesw')
+        tkinter.Label(self, text='Advanced Options').grid(column=1, columnspan=3, row=10, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Cipher').grid(column=1, row=11, sticky='w')
-        self.cipher = Tkinter.Entry(self, name='cipher')
+        tkinter.Label(self, anchor='w', justify='left', text='Cipher').grid(column=1, row=11, sticky='w')
+        self.cipher = tkinter.Entry(self, name='cipher')
         self.cipher.grid(column=2, columnspan=2, row=11, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='MAC').grid(column=1, row=12, sticky='w')
-        self.mac = Tkinter.Entry(self, name='mac')
+        tkinter.Label(self, anchor='w', justify='left', text='MAC').grid(column=1, row=12, sticky='w')
+        self.mac = tkinter.Entry(self, name='mac')
         self.mac.grid(column=2, columnspan=2, row=12, sticky='nesw')
 
-        Tkinter.Label(self, anchor='w', justify='left', text='Escape Char').grid(column=1, row=13, sticky='w')
-        self.escape = Tkinter.Entry(self, name='escape')
+        tkinter.Label(self, anchor='w', justify='left', text='Escape Char').grid(column=1, row=13, sticky='w')
+        self.escape = tkinter.Entry(self, name='escape')
         self.escape.grid(column=2, columnspan=2, row=13, sticky='nesw')
-        Tkinter.Button(self, text='Connect!', command=self.doConnect).grid(column=1, columnspan=3, row=14, sticky='nesw')
+        tkinter.Button(self, text='Connect!', command=self.doConnect).grid(column=1, columnspan=3, row=14, sticky='nesw')
 
         # Resize behavior(s)
         self.grid_rowconfigure(6, weight=1, minsize=64)
@@ -88,20 +88,20 @@ class TkConchMenu(Tkinter.Frame):
 
 
     def getIdentityFile(self):
-        r = tkFileDialog.askopenfilename()
+        r = tkinter.filedialog.askopenfilename()
         if r:
-            self.identity.delete(0, Tkinter.END)
-            self.identity.insert(Tkinter.END, r)
+            self.identity.delete(0, tkinter.END)
+            self.identity.insert(tkinter.END, r)
 
     def addForward(self):
         port = self.forwardPort.get()
-        self.forwardPort.delete(0, Tkinter.END)
+        self.forwardPort.delete(0, tkinter.END)
         host = self.forwardHost.get()
-        self.forwardHost.delete(0, Tkinter.END)
+        self.forwardHost.delete(0, tkinter.END)
         if self.localRemoteVar.get() == 'local':
-            self.forwards.insert(Tkinter.END, 'L:%s:%s' % (port, host))
+            self.forwards.insert(tkinter.END, 'L:%s:%s' % (port, host))
         else:
-            self.forwards.insert(Tkinter.END, 'R:%s:%s' % (port, host))
+            self.forwards.insert(tkinter.END, 'R:%s:%s' % (port, host))
 
     def removeForward(self):
         cur = self.forwards.curselection()
@@ -121,14 +121,14 @@ class TkConchMenu(Tkinter.Frame):
             if cipher in SSHClientTransport.supportedCiphers:
                 SSHClientTransport.supportedCiphers = [cipher]
             else:
-                tkMessageBox.showerror('TkConch', 'Bad cipher.')
+                tkinter.messagebox.showerror('TkConch', 'Bad cipher.')
                 finished = 0
 
         if mac:
             if mac in SSHClientTransport.supportedMACs:
                 SSHClientTransport.supportedMACs = [mac]
             elif finished:
-                tkMessageBox.showerror('TkConch', 'Bad MAC.')
+                tkinter.messagebox.showerror('TkConch', 'Bad MAC.')
                 finished = 0
 
         if escape:
@@ -139,13 +139,13 @@ class TkConchMenu(Tkinter.Frame):
             elif len(escape) == 1:
                 options['escape'] = escape
             elif finished:
-                tkMessageBox.showerror('TkConch', "Bad escape character '%s'." % escape)
+                tkinter.messagebox.showerror('TkConch', "Bad escape character '%s'." % escape)
                 finished = 0
 
         if self.identity.get():
             options.identitys.append(self.identity.get())
 
-        for line in self.forwards.get(0,Tkinter.END):
+        for line in self.forwards.get(0,tkinter.END):
             if line[0]=='L':
                 options.opt_localforward(line[2:])
             else:
@@ -155,7 +155,7 @@ class TkConchMenu(Tkinter.Frame):
             options['user'], options['host'] = options['host'].split('@',1)
 
         if (not options['host'] or not options['user']) and finished:
-            tkMessageBox.showerror('TkConch', 'Missing host or username.')
+            tkinter.messagebox.showerror('TkConch', 'Missing host or username.')
             finished = 0
         if finished:
             self.master.quit()
@@ -294,11 +294,11 @@ def run():
                 args[i:i+2] = [] # suck on it scp
         except ValueError:
             pass
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.withdraw()
-    top = Tkinter.Toplevel()
+    top = tkinter.Toplevel()
     menu = TkConchMenu(top)
-    menu.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=1)
+    menu.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
     options = GeneralOptions()
     try:
         options.parseOptions(args)
@@ -306,18 +306,18 @@ def run():
         print('ERROR: %s' % u)
         options.opt_help()
         sys.exit(1)
-    for k,v in options.items():
+    for k,v in list(options.items()):
         if v and hasattr(menu, k):
-            getattr(menu,k).insert(Tkinter.END, v)
+            getattr(menu,k).insert(tkinter.END, v)
     for (p, (rh, rp)) in options.localForwards:
-        menu.forwards.insert(Tkinter.END, 'L:%s:%s:%s' % (p, rh, rp))
+        menu.forwards.insert(tkinter.END, 'L:%s:%s:%s' % (p, rh, rp))
     options.localForwards = []
     for (p, (rh, rp)) in options.remoteForwards:
-        menu.forwards.insert(Tkinter.END, 'R:%s:%s:%s' % (p, rh, rp))
+        menu.forwards.insert(tkinter.END, 'R:%s:%s:%s' % (p, rh, rp))
     options.remoteForwards = []
     frame = tkvt100.VT100Frame(root, callback=None)
     root.geometry('%dx%d'%(tkvt100.fontWidth*frame.width+3, tkvt100.fontHeight*frame.height+3))
-    frame.pack(side = Tkinter.TOP)
+    frame.pack(side = tkinter.TOP)
     tksupport.install(root)
     root.withdraw()
     if (options['host'] and options['user']) or '@' in options['host']:
@@ -345,7 +345,7 @@ class SSHClientFactory(protocol.ClientFactory):
         return SSHClientTransport()
 
     def clientConnectionFailed(self, connector, reason):
-        tkMessageBox.showwarning('TkConch','Connection Failed, Reason:\n %s: %s' % (reason.type, reason.value))
+        tkinter.messagebox.showwarning('TkConch','Connection Failed, Reason:\n %s: %s' % (reason.type, reason.value))
 
 class SSHClientTransport(transport.SSHClientTransport):
 

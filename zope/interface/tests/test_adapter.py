@@ -1344,14 +1344,14 @@ class Test_utils(unittest.TestCase):
         from zope.interface.adapter import _normalize_name
         STR = b'str'
         if sys.version_info[0] < 3:
-            self.assertEqual(_normalize_name(STR), unicode(STR))
+            self.assertEqual(_normalize_name(STR), str(STR))
         else:
             self.assertEqual(_normalize_name(STR), str(STR, 'ascii'))
 
     def test__normalize_name_unicode(self):
         from zope.interface.adapter import _normalize_name
         
-        USTR = u'ustr'
+        USTR = 'ustr'
         self.assertEqual(_normalize_name(USTR), USTR)
 
     def test__normalize_name_other(self):

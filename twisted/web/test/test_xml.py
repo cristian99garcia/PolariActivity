@@ -504,8 +504,8 @@ alert("I hate you");
     def testUnicodeTolerance(self):
         import struct
         s = '<foo><bar><baz /></bar></foo>'
-        j =(u'<?xml version="1.0" encoding="UCS-2" ?>\r\n<JAPANESE>\r\n'
-            u'<TITLE>\u5c02\u9580\u5bb6\u30ea\u30b9\u30c8 </TITLE></JAPANESE>')
+        j =('<?xml version="1.0" encoding="UCS-2" ?>\r\n<JAPANESE>\r\n'
+            '<TITLE>\u5c02\u9580\u5bb6\u30ea\u30b9\u30c8 </TITLE></JAPANESE>')
         j2=('\xff\xfe<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o'
             '\x00n\x00=\x00"\x001\x00.\x000\x00"\x00 \x00e\x00n\x00c\x00o\x00d'
             '\x00i\x00n\x00g\x00=\x00"\x00U\x00C\x00S\x00-\x002\x00"\x00 \x00?'
@@ -529,14 +529,14 @@ alert("I hate you");
 
         # test that raw text still gets encoded
         # test that comments get encoded
-        j3=microdom.parseString(u'<foo/>')
+        j3=microdom.parseString('<foo/>')
         hdr='<?xml version="1.0"?>'
-        div=microdom.lmx().text(u'\u221a', raw=1).node
+        div=microdom.lmx().text('\u221a', raw=1).node
         de=j3.documentElement
         de.appendChild(div)
-        de.appendChild(j3.createComment(u'\u221a'))
+        de.appendChild(j3.createComment('\u221a'))
         self.assertEqual(j3.toxml(), hdr+
-                          u'<foo><div>\u221a</div><!--\u221a--></foo>'.encode('utf8'))
+                          '<foo><div>\u221a</div><!--\u221a--></foo>'.encode('utf8'))
 
     def testNamedChildren(self):
         tests = {"<foo><bar /><bar unf='1' /><bar>asdfadsf</bar>"
@@ -544,7 +544,7 @@ alert("I hate you");
                  '<foo>asdf</foo>' : 0,
                  '<foo><bar><bar></bar></bar></foo>' : 1,
                  }
-        for t in tests.keys():
+        for t in list(tests.keys()):
             node = microdom.parseString(t).documentElement
             result = domhelpers.namedChildren(node, 'bar')
             self.assertEqual(len(result), tests[t])

@@ -21,7 +21,7 @@ class ColorText:
     # The colors to use
     COLORS = ('b', 'r', 'g', 'y', 'l', 'm', 'c', 'w')
     BOLD_COLORS = tuple([x.upper() for x in COLORS])
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(len(COLORS))
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(len(COLORS)))
 
     # Color names
     COLOR_NAMES = (
@@ -166,7 +166,7 @@ class AnsiParser:
             str = '0'
 
         try:
-            parts = map(int, str.split(';'))
+            parts = list(map(int, str.split(';')))
         except ValueError:
             log.msg('Invalid ANSI color sequence (%d): %s' % (len(str), str))
             self.currentFG, self.currentBG = self.defaultFG, self.defaultBG

@@ -7,7 +7,7 @@ Tests for the implementation of the ssh-userauth service.
 Maintainer: Paul Swartz
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer
 

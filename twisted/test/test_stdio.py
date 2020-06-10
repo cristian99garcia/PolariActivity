@@ -8,7 +8,7 @@ Tests for L{twisted.internet.stdio}.
     platforms and native L{str} keys/values on Windows.
 """
 
-from __future__ import absolute_import, division
+
 
 import os
 import sys
@@ -269,7 +269,7 @@ class StandardInputOutputTests(unittest.TestCase):
     def _junkPath(self):
         junkPath = self.mktemp()
         with open(junkPath, 'wb') as junkFile:
-            for i in xrange(1024):
+            for i in range(1024):
                 junkFile.write(intToBytes(i) + b'\n')
         return junkPath
 
@@ -370,7 +370,7 @@ class StandardInputOutputTests(unittest.TestCase):
             self.assertEqual(next(count), howMany + 1)
             self.assertEqual(
                 path.getContent(),
-                b''.join(map(intToBytes, range(howMany))))
+                b''.join(map(intToBytes, list(range(howMany)))))
         onConnLost.addCallback(cbLost)
         return onConnLost
 

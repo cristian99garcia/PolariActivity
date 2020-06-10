@@ -6,7 +6,7 @@
 Base functionality useful to various parts of Twisted Names.
 """
 
-from __future__ import division, absolute_import
+
 
 import socket
 
@@ -22,7 +22,7 @@ from twisted.python import failure
 
 # Helpers for indexing the three-tuples that get thrown around by this code a
 # lot.
-_ANS, _AUTH, _ADD = range(3)
+_ANS, _AUTH, _ADD = list(range(3))
 
 EMPTY_RESULT = (), (), ()
 
@@ -49,7 +49,7 @@ class ResolverBase:
 
     def __init__(self):
         self.typeToMethod = {}
-        for (k, v) in typeToMethod.items():
+        for (k, v) in list(typeToMethod.items()):
             self.typeToMethod[k] = getattr(self, v)
 
 

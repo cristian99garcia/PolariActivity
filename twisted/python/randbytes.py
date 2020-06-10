@@ -6,7 +6,7 @@
 Cryptographically secure random implementation, with fallback on normal random.
 """
 
-from __future__ import division, absolute_import
+
 
 import warnings, os, random, string
 

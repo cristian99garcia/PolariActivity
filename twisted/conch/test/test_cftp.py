@@ -8,7 +8,7 @@ Tests for L{twisted.conch.scripts.cftp}.
 
 import locale
 import time, sys, os, operator, getpass, struct
-from StringIO import StringIO
+from io import StringIO
 
 from zope.interface import implementer
 try:

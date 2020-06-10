@@ -52,7 +52,7 @@ class FlatFormattingTests(unittest.TestCase):
                 "unistr: {unistr!s}"
             ),
             callme=lambda: next(counter), object=Ephemeral(),
-            number=7, string="hello", unistr=u"ö"
+            number=7, string="hello", unistr="ö"
         )
 
         flattenEvent(event1)
@@ -64,12 +64,12 @@ class FlatFormattingTests(unittest.TestCase):
         self.assertEqual(
             formatEvent(event3),
             (
-                u"callable: 0 "
+                "callable: 0 "
                 "attribute: value "
                 "numrepr: 7 "
                 "numstr: 7 "
                 "strrepr: 'hello' "
-                u"unistr: ö"
+                "unistr: ö"
             )
         )
 
@@ -89,7 +89,7 @@ class FlatFormattingTests(unittest.TestCase):
         event2 = json.loads(json.dumps(event1))
 
         self.assertTrue(
-            formatEvent(event2).startswith(u"Unable to format event")
+            formatEvent(event2).startswith("Unable to format event")
         )
 
 
@@ -199,7 +199,7 @@ class FlatFormattingTests(unittest.TestCase):
             )
 
         flattenEvent(event)
-        self.assertEqual(formatEvent(event), u"0 1")
+        self.assertEqual(formatEvent(event), "0 1")
 
         return event
 
@@ -233,7 +233,7 @@ class FlatFormattingTests(unittest.TestCase):
 
         result = formatEvent(event)
 
-        self.assertEqual(result, u"test value trailing")
+        self.assertEqual(result, "test value trailing")
 
 
     def test_extractField(self, flattenFirst=lambda x: x):

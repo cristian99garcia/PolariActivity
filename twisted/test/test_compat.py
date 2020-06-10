@@ -6,7 +6,7 @@
 Tests for L{twisted.python.compat}.
 """
 
-from __future__ import division, absolute_import
+
 
 import socket, sys, traceback, io, codecs
 
@@ -14,12 +14,13 @@ from twisted.trial import unittest
 
 from twisted.python.compat import (
     reduce, execfile, _PY3, _PYPY, comparable, cmp, nativeString,
-    networkString, unicode as unicodeCompat, lazyByteSlice, reraise,
+    networkString, str as unicodeCompat, lazyByteSlice, reraise,
     NativeStringIO, iterbytes, intToBytes, ioType, bytesEnviron, iteritems,
-    _coercedUnicode, unichr, raw_input, _bytesRepr
+    _coercedUnicode, chr, raw_input, _bytesRepr
 )
 from twisted.python.filepath import FilePath
 from twisted.python.runtime import platform
+from functools import reduce
 
 
 
@@ -76,15 +77,15 @@ class IOTypeTests(unittest.SynchronousTestCase):
             encoding = 'utf-8'
 
         self.assertEqual(ioType(VerySpecificLie(self.mktemp(), "wb")),
-                          basestring)
+                          str)
 
 
     def test_2StringIO(self):
         """
         Python 2's L{StringIO} and L{cStringIO} modules are both binary I/O.
         """
-        from cStringIO import StringIO as cStringIO
-        from StringIO import StringIO
+        from io import StringIO as cStringIO
+        from io import StringIO
         self.assertEqual(ioType(StringIO()), bytes)
         self.assertEqual(ioType(cStringIO()), bytes)
 
@@ -265,9 +266,9 @@ class ExecfileCompatTests(unittest.SynchronousTestCase):
         """
         L{execfile} executes the specified file in the given global namespace.
         """
-        script = self.writeScript(u"foo += 1\n")
+        script = self.writeScript("foo += 1\n")
         globalNamespace = {"foo": 1}
-        execfile(script.path, globalNamespace)
+        exec(compile(open(script.path, "rb").read(), script.path, 'exec'), globalNamespace)
         self.assertEqual(2, globalNamespace["foo"])
 
 
@@ -276,10 +277,10 @@ class ExecfileCompatTests(unittest.SynchronousTestCase):
         L{execfile} executes the specified file in the given global and local
         namespaces.
         """
-        script = self.writeScript(u"foo += 1\n")
+        script = self.writeScript("foo += 1\n")
         globalNamespace = {"foo": 10}
         localNamespace = {"foo": 20}
-        execfile(script.path, globalNamespace, localNamespace)
+        exec(compile(open(script.path, "rb").read(), script.path, 'exec'), globalNamespace, localNamespace)
         self.assertEqual(10, globalNamespace["foo"])
         self.assertEqual(21, localNamespace["foo"])
 
@@ -289,10 +290,10 @@ class ExecfileCompatTests(unittest.SynchronousTestCase):
         L{execfile} reads in the specified file using universal newlines so
         that scripts written on one platform will work on another.
         """
-        for lineEnding in u"\n", u"\r", u"\r\n":
-            script = self.writeScript(u"foo = 'okay'" + lineEnding)
+        for lineEnding in "\n", "\r", "\r\n":
+            script = self.writeScript("foo = 'okay'" + lineEnding)
             globalNamespace = {"foo": None}
-            execfile(script.path, globalNamespace)
+            exec(compile(open(script.path, "rb").read(), script.path, 'exec'), globalNamespace)
             self.assertEqual("okay", globalNamespace["foo"])
 
 
@@ -489,7 +490,7 @@ class CmpTests(unittest.SynchronousTestCase):
         """
         L{cmp} returns 0 for equal objects.
         """
-        self.assertEqual(cmp(u"a", u"a"), 0)
+        self.assertEqual(cmp("a", "a"), 0)
         self.assertEqual(cmp(1, 1), 0)
         self.assertEqual(cmp([1], [1]), 0)
 
@@ -539,7 +540,7 @@ class StringTests(unittest.SynchronousTestCase):
         C{nativeString} raises a C{UnicodeError} if input Unicode is not ASCII
         encodable.
         """
-        self.assertRaises(UnicodeError, nativeString, u"\u1234")
+        self.assertRaises(UnicodeError, nativeString, "\u1234")
 
 
     def test_bytesToString(self):
@@ -555,7 +556,7 @@ class StringTests(unittest.SynchronousTestCase):
         C{nativeString} converts unicode to the native string format, assuming
         an ASCII encoding if applicable.
         """
-        self.assertNativeString(u"Good day", "Good day")
+        self.assertNativeString("Good day", "Good day")
 
 
     def test_stringToString(self):
@@ -580,7 +581,7 @@ class StringTests(unittest.SynchronousTestCase):
         if _PY3:
             expected = str
         else:
-            expected = unicode
+            expected = str
         self.assertIs(unicodeCompat, expected)
 
 
@@ -613,7 +614,7 @@ class NetworkStringTests(unittest.SynchronousTestCase):
         containing bytes not used by ASCII.
         """
         self.assertRaises(
-            UnicodeError, networkString, u"\N{SNOWMAN}".encode('utf-8'))
+            UnicodeError, networkString, "\N{SNOWMAN}".encode('utf-8'))
     if _PY3:
         test_bytes.skip = test_bytesOutOfRange.skip = (
             "Bytes behavior of networkString only provided on Python 2.")
@@ -624,7 +625,7 @@ class NetworkStringTests(unittest.SynchronousTestCase):
         L{networkString} returns a C{unicode} object passed to it encoded into
         a C{bytes} instance.
         """
-        self.assertEqual(b"foo", networkString(u"foo"))
+        self.assertEqual(b"foo", networkString("foo"))
 
 
     def test_unicodeOutOfRange(self):
@@ -633,7 +634,7 @@ class NetworkStringTests(unittest.SynchronousTestCase):
         containing characters not encodable in ASCII.
         """
         self.assertRaises(
-            UnicodeError, networkString, u"\N{SNOWMAN}")
+            UnicodeError, networkString, "\N{SNOWMAN}")
     if not _PY3:
         test_unicode.skip = test_unicodeOutOfRange.skip = (
             "Unicode behavior of networkString only provided on Python 3.")
@@ -648,7 +649,7 @@ class NetworkStringTests(unittest.SynchronousTestCase):
         if _PY3:
             self.assertRaises(TypeError, networkString, b"bytes")
         else:
-            self.assertRaises(TypeError, networkString, u"text")
+            self.assertRaises(TypeError, networkString, "text")
 
 
 
@@ -807,8 +808,8 @@ class CoercedUnicodeTests(unittest.TestCase):
         """
         Unicode strings with ASCII code points are unchanged.
         """
-        result = _coercedUnicode(u'text')
-        self.assertEqual(result, u'text')
+        result = _coercedUnicode('text')
+        self.assertEqual(result, 'text')
         self.assertIsInstance(result, unicodeCompat)
 
 
@@ -816,8 +817,8 @@ class CoercedUnicodeTests(unittest.TestCase):
         """
         Unicode strings with non-ASCII code points are unchanged.
         """
-        result = _coercedUnicode(u'\N{SNOWMAN}')
-        self.assertEqual(result, u'\N{SNOWMAN}')
+        result = _coercedUnicode('\N{SNOWMAN}')
+        self.assertEqual(result, '\N{SNOWMAN}')
         self.assertIsInstance(result, unicodeCompat)
 
 
@@ -829,7 +830,7 @@ class CoercedUnicodeTests(unittest.TestCase):
         whereas for Python 3 it is identical to L{test_unicodeASCII}.
         """
         result = _coercedUnicode('text')
-        self.assertEqual(result, u'text')
+        self.assertEqual(result, 'text')
         self.assertIsInstance(result, unicodeCompat)
 
 
@@ -864,7 +865,7 @@ class UnichrTests(unittest.TestCase):
         """
         unichar exists and returns a unicode string with the given code point.
         """
-        self.assertEqual(unichr(0x2603), u"\N{SNOWMAN}")
+        self.assertEqual(chr(0x2603), "\N{SNOWMAN}")
 
 
 class RawInputTests(unittest.TestCase):
@@ -887,7 +888,7 @@ class RawInputTests(unittest.TestCase):
         self.patch(sys, "stdin", FakeStdin())
         stdout = FakeStdout()
         self.patch(sys, "stdout", stdout)
-        self.assertEqual(raw_input("Prompt"), "User input")
+        self.assertEqual(input("Prompt"), "User input")
         self.assertEqual(stdout.data, "Prompt")
 
 
@@ -904,7 +905,7 @@ class FutureBytesReprTests(unittest.TestCase):
         L{bytes}.
         """
         exc = self.assertRaises(TypeError, _bytesRepr, ["not bytes"])
-        self.assertEquals(str(exc), "Expected bytes not ['not bytes']")
+        self.assertEqual(str(exc), "Expected bytes not ['not bytes']")
 
 
     def test_bytesReprPrefix(self):

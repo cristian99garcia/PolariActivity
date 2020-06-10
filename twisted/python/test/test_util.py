@@ -6,7 +6,7 @@
 Tests for L{twisted.python.util}.
 """
 
-from __future__ import division, absolute_import
+
 
 import errno
 import os.path
@@ -371,12 +371,12 @@ class InsensitiveDictTests(unittest.TestCase):
 
         keys=['Foo', 'fnz', 1]
         for x in keys:
-            self.assertIn(x, dct.keys())
-            self.assertIn((x, dct[x]), dct.items())
+            self.assertIn(x, list(dct.keys()))
+            self.assertIn((x, dct[x]), list(dct.items()))
         self.assertEqual(len(keys), len(dct))
         del dct[1]
         del dct['foo']
-        self.assertEqual(dct.keys(), ['fnz'])
+        self.assertEqual(list(dct.keys()), ['fnz'])
 
 
     def test_noPreserve(self):
@@ -387,12 +387,12 @@ class InsensitiveDictTests(unittest.TestCase):
         dct = util.InsensitiveDict({'Foo':'bar', 1:2, 'fnz':{1:2}}, preserve=0)
         keys=['foo', 'fnz', 1]
         for x in keys:
-            self.assertIn(x, dct.keys())
-            self.assertIn((x, dct[x]), dct.items())
+            self.assertIn(x, list(dct.keys()))
+            self.assertIn((x, dct[x]), list(dct.items()))
         self.assertEqual(len(keys), len(dct))
         del dct[1]
         del dct['foo']
-        self.assertEqual(dct.keys(), ['fnz'])
+        self.assertEqual(list(dct.keys()), ['fnz'])
 
 
     def test_unicode(self):
@@ -400,9 +400,9 @@ class InsensitiveDictTests(unittest.TestCase):
         Unicode keys are case insensitive.
         """
         d = util.InsensitiveDict(preserve=False)
-        d[u"Foo"] = 1
-        self.assertEqual(d[u"FOO"], 1)
-        self.assertEqual(d.keys(), [u"foo"])
+        d["Foo"] = 1
+        self.assertEqual(d["FOO"], 1)
+        self.assertEqual(list(d.keys()), ["foo"])
 
 
     def test_bytes(self):
@@ -412,7 +412,7 @@ class InsensitiveDictTests(unittest.TestCase):
         d = util.InsensitiveDict(preserve=False)
         d[b"Foo"] = 1
         self.assertEqual(d[b"FOO"], 1)
-        self.assertEqual(d.keys(), [b"foo"])
+        self.assertEqual(list(d.keys()), [b"foo"])
 
 
 

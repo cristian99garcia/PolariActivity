@@ -6,13 +6,13 @@
 HTTP client.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import warnings
 
 try:
-    from urlparse import urlunparse, urljoin, urldefrag
+    from urllib.parse import urlunparse, urljoin, urldefrag
 except ImportError:
     from urllib.parse import urljoin, urldefrag
     from urllib.parse import urlunparse as _urlunparse
@@ -28,7 +28,7 @@ from zope.interface import implementer
 
 from twisted.python import log
 from twisted.python.compat import _PY3, networkString
-from twisted.python.compat import nativeString, intToBytes, unicode, itervalues
+from twisted.python.compat import nativeString, intToBytes, str, itervalues
 from twisted.python.deprecate import deprecatedModuleAttribute
 from twisted.python.failure import Failure
 from incremental import Version
@@ -95,13 +95,13 @@ class HTTPPageGetter(http.HTTPClient):
             self.sendHeader(b"Content-Length", intToBytes(len(data)))
 
         cookieData = []
-        for (key, value) in self.factory.headers.items():
+        for (key, value) in list(self.factory.headers.items()):
             if key.lower() not in self._specialHeaders:
                 # we calculated it on our own
                 self.sendHeader(key, value)
             if key.lower() == b'cookie':
                 cookieData.append(value)
-        for cookie, cookval in self.factory.cookies.items():
+        for cookie, cookval in list(self.factory.cookies.items()):
             cookieData.append(cookie + b'=' + cookval)
         if cookieData:
             self.sendHeader(b'Cookie', b'; '.join(cookieData))
@@ -472,7 +472,7 @@ class HTTPDownloader(HTTPClientFactory):
                  timeout=0, cookies=None, followRedirect=True,
                  redirectLimit=20, afterFoundGet=False):
         self.requestedPartial = 0
-        if isinstance(fileOrName, (str, unicode)):
+        if isinstance(fileOrName, str):
             self.fileName = fileOrName
             self.file = None
             if supportPartial and os.path.exists(self.fileName):

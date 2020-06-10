@@ -17,7 +17,7 @@ from ._file import FileLogObserver
 from ._levels import LogLevel
 from ._logger import Logger
 
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.python.failure import Failure
 
 log = Logger()
@@ -60,10 +60,10 @@ def asBytes(obj):
     @rtype: L{bytes}
     """
     if isinstance(obj, list):
-        return map(asBytes, obj)
+        return list(map(asBytes, obj))
     elif isinstance(obj, dict):
-        return dict((asBytes(k), asBytes(v)) for k, v in obj.items())
-    elif isinstance(obj, unicode):
+        return dict((asBytes(k), asBytes(v)) for k, v in list(obj.items()))
+    elif isinstance(obj, str):
         return obj.encode("utf-8")
     else:
         return obj
@@ -198,8 +198,8 @@ def eventAsJSON(event):
 
     flattenEvent(event)
     result = dumps(event, **kw)
-    if not isinstance(result, unicode):
-        return unicode(result, "utf-8", "replace")
+    if not isinstance(result, str):
+        return str(result, "utf-8", "replace")
     return result
 
 
@@ -219,7 +219,7 @@ def eventFromJSON(eventText):
 
 
 
-def jsonFileLogObserver(outFile, recordSeparator=u"\x1e"):
+def jsonFileLogObserver(outFile, recordSeparator="\x1e"):
     """
     Create a L{FileLogObserver} that emits JSON-serialized events to a
     specified (writable) file-like object.
@@ -245,7 +245,7 @@ def jsonFileLogObserver(outFile, recordSeparator=u"\x1e"):
     """
     return FileLogObserver(
         outFile,
-        lambda event: u"{0}{1}\n".format(recordSeparator, eventAsJSON(event))
+        lambda event: "{0}{1}\n".format(recordSeparator, eventAsJSON(event))
     )
 
 
@@ -282,7 +282,7 @@ def eventsFromJSONLogFile(inFile, recordSeparator=None, bufferSize=4096):
             text = bytes(record).decode("utf-8")
         except UnicodeDecodeError:
             log.error(
-                u"Unable to decode UTF-8 for JSON record: {record!r}",
+                "Unable to decode UTF-8 for JSON record: {record!r}",
                 record=bytes(record)
             )
             return None
@@ -291,7 +291,7 @@ def eventsFromJSONLogFile(inFile, recordSeparator=None, bufferSize=4096):
             return eventFromJSON(text)
         except ValueError:
             log.error(
-                u"Unable to read JSON record: {record!r}",
+                "Unable to read JSON record: {record!r}",
                 record=bytes(record)
             )
             return None
@@ -322,7 +322,7 @@ def eventsFromJSONLogFile(inFile, recordSeparator=None, bufferSize=4096):
                 return eventFromBytearray(record)
             else:
                 log.error(
-                    u"Unable to read truncated JSON record: {record!r}",
+                    "Unable to read truncated JSON record: {record!r}",
                     record=bytes(record)
                 )
             return None

@@ -16,7 +16,7 @@ but may have a small impact on users who subclass and override methods.
 @author: Glyph Lefkowitz
 """
 
-from __future__ import absolute_import, division
+
 
 # NOTE: this module should NOT import pb; it is supposed to be a module which
 # abstractly defines remotely accessible types.  Many of these types expect to
@@ -28,7 +28,7 @@ import sys
 from zope.interface import implementer, Interface
 
 from twisted.python import log, reflect
-from twisted.python.compat import _PY3, unicode, comparable, cmp
+from twisted.python.compat import _PY3, str, comparable, cmp
 from .jelly import (
     setUnjellyableForClass, setUnjellyableForClassTree,
     setUnjellyableFactoryForClass, unjellyableRegistry, Jellyable, Unjellyable,
@@ -394,7 +394,7 @@ class RemoteCopy(Unjellyable):
         """
         if _PY3:
             state = {x.decode('utf8') if isinstance(x, bytes)
-                     else x:y for x,y in state.items()}
+                     else x:y for x,y in list(state.items())}
         self.__dict__ = state
 
     def unjellyFor(self, unjellier, jellyList):
@@ -622,7 +622,7 @@ class RemoteCacheObserver:
         """(internal) action method.
         """
         cacheID = self.broker.cachedRemotelyAs(self.cached)
-        if isinstance(_name, unicode):
+        if isinstance(_name, str):
             _name = _name.encode("utf-8")
         if cacheID is None:
             from pb import ProtocolError

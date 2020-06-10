@@ -8,7 +8,7 @@ Tests for implementations of L{IReactorProcess}.
     platforms and native L{str} keys/values on Windows.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 import io
 import os
@@ -463,7 +463,7 @@ sys.stdout.flush()""".format(twistedRoot.path))
         def execvpe(*args, **kw):
             # Ensure that real traceback formatting has some non-ASCII in it,
             # by forcing the filename of the last frame to contain non-ASCII.
-            filename = u"<\N{SNOWMAN}>"
+            filename = "<\N{SNOWMAN}>"
             if not isinstance(filename, str):
                 filename = filename.encode("utf-8")
             codeobj = compile("1/0", filename, "single")
@@ -485,7 +485,7 @@ sys.stdout.flush()""".format(twistedRoot.path))
                                  [pyExe, b"-c", b""])
 
         self.runReactor(reactor, timeout=30)
-        self.assertIn(u"\N{SNOWMAN}".encode("utf-8"), output.getvalue())
+        self.assertIn("\N{SNOWMAN}".encode("utf-8"), output.getvalue())
 
 
     def test_timelyProcessExited(self):
@@ -821,9 +821,9 @@ class ProcessTestsBuilder(ProcessTestsBuilderBase):
         args = [b'hello', b'"', b' \t|<>^&', br'"\\"hello\\"', br'"foo\ bar baz\""']
         # Ensure that all non-NUL characters can be passed too.
         if _PY3:
-            args.append("".join(map(chr, xrange(1,255))).encode("utf8"))
+            args.append("".join(map(chr, range(1,255))).encode("utf8"))
         else:
-            args.append("".join(map(chr, xrange(1,255))))
+            args.append("".join(map(chr, range(1,255))))
 
         reactor = self.buildReactor()
 

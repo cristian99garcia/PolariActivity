@@ -7,12 +7,12 @@ This is a web-server which integrates with the twisted.internet
 infrastructure.
 """
 
-from __future__ import division, absolute_import
+
 
 import copy
 import os
 try:
-    from urllib import quote
+    from urllib.parse import quote
 except ImportError:
     from urllib.parse import quote as _quote
 

@@ -14,7 +14,7 @@ This API is currently considered private because it's in early draft form. When
 it has stabilised, it'll be made public.
 """
 
-from __future__ import absolute_import, division
+
 
 import io
 import warnings
@@ -227,7 +227,7 @@ class H2Connection(Protocol, TimeoutMixin):
         self._stillProducing = False
         self.setTimeout(None)
 
-        for stream in self.streams.values():
+        for stream in list(self.streams.values()):
             stream.connectionLost(reason)
 
         for streamID in list(self.streams.keys()):
@@ -642,7 +642,7 @@ class H2Connection(Protocol, TimeoutMixin):
             self.streams[streamID].windowUpdated()
         else:
             # Update strictly applies to all streams.
-            for stream in self.streams.values():
+            for stream in list(self.streams.values()):
                 stream.windowUpdated()
 
                 # If we still have data to send for this stream, unblock it.

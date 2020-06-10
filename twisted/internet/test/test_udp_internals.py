@@ -5,7 +5,7 @@
 Tests for the internal implementation details of L{twisted.internet.udp}.
 """
 
-from __future__ import division, absolute_import
+
 
 import socket
 

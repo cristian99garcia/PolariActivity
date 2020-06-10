@@ -4,7 +4,7 @@
 Generic sentence handling tools: hopefully reusable.
 """
 
-from __future__ import absolute_import, division
+
 
 
 class _BaseSentence(object):
@@ -79,7 +79,7 @@ class _BaseSentence(object):
         @return: A textual representation of this sentence.
         @rtype: C{str}
         """
-        items = self._sentenceData.items()
+        items = list(self._sentenceData.items())
         data = ["%s: %s" % (k, v) for k, v in sorted(items) if k != "type"]
         dataRepr = ", ".join(data)
 
@@ -113,7 +113,7 @@ class _PositioningSentenceProducerMixin(object):
         @rtype: C{set} of C{str}
         """
         attributes = set(["type"])
-        for attributeList in cls._SENTENCE_CONTENTS.values():
+        for attributeList in list(cls._SENTENCE_CONTENTS.values()):
             for attribute in attributeList:
                 if attribute is None:
                     continue

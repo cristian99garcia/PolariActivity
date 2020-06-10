@@ -5,7 +5,7 @@
 POSIX implementation of local network interface enumeration.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys, socket
 

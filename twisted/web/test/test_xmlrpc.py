@@ -6,7 +6,7 @@
 Tests for  XML-RPC support in L{twisted.web.xmlrpc}.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.python.compat import nativeString, networkString, NativeStringIO
 
@@ -143,7 +143,7 @@ class Test(XMLRPC):
         """
         Used to test that we can pass Unicode.
         """
-        snowman = u"\u2603"
+        snowman = "\u2603"
         if snowman != payload:
             return xmlrpc.Fault(13, "Payload not unicode snowman")
         return snowman
@@ -317,7 +317,7 @@ class XMLRPCTests(unittest.TestCase):
             ("defer", ("a",), "a"),
             ("dict", ({"a": 1}, "a"), 1),
             ("pair", ("a", 1), ["a", 1]),
-            ("snowman", (u"\u2603"), u"\u2603"),
+            ("snowman", ("\u2603"), "\u2603"),
             ("complex", (), {"a": ["b", "c", 12, []], "D": "foo"})]
 
         dl = []
@@ -334,7 +334,7 @@ class XMLRPCTests(unittest.TestCase):
         get back from the server side are correct.
 
         """
-        d = self.proxy().callRemote("snowman", u"\u2603")
+        d = self.proxy().callRemote("snowman", "\u2603")
 
         def check_server_headers(ing):
             self.assertEqual(

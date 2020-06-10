@@ -4,13 +4,13 @@
 """
 This module tests twisted.conch.ssh.connection.
 """
-from __future__ import division, absolute_import
+
 
 import struct
 
 from twisted.conch import error
 from twisted.conch.ssh import channel, common, connection
-from twisted.python.compat import long
+from twisted.python.compat import int
 from twisted.trial import unittest
 from twisted.conch.test import test_userauth
 
@@ -326,7 +326,7 @@ class ConnectionTests(unittest.TestCase):
         errors = self.flushLoggedErrors(error.ConchError)
         self.assertEqual(
             len(errors), 1, "Expected one error, got: %r" % (errors,))
-        self.assertEqual(errors[0].value.args, (long(123), "error args in wrong order"))
+        self.assertEqual(errors[0].value.args, (int(123), "error args in wrong order"))
         self.assertEqual(
             self.transport.packets,
             [(connection.MSG_CHANNEL_OPEN_FAILURE,
@@ -356,7 +356,7 @@ class ConnectionTests(unittest.TestCase):
         Like L{test_lookupChannelError}, but for the case where the failure code
         is represented as a L{long} instead of a L{int}.
         """
-        self._lookupChannelErrorTest(long(123))
+        self._lookupChannelErrorTest(int(123))
 
 
     def test_CHANNEL_OPEN_CONFIRMATION(self):

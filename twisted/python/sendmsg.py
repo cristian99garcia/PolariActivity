@@ -6,7 +6,7 @@
 sendmsg(2) and recvmsg(2) support for Python.
 """
 
-from __future__ import absolute_import, division
+
 
 from collections import namedtuple
 from twisted.python.compat import _PY3

@@ -8,8 +8,8 @@ URL parsing, construction and rendering.
 """
 
 try:
-    from urlparse import urlsplit, urlunsplit
-    from urllib import quote as urlquote, unquote as urlunquote
+    from urllib.parse import urlsplit, urlunsplit
+    from urllib.parse import quote as urlquote, unquote as urlunquote
 except ImportError:
     from urllib.parse import (urlsplit, urlunsplit,
                               quote as urlquote,
@@ -20,16 +20,16 @@ from unicodedata import normalize
 # Zero dependencies within Twisted: this module should probably be spun out
 # into its own library fairly soon.
 
-unicode = type(u'')
+str = type('')
 
 # RFC 3986 section 2.2, Reserved Characters
-_genDelims = u':/?#[]@'
-_subDelims = u"!$&'()*+,;="
+_genDelims = ':/?#[]@'
+_subDelims = "!$&'()*+,;="
 
-_validInPath = _subDelims + u':@'
-_validInFragment = _validInPath + u'/?'
+_validInPath = _subDelims + ':@'
+_validInFragment = _validInPath + '/?'
 _validInQuery = (_validInFragment
-                 .replace(u'&', u'').replace(u'=', u'').replace(u'+', u''))
+                 .replace('&', '').replace('=', '').replace('+', ''))
 
 
 
@@ -48,7 +48,7 @@ def _minimalPercentEncode(text, safe):
     @rtype: L{unicode}
     """
     unsafe = set(_genDelims + _subDelims) - set(safe)
-    return u''.join((c if c not in unsafe else "%{:02X}".format(ord(c)))
+    return ''.join((c if c not in unsafe else "%{:02X}".format(ord(c)))
                     for c in text)
 
 
@@ -68,9 +68,9 @@ def _maximalPercentEncode(text, safe):
     @rtype: L{unicode}
     """
     quoted = urlquote(
-        normalize("NFC", text).encode("utf-8"), (safe + u'%').encode("ascii")
+        normalize("NFC", text).encode("utf-8"), (safe + '%').encode("ascii")
     )
-    if not isinstance(quoted, unicode):
+    if not isinstance(quoted, str):
         quoted = quoted.decode("ascii")
     return quoted
 
@@ -112,16 +112,16 @@ def _resolveDotSegments(path):
     segs = []
 
     for seg in path:
-        if seg == u'.':
+        if seg == '.':
             pass
-        elif seg == u'..':
+        elif seg == '..':
             if segs:
                 segs.pop()
         else:
             segs.append(seg)
 
-    if list(path[-1:]) in ([u'.'], [u'..']):
-        segs.append(u'')
+    if list(path[-1:]) in (['.'], ['..']):
+        segs.append('')
 
     return segs
 
@@ -146,8 +146,8 @@ def _optional(argument, default):
         return argument
 
 _schemeDefaultPorts = {
-    u'http': 80,
-    u'https': 443,
+    'http': 80,
+    'https': 443,
 }
 
 
@@ -172,7 +172,7 @@ def _typecheck(name, value, *types):
     @return: C{value} if the type check succeeds
     """
     if not types:
-        types = (unicode,)
+        types = (str,)
     if not isinstance(value, types):
         raise TypeError("expected {} for {}, got {}".format(
             " or ".join([t.__name__ for t in types]), name, repr(value),
@@ -230,7 +230,7 @@ class URL(object):
         URL.fromText(u'https://xn--example-dk9c.com/foo%E2%87%A7bar/')
         >>> (URL.fromText(u'https://xn--example-dk9c.com/foo%E2%87%A7bar/')
              .asIRI())
-        URL.fromText(u'https://\u2192example.com/foo\u21e7bar/')
+        URL.fromText(u'https://\\u2192example.com/foo\\u21e7bar/')
 
     @see: U{RFC 3986, Uniform Resource Identifier (URI): Generic Syntax
         <https://tools.ietf.org/html/rfc3986>}
@@ -273,8 +273,8 @@ class URL(object):
     @type rooted: L{bool}
     """
 
-    def __init__(self, scheme=None, host=None, path=(), query=(), fragment=u'',
-                 port=None, rooted=None, userinfo=u''):
+    def __init__(self, scheme=None, host=None, path=(), query=(), fragment='',
+                 port=None, rooted=None, userinfo=''):
         """
         Create a new L{URL} from structured information about itself.
 
@@ -311,25 +311,25 @@ class URL(object):
         @type userinfo: L{unicode}
         """
         if host is not None and scheme is None:
-            scheme = u'http'
+            scheme = 'http'
         if port is None:
             port = _schemeDefaultPorts.get(scheme)
         if host and query and not path:
-            path = (u'',)
+            path = ('',)
 
         # Now that we're done detecting whether they were passed, we can set
         # them to their defaults:
         if scheme is None:
-            scheme = u''
+            scheme = ''
         if host is None:
-            host = u''
+            host = ''
         if rooted is None:
             rooted = bool(host)
 
         # Set attributes.
         self._scheme = _typecheck("scheme", scheme)
         self._host = _typecheck("host", host)
-        if isinstance(path, unicode):
+        if isinstance(path, str):
             raise TypeError(
                 "expected iterable of text for path, got text itself: "
                 + repr(path)
@@ -338,7 +338,7 @@ class URL(object):
                             for segment in path))
         self._query = tuple(
             (_typecheck("query parameter name", k),
-             _typecheck("query parameter value", v, unicode, type(None)))
+             _typecheck("query parameter value", v, str, type(None)))
             for (k, v) in query
         )
         self._fragment = _typecheck("fragment", fragment)
@@ -361,7 +361,7 @@ class URL(object):
         """
         The user portion of C{userinfo}; everything up to the first C{":"}.
         """
-        return self.userinfo.split(u':')[0]
+        return self.userinfo.split(':')[0]
 
 
     def authority(self, includeSecrets=False):
@@ -378,15 +378,15 @@ class URL(object):
         """
         hostport = [self.host]
         if self.port != _schemeDefaultPorts.get(self.scheme):
-            hostport.append(unicode(self.port))
+            hostport.append(str(self.port))
         authority = []
         if self.userinfo:
             userinfo = self.userinfo
-            if not includeSecrets and u":" in userinfo:
-                userinfo = userinfo[:userinfo.index(u":")+1]
+            if not includeSecrets and ":" in userinfo:
+                userinfo = userinfo[:userinfo.index(":")+1]
             authority.append(userinfo)
-        authority.append(u":".join(hostport))
-        return u"@".join(authority)
+        authority.append(":".join(hostport))
+        return "@".join(authority)
 
 
     def __eq__(self, other):
@@ -489,22 +489,22 @@ class URL(object):
         @rtype: L{URL}
         """
         (scheme, authority, path, query, fragment) = (
-            (u'' if x == b'' else x) for x in urlsplit(s)
+            ('' if x == b'' else x) for x in urlsplit(s)
         )
         authority = authority.split("@", 1)
         if len(authority) == 1:
             [netloc] = authority
-            userinfo = u''
+            userinfo = ''
         else:
             [userinfo, netloc] = authority
-        split = netloc.split(u":")
+        split = netloc.split(":")
         if len(split) == 2:
             host, port = split
             port = int(port)
         else:
             host, port = split[0], None
         if path:
-            path = path.split(u"/")
+            path = path.split("/")
             if not path[0]:
                 path.pop(0)
                 rooted = True
@@ -514,8 +514,8 @@ class URL(object):
             path = ()
             rooted = bool(netloc)
         if query:
-            query = ((qe.split(u"=", 1) if u'=' in qe else (qe, None))
-                     for qe in query.split(u"&"))
+            query = ((qe.split("=", 1) if '=' in qe else (qe, None))
+                     for qe in query.split("&"))
         else:
             query = ()
         return cls(scheme, host, path, query, fragment, port, rooted, userinfo)
@@ -539,7 +539,7 @@ class URL(object):
         @rtype: L{URL}
         """
         return self.replace(
-            path=self.path[:-1 if (self.path and self.path[-1] == u'')
+            path=self.path[:-1 if (self.path and self.path[-1] == '')
                            else None] + segments
         )
 
@@ -646,7 +646,7 @@ class URL(object):
 
             >>> (URL.fromText(u'https://xn--example-dk9c.com/foo%E2%87%A7bar/')
                  .asIRI())
-            URL.fromText(u'https://\u2192example.com/foo\u21e7bar/')
+            URL.fromText(u'https://\\u2192example.com/foo\\u21e7bar/')
 
         @return: a new L{URL} with its path-segments, query-parameters, and
             hostname appropriately decoded.
@@ -690,11 +690,11 @@ class URL(object):
             C{u"http://example.com/some/path?some=query"}.
         @rtype: L{unicode}
         """
-        path = u'/'.join(([u''] if self.rooted else [])
+        path = '/'.join(([''] if self.rooted else [])
                          + [_minimalPercentEncode(segment, _validInPath)
                             for segment in self.path])
-        query = u'&'.join(
-            u'='.join((_minimalPercentEncode(x, _validInQuery)
+        query = '&'.join(
+            '='.join((_minimalPercentEncode(x, _validInQuery)
                        for x in ([k] if v is None else [k, v])))
             for (k, v) in self.query
         )

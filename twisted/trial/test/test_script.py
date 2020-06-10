@@ -1,7 +1,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+
 
 import gc
 import re
@@ -142,7 +142,7 @@ class TestModuleTests(unittest.SynchronousTestCase):
     def assertSuitesEqual(self, test1, names):
         loader = TestLoader()
         names1 = testNames(test1)
-        names2 = testNames(TestSuite(map(loader.loadByName, names)))
+        names2 = testNames(TestSuite(list(map(loader.loadByName, names))))
         names1.sort()
         names2.sort()
         self.assertEqual(names1, names2)
@@ -669,7 +669,7 @@ class TestArgumentOrderTests(unittest.TestCase):
         suite = trial._getSuite(self.config)
         names = testNames(suite)
 
-        expectedSuite = TestSuite(map(self.loader.loadByName, tests))
+        expectedSuite = TestSuite(list(map(self.loader.loadByName, tests)))
         expectedNames = testNames(expectedSuite)
 
         self.assertEqual(names, expectedNames)
@@ -864,7 +864,7 @@ class HelpOrderTests(unittest.TestCase):
         output = sys.stdout.getvalue()
 
         msg = "%r with its description not properly described in %r"
-        for orderName, (orderDesc, _) in trial._runOrders.items():
+        for orderName, (orderDesc, _) in list(trial._runOrders.items()):
             match = re.search(
                 "%s.*%s" % (re.escape(orderName), re.escape(orderDesc)),
                 output,

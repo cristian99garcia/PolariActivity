@@ -71,7 +71,7 @@ See also L{incremental.Version}.
     to use when one is not provided by the user.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = [
     'deprecated',
@@ -114,7 +114,7 @@ def _fullyQualifiedName(obj):
         return "%s.%s" % (moduleName, name)
     elif inspect.ismethod(obj):
         try:
-            cls = obj.im_class
+            cls = obj.__self__.__class__
         except AttributeError:
             # Python 3 eliminates im_class, substitutes __module__ and
             # __qualname__ to provide similar information.
@@ -683,7 +683,7 @@ def _passed(argspec, positional, keyword):
             result[argspec.varargs] = positional[len(argspec.args):]
     for name, value in zip(argspec.args, positional):
         result[name] = value
-    for name, value in keyword.items():
+    for name, value in list(keyword.items()):
         if name in argspec.args:
             if name in result:
                 raise TypeError("Already passed.")

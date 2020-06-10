@@ -6,18 +6,18 @@
 Implementation module for the I{mailmail} command.
 """
 
-from __future__ import print_function
+
 
 import os
 import sys
 import rfc822
 import getpass
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except:
-    import StringIO
+    import io
 
 from twisted.copyright import version
 from twisted.internet import reactor
@@ -142,7 +142,7 @@ def parseOptions(argv):
         'date': [],
     }
 
-    buffer = StringIO.StringIO()
+    buffer = io.StringIO()
     while 1:
         write = 1
         line = sys.stdin.readline()
@@ -186,7 +186,7 @@ def parseOptions(argv):
                 pass
 
     buffer.seek(0, 0)
-    o.body = StringIO.StringIO(buffer.getvalue() + sys.stdin.read())
+    o.body = io.StringIO(buffer.getvalue() + sys.stdin.read())
     return o
 
 
@@ -273,7 +273,7 @@ def loadConfig(path):
                         else:
                             L.append(id)
             order = p.get(section, 'order')
-            order = map(str.split, map(str.lower, order.split(',')))
+            order = list(map(str.split, list(map(str.lower, order.split(',')))))
             if order[0] == 'allow':
                 setattr(c, section, 'allow')
             else:
@@ -320,9 +320,9 @@ def sendmail(host, options, ident):
 def senderror(failure, options):
     recipient = [options.sender]
     sender = '"Internally Generated Message (%s)"<postmaster@%s>' % (sys.argv[0], smtp.DNSNAME)
-    error = StringIO.StringIO()
+    error = io.StringIO()
     failure.printTraceback(file=error)
-    body = StringIO.StringIO(ERROR_FMT % error.getvalue())
+    body = io.StringIO(ERROR_FMT % error.getvalue())
 
     d = smtp.sendmail('localhost', sender, recipient, body)
     d.addBoth(lambda _: reactor.stop())

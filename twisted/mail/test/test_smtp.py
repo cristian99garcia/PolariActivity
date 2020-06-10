@@ -41,9 +41,9 @@ else:
 import re
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 
 def spameater(*spam, **eggs):
@@ -641,7 +641,7 @@ class SMTPHelperTests(unittest.TestCase):
         I{xtext} codec should produce the same result as not
         specifying the error policy.
         """
-        text = u'Hello world'
+        text = 'Hello world'
         self.assertEqual(
             smtp.xtext_encode(text, 'strict'),
             (text.encode('xtext'), len(text)))

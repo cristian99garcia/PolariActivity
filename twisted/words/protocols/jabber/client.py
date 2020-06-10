@@ -3,9 +3,9 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
 
-from twisted.python.compat import _coercedUnicode, unicode
+
+from twisted.python.compat import _coercedUnicode, str
 from twisted.words.protocols.jabber import xmlstream, sasl, error
 from twisted.words.protocols.jabber.jid import JID
 from twisted.words.xish import domish, xpath, utility
@@ -127,7 +127,7 @@ class IQAuthInitializer(object):
         # Prefer digest over plaintext
         if DigestAuthQry.matches(iq):
             digest = xmlstream.hashPassword(self.xmlstream.sid, password)
-            reply.query.addElement("digest", content=unicode(digest))
+            reply.query.addElement("digest", content=str(digest))
         else:
             reply.query.addElement("password", content = password)
 
@@ -280,7 +280,7 @@ class BindInitializer(xmlstream.BaseFeatureInitiatingInitializer):
 
     def onBind(self, iq):
         if iq.bind:
-            self.xmlstream.authenticator.jid = JID(unicode(iq.bind.jid))
+            self.xmlstream.authenticator.jid = JID(str(iq.bind.jid))
 
 
 

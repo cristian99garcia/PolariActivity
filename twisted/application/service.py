@@ -14,7 +14,7 @@ a sibling).
 Maintainer: Moshe Zadka
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer, Interface, Attribute
 

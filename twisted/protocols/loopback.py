@@ -6,7 +6,7 @@
 Testing support for protocols -- loopback between client and server.
 """
 
-from __future__ import division, absolute_import
+
 
 # system imports
 import tempfile
@@ -42,7 +42,7 @@ class _LoopbackQueue(object):
             d.callback(None)
 
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._queue)
     __bool__ = __nonzero__
 

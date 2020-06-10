@@ -33,7 +33,7 @@ class _BaseURLPathTests(object):
         self.assertEqual(type(self.path.__str__()), str)
 
 
-    def test_mutabilityWithText(self, stringType=type(u"")):
+    def test_mutabilityWithText(self, stringType=type("")):
         """
         Setting attributes on L{urlpath.URLPath} should change the value
         returned by L{str}.
@@ -43,24 +43,24 @@ class _BaseURLPathTests(object):
         @type stringType: 1-argument callable taking L{unicode} and returning
             L{str} or L{bytes}.
         """
-        self.path.scheme = stringType(u"https")
+        self.path.scheme = stringType("https")
         self.assertEqual(
             str(self.path),
             "https://example.com/foo/bar?yes=no&no=yes#footer")
-        self.path.netloc = stringType(u"another.example.invalid")
+        self.path.netloc = stringType("another.example.invalid")
         self.assertEqual(
             str(self.path),
             "https://another.example.invalid/foo/bar?yes=no&no=yes#footer")
-        self.path.path = stringType(u"/hello")
+        self.path.path = stringType("/hello")
         self.assertEqual(
             str(self.path),
             "https://another.example.invalid/hello?yes=no&no=yes#footer")
-        self.path.query = stringType(u"alpha=omega&opposites=same")
+        self.path.query = stringType("alpha=omega&opposites=same")
         self.assertEqual(
             str(self.path),
             "https://another.example.invalid/hello?alpha=omega&opposites=same"
             "#footer")
-        self.path.fragment = stringType(u"header")
+        self.path.fragment = stringType("header")
         self.assertEqual(
             str(self.path),
             "https://another.example.invalid/hello?alpha=omega&opposites=same"
@@ -212,7 +212,7 @@ class BytesURLPathTests(_BaseURLPathTests, unittest.TestCase):
             urlpath.URLPath.fromBytes(None)
 
         with self.assertRaises(ValueError):
-            urlpath.URLPath.fromBytes(u"someurl")
+            urlpath.URLPath.fromBytes("someurl")
 
 
     def test_withoutArguments(self):
@@ -279,12 +279,12 @@ class UnicodeURLPathTests(_BaseURLPathTests, unittest.TestCase):
     """
     def setUp(self):
         self.path = urlpath.URLPath.fromString(
-            u"http://example.com/foo/bar?yes=no&no=yes#footer")
+            "http://example.com/foo/bar?yes=no&no=yes#footer")
 
 
     def test_nonASCIICharacters(self):
         """
         L{URLPath.fromString} can load non-ASCII characters.
         """
-        url = urlpath.URLPath.fromString(u"http://example.com/\xff\x00")
+        url = urlpath.URLPath.fromString("http://example.com/\xff\x00")
         self.assertEqual(str(url), "http://example.com/%C3%BF%00")

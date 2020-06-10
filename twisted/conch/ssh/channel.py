@@ -9,7 +9,7 @@ are session. direct-tcp, and forwarded-tcp.
 Maintainer: Paul Swartz
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface import implementer
 
@@ -226,7 +226,7 @@ class SSHChannel(log.Logger):
             top = self.remoteWindowLeft
         rmp = self.remoteMaxPacket
         write = self.conn.sendData
-        r = range(0, top, rmp)
+        r = list(range(0, top, rmp))
         for offset in r:
             write(self, data[offset: offset+rmp])
         self.remoteWindowLeft -= top

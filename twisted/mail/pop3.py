@@ -217,7 +217,7 @@ class _IteratorBuffer(object):
         return self
 
 
-    def next(self):
+    def __next__(self):
         """
         Get the next string from the container, buffer it, and possibly send
         the buffer to the writer.
@@ -229,7 +229,7 @@ class _IteratorBuffer(object):
         container.
         """
         try:
-            v = self.iterator.next()
+            v = next(self.iterator)
         except StopIteration:
             if self.lines:
                 self.write(self.lines)
@@ -664,7 +664,7 @@ class POP3(basic.LineOnlyReceiver, policies.TimeoutMixin):
             except:
                 log.err()
             else:
-                baseCaps.append("SASL " + ' '.join(v.keys()))
+                baseCaps.append("SASL " + ' '.join(list(v.keys())))
         return baseCaps
 
 
@@ -1419,7 +1419,7 @@ class Mailbox:
 
 
 
-NONE, SHORT, FIRST_LONG, LONG = range(4)
+NONE, SHORT, FIRST_LONG, LONG = list(range(4))
 
 NEXT = {}
 NEXT[NONE] = NONE

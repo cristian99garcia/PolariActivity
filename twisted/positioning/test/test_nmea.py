@@ -4,7 +4,7 @@
 Test cases for using NMEA sentences.
 """
 
-from __future__ import absolute_import, division
+
 
 import datetime
 from operator import attrgetter
@@ -1061,7 +1061,7 @@ class NMEAReceiverTests(TestCase):
         for sentence in sentences:
             self.protocol.lineReceived(sentence)
 
-        actuallyFired = self.receiver.called.keys()
+        actuallyFired = list(self.receiver.called.keys())
         self.assertEqual(set(actuallyFired), set(expectedFired))
 
         if extraTest is not None:

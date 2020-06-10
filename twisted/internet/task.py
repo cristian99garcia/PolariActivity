@@ -6,7 +6,7 @@
 Scheduling utility methods and classes.
 """
 
-from __future__ import division, absolute_import
+
 
 __metaclass__ = type
 
@@ -282,7 +282,7 @@ class LoopingCall:
         elif hasattr(self.f, '__name__'):
             func = self.f.__name__
             if hasattr(self.f, 'im_class'):
-                func = self.f.im_class.__name__ + '.' + func
+                func = self.f.__self__.__class__.__name__ + '.' + func
         else:
             func = reflect.safe_repr(self.f)
 

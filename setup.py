@@ -72,7 +72,7 @@ def cmd_genpot(config, options):
     args += python_files
     retcode = subprocess.call(args)
     if retcode:
-        print 'ERROR - xgettext failed with return code %i.' % retcode
+        print('ERROR - xgettext failed with return code %i.' % retcode)
 
 
 def start():
@@ -100,7 +100,7 @@ def start():
                               choices=['unit', 'integration'],
                               help="run unit/integration test")
     check_parser.add_argument("--verbosity", "-v", dest="verbose",
-                              type=int, choices=range(0, 3),
+                              type=int, choices=list(range(0, 3)),
                               default=1, nargs='?',
                               help="verbosity for the unit tests")
 

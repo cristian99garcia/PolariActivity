@@ -9,7 +9,7 @@ I hold resource classes and helper classes that deal with CGI scripts.
 
 # System Imports
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 # Twisted Imports
 from twisted.web import http
@@ -111,16 +111,16 @@ class CGIScript(resource.Resource):
             if '=' in qs:
                 qargs = []
             else:
-                qargs = [urllib.unquote(x) for x in qs.split('+')]
+                qargs = [urllib.parse.unquote(x) for x in qs.split('+')]
 
         # Propagate HTTP headers
-        for title, header in request.getAllHeaders().items():
+        for title, header in list(request.getAllHeaders().items()):
             envname = title.replace('-', '_').upper()
             if title not in ('content-type', 'content-length', 'proxy'):
                 envname = "HTTP_" + envname
             env[envname] = header
         # Propagate our environment
-        for key, value in os.environ.items():
+        for key, value in list(os.environ.items()):
             if key not in env:
                 env[key] = value
         # And they're off!

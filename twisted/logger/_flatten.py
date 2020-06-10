@@ -11,7 +11,7 @@ examination.
 from string import Formatter
 from collections import defaultdict
 
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 
 aFormatter = Formatter()
 
@@ -99,7 +99,7 @@ def flattenEvent(event):
             # We've already seen and handled this key
             continue
 
-        if fieldName.endswith(u"()"):
+        if fieldName.endswith("()"):
             fieldName = fieldName[:-2]
             callit = True
         else:
@@ -111,7 +111,7 @@ def flattenEvent(event):
         if conversion == "r":
             conversionFunction = repr
         else:  # Above: if conversion is not "r", it's "s"
-            conversionFunction = unicode
+            conversionFunction = str
 
         if callit:
             fieldValue = fieldValue()
@@ -174,5 +174,5 @@ def flatFormat(event):
         if fieldName is not None:
             key = keyFlattener.flatKey(
                     fieldName, formatSpec, conversion or "s")
-            s.append(unicode(fieldValues[key]))
-    return u"".join(s)
+            s.append(str(fieldValues[key]))
+    return "".join(s)

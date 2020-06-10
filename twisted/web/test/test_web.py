@@ -12,7 +12,7 @@ from zope.interface import implementer
 from zope.interface.verify import verifyObject
 
 from twisted.python import reflect, failure
-from twisted.python.compat import _PY3, unichr
+from twisted.python.compat import _PY3, chr
 from twisted.python.filepath import FilePath
 from twisted.trial import unittest
 from twisted.internet import reactor
@@ -148,7 +148,7 @@ class SiteTest(unittest.TestCase):
 
         def predictableEntropy(n):
             predictableEntropy.x += 1
-            return (unichr(predictableEntropy.x) * n).encode("charmap")
+            return (chr(predictableEntropy.x) * n).encode("charmap")
         predictableEntropy.x = 0
         self.patch(site, "_entropy", predictableEntropy)
         a = self.getAutoExpiringSession(site)
@@ -619,7 +619,7 @@ class RequestTests(unittest.TestCase):
         request = server.Request(d, 1)
         request.site = server.Site(resource.Resource())
         request.site.displayTracebacks = True
-        fail = failure.Failure(Exception(u"\u2603"))
+        fail = failure.Failure(Exception("\u2603"))
         request.processingFailed(fail)
 
         self.assertIn(b"&#9731;", request.transport.written.getvalue())
@@ -1207,7 +1207,7 @@ class AccessLogTestsMixin(object):
         formatter is used to generate lines for the log file.
         """
         def notVeryGoodFormatter(timestamp, request):
-            return u"this is a bad log format"
+            return "this is a bad log format"
 
         reactor = Clock()
         reactor.advance(1234567890)
@@ -1283,8 +1283,8 @@ class CombinedLogFormatterTests(unittest.TestCase):
 
         line = http.combinedLogFormatter(timestamp, request)
         self.assertEqual(
-            u'"evil x-forwarded-for \\x80" - - [13/Feb/2009:23:31:30 +0000] '
-            u'"POS\\x81 /dummy HTTP/1.0" 123 - "evil \\x83" "evil \\x84"',
+            '"evil x-forwarded-for \\x80" - - [13/Feb/2009:23:31:30 +0000] '
+            '"POS\\x81 /dummy HTTP/1.0" 123 - "evil \\x83" "evil \\x84"',
             line)
 
 
@@ -1317,7 +1317,7 @@ class ProxiedLogFormatterTests(unittest.TestCase):
         timestamp = http.datetimeToLogString(reactor.seconds())
         request = DummyRequestForLogTest(http.HTTPFactory(reactor=reactor))
         expected = http.combinedLogFormatter(timestamp, request).replace(
-            u"1.2.3.4", u"172.16.1.2")
+            "1.2.3.4", "172.16.1.2")
         request.requestHeaders.setRawHeaders(b"x-forwarded-for", [header])
         line = http.proxiedLogFormatter(timestamp, request)
 

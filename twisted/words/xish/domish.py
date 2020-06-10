@@ -10,12 +10,12 @@ and serializing such structures to an XML string representation, optimized
 for use in streaming XML applications.
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer, Interface, Attribute
 
 from twisted.python.compat import (_PY3, StringType, _coercedUnicode,
-                                   iteritems, itervalues, unicode)
+                                   iteritems, itervalues, str)
 
 def _splitPrefix(name):
     """ Internal method for splitting a prefixed Element name into its
@@ -39,11 +39,11 @@ class _ListSerializer:
         if prefixes:
             self.prefixes.update(prefixes)
         self.prefixes.update(G_PREFIXES)
-        self.prefixStack = [G_PREFIXES.values()] + (prefixesInScope or [])
+        self.prefixStack = [list(G_PREFIXES.values())] + (prefixesInScope or [])
         self.prefixCounter = 0
 
     def getValue(self):
-        return u"".join(self.writelist)
+        return "".join(self.writelist)
 
     def getPrefix(self, uri):
         if uri not in self.prefixes:
@@ -113,7 +113,7 @@ class _ListSerializer:
             write(" xmlns:%s='%s'" % (p, u))
 
         # Serialize attributes
-        for k,v in elem.attributes.items():
+        for k,v in list(elem.attributes.items()):
             # If the attribute name is a tuple, it's a qualified attribute
             if isinstance(k, tuple):
                 attr_uri, attr_name = k
@@ -199,7 +199,7 @@ def generateElementsNamed(list, name):
             yield n
 
 
-class SerializedXML(unicode):
+class SerializedXML(str):
     """ Marker class for pre-serialized XML in the DOM. """
     pass
 
@@ -462,13 +462,13 @@ class Element(object):
         for n in self.children:
             if isinstance(n, StringType):
                 return n
-        return u""
+        return ""
 
     def __bytes__(self):
         """
         Retrieve the first character data node as UTF-8 bytes.
         """
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
 
     if _PY3:
         __str__ = __unicode__
@@ -515,7 +515,7 @@ class Element(object):
         """ Add some text data to this Element. """
         text = _coercedUnicode(text)
         c = self.children
-        if len(c) > 0 and isinstance(c[-1], unicode):
+        if len(c) > 0 and isinstance(c[-1], str):
             c[-1] = c[-1] + text
         else:
             c.append(text)
@@ -671,7 +671,7 @@ else:
                 uri = self.findUri(prefix)
 
             # Pass 2 - Fix up and escape attributes
-            for k, v in attributes.items():
+            for k, v in list(attributes.items()):
                 p, n = _splitPrefix(k)
                 if p is None:
                     attribs[n] = v
@@ -807,7 +807,7 @@ class ExpatElementStream:
             qname = ('', name)
 
         # Process attributes
-        for k, v in attrs.items():
+        for k, v in list(attrs.items()):
             if " " in k:
                 aqname = k.rsplit(" ", 1)
                 attrs[(aqname[0], aqname[1])] = v

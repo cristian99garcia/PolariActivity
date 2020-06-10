@@ -41,9 +41,9 @@ from twisted import cred
 from twisted.python.runtime import platform
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 
 __all__ = [
@@ -77,7 +77,7 @@ else:
     DNSNAME = socket.getfqdn()
 
 # Used for fast success code lookup
-SUCCESS = dict.fromkeys(xrange(200,300))
+SUCCESS = dict.fromkeys(range(200,300))
 
 
 def rfc822date(timeinfo=None,local=1):
@@ -129,7 +129,7 @@ def idGenerator():
 
 
 
-def messageid(uniq=None, N=idGenerator().next):
+def messageid(uniq=None, N=idGenerator().__next__):
     """
     Return a globally unique random string in RFC 2822 Message-ID format
 
@@ -199,12 +199,12 @@ class Address:
         if isinstance(addr, Address):
             self.__dict__ = addr.__dict__.copy()
             return
-        elif not isinstance(addr, types.StringTypes):
+        elif not isinstance(addr, (str,)):
             addr = str(addr)
         self.addrstr = addr
 
         # Tokenize
-        atl = filter(None,self.tstring.split(addr))
+        atl = [_f for _f in self.tstring.split(addr) if _f]
 
         local = []
         domain = []
@@ -254,7 +254,7 @@ class Address:
         """
         res = []
 
-        atl = filter(None,self.tstring.split(str(addr)))
+        atl = [_f for _f in self.tstring.split(str(addr)) if _f]
 
         for t in atl:
             if t[0] == '"' and t[-1] == '"':
@@ -957,7 +957,7 @@ class SMTPClient(basic.LineReceiver, policies.TimeoutMixin):
         self.toAddressesResult = []
         self.successAddresses = []
         self._okresponse = self.smtpState_toOrData
-        self._expected = xrange(0,1000)
+        self._expected = range(0,1000)
         self.lastAddress = None
         return self.smtpState_toOrData(0, '')
 
@@ -968,7 +968,7 @@ class SMTPClient(basic.LineReceiver, policies.TimeoutMixin):
             if code in SUCCESS:
                 self.successAddresses.append(self.lastAddress)
         try:
-            self.lastAddress = self.toAddresses.next()
+            self.lastAddress = next(self.toAddresses)
         except StopIteration:
             if self.successAddresses:
                 self.sendLine('DATA')
@@ -1087,7 +1087,7 @@ class SMTPClient(basic.LineReceiver, policies.TimeoutMixin):
 
 
     def _disconnectFromServer(self):
-        self._expected = xrange(0, 1000)
+        self._expected = range(0, 1000)
         self._okresponse = self.smtpState_disconnect
         self.sendLine('QUIT')
 
@@ -1533,7 +1533,7 @@ class ESMTP(SMTP):
 
 
     def extensions(self):
-        ext = {'AUTH': self.challengers.keys()}
+        ext = {'AUTH': list(self.challengers.keys())}
         if self.canStartTLS and not self.startedTLS:
             ext['STARTTLS'] = None
         return ext
@@ -1548,7 +1548,7 @@ class ESMTP(SMTP):
 
     def listExtensions(self):
         r = []
-        for (c, v) in self.extensions().iteritems():
+        for (c, v) in self.extensions().items():
             if v is not None:
                 if v:
                     # Intentionally omit extensions with empty argument lists
@@ -1785,9 +1785,9 @@ class SMTPSenderFactory(protocol.ClientFactory):
         @param timeout: Period, in seconds, for which to wait for
         server responses, or None to wait forever.
         """
-        assert isinstance(retries, (int, long))
+        assert isinstance(retries, int)
 
-        if isinstance(toEmail, types.StringTypes):
+        if isinstance(toEmail, (str,)):
             toEmail = [toEmail]
         self.fromEmail = Address(fromEmail)
         self.nEmails = len(toEmail)

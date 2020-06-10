@@ -8,7 +8,7 @@ Implementation of RFC2617: HTTP Digest Authentication
 @see: U{http://www.faqs.org/rfcs/rfc2617.html}
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface import implementer
 from twisted.cred import credentials

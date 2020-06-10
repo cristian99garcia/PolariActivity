@@ -111,7 +111,7 @@ class MakeServiceTests(TestCase):
         service = manhole_tap.makeService(self.options)
         portal = service.services[0].factory.protocol.portal
 
-        self.assertEqual(len(portal.checkers.keys()), 2)
+        self.assertEqual(len(list(portal.checkers.keys())), 2)
 
         # Ensure it's the passwd file we wanted by trying to authenticate
         self.assertTrue(self.successResultOf(

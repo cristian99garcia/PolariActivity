@@ -14,7 +14,7 @@ Utilities for handling RFC1982 Serial Number Arithmetic.
    Format<https://tools.ietf.org/html/rfc4034#section-3.2>}
 """
 
-from __future__ import division, absolute_import
+
 
 import calendar
 from datetime import datetime, timedelta

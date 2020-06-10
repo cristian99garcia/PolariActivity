@@ -6,7 +6,7 @@
 An in-memory caching resolver.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.names import dns, common
 from twisted.python import failure, log
@@ -33,7 +33,7 @@ class CacheResolver(common.ResolverBase):
         self._reactor = reactor
 
         if cache:
-            for query, (seconds, payload) in cache.items():
+            for query, (seconds, payload) in list(cache.items()):
                 self.cacheResult(query, payload, seconds)
 
 
@@ -41,7 +41,7 @@ class CacheResolver(common.ResolverBase):
         self.__dict__ = state
 
         now = self._reactor.seconds()
-        for (k, (when, (ans, add, ns))) in self.cache.items():
+        for (k, (when, (ans, add, ns))) in list(self.cache.items()):
             diff = now - when
             for rec in ans + add + ns:
                 if rec.ttl < diff:
@@ -50,7 +50,7 @@ class CacheResolver(common.ResolverBase):
 
 
     def __getstate__(self):
-        for c in self.cancel.values():
+        for c in list(self.cancel.values()):
             c.cancel()
         self.cancel.clear()
         return self.__dict__

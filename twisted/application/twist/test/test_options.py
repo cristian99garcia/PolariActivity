@@ -90,8 +90,8 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         options = TwistOptions()
         options.opt_version()
 
-        self.assertEquals(self.exit.status, ExitStatus.EX_OK)
-        self.assertEquals(self.exit.message, version)
+        self.assertEqual(self.exit.status, ExitStatus.EX_OK)
+        self.assertEqual(self.exit.message, version)
 
 
     def test_reactor(self):
@@ -101,7 +101,7 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         options = TwistOptions()
         options.opt_reactor("fission")
 
-        self.assertEquals(options["reactorName"], "fission")
+        self.assertEqual(options["reactorName"], "fission")
 
 
     def test_installReactor(self):
@@ -200,7 +200,7 @@ class OptionsTests(twisted.trial.unittest.TestCase):
         options = TwistOptions()
         options.opt_log_file("nocanopen")
 
-        self.assertEquals(self.exit.status, ExitStatus.EX_IOERR)
+        self.assertEqual(self.exit.status, ExitStatus.EX_IOERR)
         self.assertTrue(
             self.exit.message.startswith(
                 "Unable to open log file 'nocanopen': "

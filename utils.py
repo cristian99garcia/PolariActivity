@@ -54,7 +54,7 @@ def parse_irc(msg, server):
 
 
 def beep():
-    print "\a"
+    print("\a")
 
 
 def remove_usertypes(nicknames):

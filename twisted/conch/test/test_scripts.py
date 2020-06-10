@@ -22,13 +22,13 @@ else:
     ttySkip = "can't run w/o tty"
 
 try:
-    import Tkinter
+    import tkinter
 except ImportError:
     tkskip = "can't run w/o Tkinter"
 else:
     try:
-        Tkinter.Tk().destroy()
-    except Tkinter.TclError as e:
+        tkinter.Tk().destroy()
+    except tkinter.TclError as e:
         tkskip = "Can't test Tkinter: " + str(e)
     else:
         tkskip = None

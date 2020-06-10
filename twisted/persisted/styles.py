@@ -6,13 +6,13 @@
 Different styles of persisted objects.
 """
 
-from __future__ import division, absolute_import
+
 
 # System Imports
 import types
 import pickle
 try:
-    import copy_reg
+    import copyreg
 except ImportError:
     import copyreg as copy_reg
 import copy
@@ -28,15 +28,15 @@ oldModules = {}
 
 
 try:
-    import cPickle
+    import pickle
 except ImportError:
     cPickle = None
 
-if cPickle is None or cPickle.PicklingError is pickle.PicklingError:
+if cPickle is None or pickle.PicklingError is pickle.PicklingError:
     _UniversalPicklingError = pickle.PicklingError
 else:
     class _UniversalPicklingError(pickle.PicklingError,
-                                  cPickle.PicklingError):
+                                  pickle.PicklingError):
         """
         A PicklingError catchable by both L{cPickle.PicklingError} and
         L{pickle.PicklingError} handlers.
@@ -53,9 +53,9 @@ def pickleMethod(method):
                                  method.__self__,
                                  method.__self__.__class__))
     else:
-        return (unpickleMethod, (method.im_func.__name__,
-                                 method.im_self,
-                                 method.im_class))
+        return (unpickleMethod, (method.__func__.__name__,
+                                 method.__self__,
+                                 method.__self__.__class__))
 
 
 
@@ -76,7 +76,7 @@ def _methodFunction(classObject, methodName):
     methodObject = getattr(classObject, methodName)
     if _PY3:
         return methodObject
-    return methodObject.im_func
+    return methodObject.__func__
 
 
 
@@ -116,7 +116,7 @@ def unpickleMethod(im_name, im_self, im_class):
 
 
 
-copy_reg.pickle(types.MethodType, pickleMethod, unpickleMethod)
+copyreg.pickle(types.MethodType, pickleMethod, unpickleMethod)
 
 def _pickleFunction(f):
     """
@@ -157,7 +157,7 @@ def _unpickleFunction(fullyQualifiedName):
 
 
 
-copy_reg.pickle(types.FunctionType, _pickleFunction, _unpickleFunction)
+copyreg.pickle(types.FunctionType, _pickleFunction, _unpickleFunction)
 
 def pickleModule(module):
     'support function for copy_reg to pickle module refs'
@@ -172,7 +172,7 @@ def unpickleModule(name):
     return __import__(name,{},{},'x')
 
 
-copy_reg.pickle(types.ModuleType,
+copyreg.pickle(types.ModuleType,
                 pickleModule,
                 unpickleModule)
 
@@ -256,12 +256,12 @@ def unpickleStringI(val, sek):
 
 
 try:
-    from cStringIO import InputType, OutputType, StringIO as _cStringIO
+    from io import InputType, OutputType, StringIO as _cStringIO
 except ImportError:
     from io import StringIO as _cStringIO
 else:
-    copy_reg.pickle(OutputType, pickleStringO, unpickleStringO)
-    copy_reg.pickle(InputType, pickleStringI, unpickleStringI)
+    copyreg.pickle(OutputType, pickleStringO, unpickleStringO)
+    copyreg.pickle(InputType, pickleStringI, unpickleStringI)
 
 
 

@@ -5,7 +5,7 @@
 Test that twisted scripts can be invoked as modules.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 

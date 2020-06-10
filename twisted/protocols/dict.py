@@ -50,12 +50,12 @@ def parseParam(line):
 def makeAtom(line):
     """Munch a string into an 'atom'"""
     # FIXME: proper quoting
-    return filter(lambda x: not (x in map(chr, range(33)+[34, 39, 92])), line)
+    return [x for x in line if not (x in list(map(chr, list(range(33))+[34, 39, 92])))]
 
 
 
 def makeWord(s):
-    mustquote = range(33)+[34, 39, 92]
+    mustquote = list(range(33))+[34, 39, 92]
     result = []
     for c in s:
         if ord(c) in mustquote:
@@ -260,7 +260,7 @@ class DictClient(basic.LineReceiver):
         res = parseText(line)
         if res == None:
             self.mode = "command"
-            self.result = map(l, self.data)
+            self.result = list(map(l, self.data))
             self.data = None
         else:
             self.data.append(line)
@@ -329,9 +329,9 @@ class DictLookup(DictClient):
 
     def dictConnected(self):
         if self.factory.queryType == "define":
-            apply(self.sendDefine, self.factory.param)
+            self.sendDefine(*self.factory.param)
         elif self.factory.queryType == "match":
-            apply(self.sendMatch, self.factory.param)
+            self.sendMatch(*self.factory.param)
 
 
     def defineFailed(self, reason):

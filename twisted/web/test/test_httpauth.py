@@ -5,7 +5,7 @@
 Tests for L{twisted.web._auth}.
 """
 
-from __future__ import division, absolute_import
+
 
 import base64
 
@@ -201,7 +201,7 @@ class DigestAuthTests(RequestMixin, unittest.TestCase):
         self.assertEqual(challenge['algorithm'], b'md5')
         self.assertIn('nonce', challenge)
         self.assertIn('opaque', challenge)
-        for v in challenge.values():
+        for v in list(challenge.values()):
             self.assertNotIn(b'\n', v)
 
 

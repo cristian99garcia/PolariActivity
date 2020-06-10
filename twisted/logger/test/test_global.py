@@ -5,7 +5,7 @@
 Test cases for L{twisted.logger._global}.
 """
 
-from __future__ import print_function
+
 
 import io
 
@@ -44,7 +44,7 @@ def compareEvents(test, actualEvents, expectedEvents):
 
     def simplify(event):
         copy = event.copy()
-        for key in event.keys():
+        for key in list(event.keys()):
             if key not in allMergedKeys:
                 copy.pop(key)
         return copy
@@ -202,7 +202,7 @@ class LogBeginnerTests(unittest.TestCase):
         log = Logger(observer=self.publisher)
         log.info("ignore this")
         log.critical("a critical {message}", message="message")
-        self.assertEqual(self.errorStream.getvalue(), u"a critical message\n")
+        self.assertEqual(self.errorStream.getvalue(), "a critical message\n")
 
 
     def test_criticalLoggingStops(self):
@@ -213,7 +213,7 @@ class LogBeginnerTests(unittest.TestCase):
         log = Logger(observer=self.publisher)
         self.beginner.beginLoggingTo(())
         log.critical("another critical message")
-        self.assertEqual(self.errorStream.getvalue(), u"")
+        self.assertEqual(self.errorStream.getvalue(), "")
 
 
     def test_beginLoggingToRedirectStandardIO(self):
@@ -268,7 +268,7 @@ class LogBeginnerTests(unittest.TestCase):
         self.sysModule.stdout.write(b"\x97\x9B\n")
         self.sysModule.stderr.write(b"\xBC\xFC\n")
         compareEvents(
-            self, x, [dict(log_io=u"\u674e"), dict(log_io=u"\u7469")]
+            self, x, [dict(log_io="\u674e"), dict(log_io="\u7469")]
         )
 
 

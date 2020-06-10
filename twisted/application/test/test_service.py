@@ -5,7 +5,7 @@
 Tests for L{twisted.application.service}.
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface.verify import verifyObject
 

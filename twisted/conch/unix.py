@@ -115,7 +115,7 @@ class UnixConchUser(ConchUser):
 
     def logout(self):
         # Remove all listeners.
-        for listener in self.listeners.values():
+        for listener in list(self.listeners.values()):
             self._runAsUser(listener.stopListening)
         log.msg(
             'avatar %s logging out (%i)'

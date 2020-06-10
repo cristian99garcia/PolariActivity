@@ -5,7 +5,7 @@
 Tests for L{twisted.cred.strcred}.
 """
 
-from __future__ import absolute_import, division
+
 
 import os
 
@@ -200,7 +200,7 @@ class UnixCheckerTests(unittest.TestCase):
         # go about reading your /etc/passwd or /etc/shadow files
         if pwd:
             database = UserDatabase()
-            for username, password in self.users.items():
+            for username, password in list(self.users.items()):
                 database.addUser(
                     username, crypt.crypt(password, 'F/'),
                     1000, 1000, username, '/home/' + username, '/bin/sh')

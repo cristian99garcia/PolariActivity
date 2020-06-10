@@ -5,7 +5,7 @@
 Test cases for L{twisted.names.srvconnect}.
 """
 
-from __future__ import absolute_import, division
+
 
 import random
 
@@ -226,7 +226,7 @@ class SRVConnectorTests(unittest.TestCase):
         C{idna} encoding.
         """
         self.connector = srvconnect.SRVConnector(
-            self.reactor, 'xmpp-client', u'\u00e9chec.example.org',
+            self.reactor, 'xmpp-client', '\u00e9chec.example.org',
             self.factory)
         self.assertEqual('xn--chec-9oa.example.org', self.connector.domain)
 

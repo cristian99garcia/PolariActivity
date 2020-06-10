@@ -13,7 +13,7 @@
 ##############################################################################
 """Interface object implementation
 """
-from __future__ import generators
+
 
 import sys
 from types import MethodType
@@ -83,7 +83,7 @@ class Element(object):
 
     def getTaggedValueTags(self):
         """ Returns a list of all tags. """
-        return self.__tagged_values.keys()
+        return list(self.__tagged_values.keys())
 
     def setTaggedValue(self, tag, value):
         """ Associates 'value' with 'key'. """
@@ -340,7 +340,7 @@ class InterfaceClass(Element, InterfaceBase, Specification):
 
         tagged_data = attrs.pop(TAGGED_DATA, None)
         if tagged_data is not None:
-            for key, val in tagged_data.items():
+            for key, val in list(tagged_data.items()):
                 self.setTaggedValue(key, val)
 
         for base in bases:
@@ -387,14 +387,14 @@ class InterfaceClass(Element, InterfaceBase, Specification):
     def names(self, all=False):
         """Return the attribute names defined by the interface."""
         if not all:
-            return self.__attrs.keys()
+            return list(self.__attrs.keys())
 
         r = self.__attrs.copy()
 
         for base in self.__bases__:
             r.update(dict.fromkeys(base.names(all)))
 
-        return r.keys()
+        return list(r.keys())
 
     def __iter__(self):
         return iter(self.names(all=True))
@@ -402,7 +402,7 @@ class InterfaceClass(Element, InterfaceBase, Specification):
     def namesAndDescriptions(self, all=False):
         """Return attribute names and descriptions defined by interface."""
         if not all:
-            return self.__attrs.items()
+            return list(self.__attrs.items())
 
         r = {}
         for base in self.__bases__[::-1]:
@@ -410,7 +410,7 @@ class InterfaceClass(Element, InterfaceBase, Specification):
 
         r.update(self.__attrs)
 
-        return r.items()
+        return list(r.items())
 
     def getDescriptionFor(self, name):
         """Return the attribute description for the given name."""
@@ -600,7 +600,7 @@ class Method(Attribute):
         sig = []
         for v in self.positional:
             sig.append(v)
-            if v in self.optional.keys():
+            if v in list(self.optional.keys()):
                 sig[-1] += "=" + repr(self.optional[v])
         if self.varargs:
             sig.append("*" + self.varargs)
@@ -625,7 +625,7 @@ def fromFunction(func, interface=None, imlevel=0, name=None):
         nr = 0
 
     # Determine the optional arguments.
-    opt.update(dict(zip(names[nr:], defaults)))
+    opt.update(dict(list(zip(names[nr:], defaults))))
 
     method.positional = names[:na]
     method.required = names[:nr]
@@ -648,7 +648,7 @@ def fromFunction(func, interface=None, imlevel=0, name=None):
 
     method.interface = interface
 
-    for key, value in func.__dict__.items():
+    for key, value in list(func.__dict__.items()):
         method.setTaggedValue(key, value)
 
     return method

@@ -11,7 +11,7 @@ listeners or connectors are added)::
     pollreactor.install()
 """
 
-from __future__ import division, absolute_import
+
 
 # System imports
 import errno
@@ -98,7 +98,7 @@ class PollReactor(posixbase.PosixReactorBase, posixbase._PollLikeMixin):
         except:
             # the hard way: necessary because fileno() may disappear at any
             # moment, thanks to python's underlying sockets impl
-            for fd, fdes in self._selectables.items():
+            for fd, fdes in list(self._selectables.items()):
                 if selectable is fdes:
                     break
             else:

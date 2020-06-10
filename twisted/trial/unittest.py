@@ -6,7 +6,7 @@
 Things likely to be used by writers of unit tests.
 """
 
-from __future__ import division, absolute_import
+
 
 # Define the public API from the two implementation modules
 from twisted.trial._synctest import (

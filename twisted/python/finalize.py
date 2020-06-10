@@ -3,7 +3,7 @@
 A module for externalized finalizers.
 """
 
-from __future__ import print_function
+
 
 import weakref
 

@@ -217,7 +217,7 @@ class ProcmonTests(unittest.TestCase):
         self.pm.addProcess("foo", ["foo"])
         self.pm.startProcess("foo")
         self.assertIsInstance(self.pm.protocols["foo"], LoggingProtocol)
-        self.assertIn("foo", self.pm.timeStarted.keys())
+        self.assertIn("foo", list(self.pm.timeStarted.keys()))
 
 
     def test_startProcessAlreadyStarted(self):

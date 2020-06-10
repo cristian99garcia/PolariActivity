@@ -5,7 +5,7 @@
 Tests for L{incremental}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import operator
@@ -107,7 +107,7 @@ class VersionsTests(TestCase):
         vb = Version("whatever", 1, 0, 0)
         self.assertTrue(va > vb)
         self.assertFalse(va < vb)
-        self.assertNotEquals(vb, va)
+        self.assertNotEqual(vb, va)
 
     def test_NEXTMustBeAlone(self):
         """
@@ -131,7 +131,7 @@ class VersionsTests(TestCase):
         """
         va = Version("whatever", "NEXT", 0, 0)
         vb = Version("whatever", "NEXT", 0, 0)
-        self.assertEquals(vb, va)
+        self.assertEqual(vb, va)
 
     def test_comparingPrereleasesWithReleases(self):
         """
@@ -141,7 +141,7 @@ class VersionsTests(TestCase):
         vb = Version("whatever", 1, 0, 0)
         self.assertTrue(va < vb)
         self.assertFalse(va > vb)
-        self.assertNotEquals(vb, va)
+        self.assertNotEqual(vb, va)
 
     def test_prereleaseDeprecated(self):
         """
@@ -178,7 +178,7 @@ class VersionsTests(TestCase):
         vb = Version("whatever", 1, 0, 0)
         self.assertTrue(va < vb)
         self.assertFalse(va > vb)
-        self.assertNotEquals(vb, va)
+        self.assertNotEqual(vb, va)
 
     def test_comparingDevReleasesWithReleases(self):
         """
@@ -188,7 +188,7 @@ class VersionsTests(TestCase):
         vb = Version("whatever", 1, 0, 0)
         self.assertTrue(va < vb)
         self.assertFalse(va > vb)
-        self.assertNotEquals(vb, va)
+        self.assertNotEqual(vb, va)
 
     def test_rcEqualspre(self):
         """

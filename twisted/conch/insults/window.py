@@ -296,7 +296,7 @@ class AbsoluteBox(ContainerWidget):
 
 
 class _Box(ContainerWidget):
-    TOP, CENTER, BOTTOM = range(3)
+    TOP, CENTER, BOTTOM = list(range(3))
 
     def __init__(self, gravity=CENTER):
         ContainerWidget.__init__(self)
@@ -396,7 +396,7 @@ class Packer(ContainerWidget):
         for n, ch in enumerate(self.children):
             boxes[n % len(boxes)].addChild(ch)
         h = HBox()
-        map(h.addChild, boxes)
+        list(map(h.addChild, boxes))
         h.render(width, height, terminal)
 
 
@@ -460,7 +460,7 @@ def horizontalLine(terminal, y, left, right):
 
 def verticalLine(terminal, x, top, bottom):
     terminal.selectCharacterSet(insults.CS_DRAWING, insults.G0)
-    for n in xrange(top, bottom):
+    for n in range(top, bottom):
         terminal.cursorPosition(x, n)
         terminal.write(chr(0o170))
     terminal.selectCharacterSet(insults.CS_US, insults.G0)
@@ -675,7 +675,7 @@ class TextOutput(Widget):
 
 
 class TextOutputArea(TextOutput):
-    WRAP, TRUNCATE = range(2)
+    WRAP, TRUNCATE = list(range(2))
 
     def __init__(self, size=None, longLines=WRAP):
         TextOutput.__init__(self, size)
@@ -791,10 +791,10 @@ class HorizontalScrollbar(_Scrollbar):
     def func_RIGHT_ARROW(self, modifier):
         self.bigger()
 
-    _left = u'\N{BLACK LEFT-POINTING TRIANGLE}'
-    _right = u'\N{BLACK RIGHT-POINTING TRIANGLE}'
-    _bar = u'\N{LIGHT SHADE}'
-    _slider = u'\N{DARK SHADE}'
+    _left = '\N{BLACK LEFT-POINTING TRIANGLE}'
+    _right = '\N{BLACK RIGHT-POINTING TRIANGLE}'
+    _bar = '\N{LIGHT SHADE}'
+    _slider = '\N{DARK SHADE}'
 
 
     def render(self, width, height, terminal):
@@ -819,17 +819,17 @@ class VerticalScrollbar(_Scrollbar):
     def func_DOWN_ARROW(self, modifier):
         self.bigger()
 
-    _up = u'\N{BLACK UP-POINTING TRIANGLE}'
-    _down = u'\N{BLACK DOWN-POINTING TRIANGLE}'
-    _bar = u'\N{LIGHT SHADE}'
-    _slider = u'\N{DARK SHADE}'
+    _up = '\N{BLACK UP-POINTING TRIANGLE}'
+    _down = '\N{BLACK DOWN-POINTING TRIANGLE}'
+    _bar = '\N{LIGHT SHADE}'
+    _slider = '\N{DARK SHADE}'
 
 
     def render(self, width, height, terminal):
         terminal.cursorPosition(0, 0)
         knob = int(self.percent * (height - 2))
         terminal.write(self._up.encode('utf-8'))
-        for i in xrange(1, height - 1):
+        for i in range(1, height - 1):
             terminal.cursorPosition(0, i)
             if i != (knob + 1):
                 terminal.write(self._bar.encode('utf-8'))
@@ -925,7 +925,7 @@ class Selection(Widget):
         self.onSelect = onSelect
         self.minVisible = minVisible
         if minVisible is not None:
-            self._width = max(map(len, self.sequence))
+            self._width = max(list(map(len, self.sequence)))
 
 
     def sizeHint(self):

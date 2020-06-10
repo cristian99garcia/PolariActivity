@@ -27,7 +27,7 @@ To get started, begin with L{PBClientFactory} and L{PBServerFactory}.
 @author: Glyph Lefkowitz
 """
 
-from __future__ import absolute_import, division
+
 
 import random
 from hashlib import md5
@@ -36,7 +36,7 @@ from zope.interface import implementer, Interface
 
 # Twisted Imports
 from twisted.python import log, failure, reflect
-from twisted.python.compat import (unicode, _bytesChr as chr, xrange,
+from twisted.python.compat import (str, _bytesChr as chr, xrange,
                                    comparable, cmp)
 from twisted.internet import defer, protocol
 from twisted.cred.portal import Portal
@@ -539,7 +539,7 @@ class Broker(banana.Banana):
         """Called when the consumer attached to me runs out of buffer.
         """
         # Go backwards over the list so we can remove indexes from it as we go
-        for pageridx in xrange(len(self.pageProducers)-1, -1, -1):
+        for pageridx in range(len(self.pageProducers)-1, -1, -1):
             pager = self.pageProducers[pageridx]
             pager.sendNextPage()
             if not pager.stillPaging():
@@ -635,13 +635,13 @@ class Broker(banana.Banana):
         # nuke potential circular references.
         self.luids = None
         if self.waitingForAnswers:
-            for d in self.waitingForAnswers.values():
+            for d in list(self.waitingForAnswers.values()):
                 try:
                     d.errback(failure.Failure(PBConnectionLost(reason)))
                 except:
                     log.deferr()
         # Assure all Cacheable.stoppedObserving are called
-        for lobj in self.remotelyCachedObjects.values():
+        for lobj in list(self.remotelyCachedObjects.values()):
             cacheable = lobj.object
             perspective = lobj.perspective
             try:
@@ -700,7 +700,7 @@ class Broker(banana.Banana):
             L{None} if there is no object which corresponds to the given
             identifier.
         """
-        if isinstance(luid, unicode):
+        if isinstance(luid, str):
             luid = luid.encode('utf8')
 
         lob = self.localObjects.get(luid)
@@ -742,7 +742,7 @@ class Broker(banana.Banana):
         This is how you specify a 'base' set of objects that the remote
         protocol can connect to.
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             name = name.encode('utf8')
 
         assert object is not None
@@ -754,7 +754,7 @@ class Broker(banana.Banana):
         Note that this does not check the validity of the name, only
         creates a translucent reference for it.
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             name = name.encode('utf8')
 
         return RemoteReference(None, self, name, 0)
@@ -1013,7 +1013,7 @@ class Broker(banana.Banana):
         If the reference count is zero, it will free the reference to this
         object.
         """
-        if isinstance(objectID, unicode):
+        if isinstance(objectID, str):
             objectID = objectID.encode('utf8')
         refs = self.localObjects[objectID].decref()
         if refs == 0:

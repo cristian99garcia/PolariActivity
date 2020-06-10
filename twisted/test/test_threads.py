@@ -6,7 +6,7 @@
 Test methods in twisted.internet.threads and reactor thread APIs.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys, os, time
 
@@ -96,7 +96,7 @@ class ReactorThreadsTests(unittest.TestCase):
             def threadedFunction():
                 # Hopefully a hundred thousand queued calls is enough to
                 # trigger the error condition
-                for i in xrange(100000):
+                for i in range(100000):
                     try:
                         reactor.callFromThread(lambda: None)
                     except:
@@ -238,7 +238,7 @@ class DeferredResultTests(unittest.TestCase):
             d.callback(None)
 
         threads.callMultipleInThread([
-            (L.append, (i,), {}) for i in xrange(N)
+            (L.append, (i,), {}) for i in range(N)
             ] + [(reactor.callFromThread, (finished,), {})])
         return d
 

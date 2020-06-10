@@ -26,7 +26,7 @@ Various other classes in this module support this usage:
     response.
 """
 
-from __future__ import division, absolute_import
+
 __metaclass__ = type
 
 from zope.interface import implementer
@@ -49,10 +49,10 @@ from twisted.web.http import _DataLoss, PotentialDataLoss
 from twisted.web.http import _IdentityTransferDecoder, _ChunkedTransferDecoder
 
 # States HTTPParser can be in
-STATUS = u'STATUS'
-HEADER = u'HEADER'
-BODY = u'BODY'
-DONE = u'DONE'
+STATUS = 'STATUS'
+HEADER = 'HEADER'
+BODY = 'BODY'
+DONE = 'DONE'
 
 
 class BadHeaders(Exception):
@@ -193,7 +193,7 @@ def _callAppFunction(function):
     try:
         function()
     except:
-        log.err(None, u"Unexpected exception from %s" % (
+        log.err(None, "Unexpected exception from %s" % (
                 fullyQualifiedName(function),))
 
 
@@ -255,7 +255,7 @@ class HTTPParser(LineReceiver):
         part of the message body and deliver them to the given decoder.
         """
         if self.state == BODY:
-            raise RuntimeError(u"already in body mode")
+            raise RuntimeError("already in body mode")
 
         self.bodyDecoder = decoder
         self.state = BODY
@@ -398,7 +398,7 @@ class HTTPClientParser(HTTPParser):
         except ValueError as e:
             raise BadResponseVersion(str(e), strversion)
         if major < 0 or minor < 0:
-            raise BadResponseVersion(u"version may not be negative",
+            raise BadResponseVersion("version may not be negative",
                 strversion)
         return (proto, major, minor)
 
@@ -410,12 +410,12 @@ class HTTPClientParser(HTTPParser):
         """
         parts = status.split(b' ', 2)
         if len(parts) != 3:
-            raise ParseError(u"wrong number of parts", status)
+            raise ParseError("wrong number of parts", status)
 
         try:
             statusCode = int(parts[1])
         except ValueError:
-            raise ParseError(u"non-integer status code", status)
+            raise ParseError("non-integer status code", status)
 
         self.response = Response._construct(
             self.parseVersion(parts[0]),
@@ -503,8 +503,8 @@ class HTTPClientParser(HTTPParser):
                 else:
                     # "HTTP Message Splitting" or "HTTP Response Smuggling"
                     # potentially happening.  Or it's just a buggy server.
-                    raise ValueError(u"Too many Content-Length headers; "
-                                     u"response is invalid")
+                    raise ValueError("Too many Content-Length headers; "
+                                     "response is invalid")
 
                 if contentLength == 0:
                     self._finished(self.clearLineBuffer())
@@ -642,7 +642,7 @@ class Request:
     def _writeHeaders(self, transport, TEorCL):
         hosts = self.headers.getRawHeaders(b'host', ())
         if len(hosts) != 1:
-            raise BadHeaders(u"Exactly one Host header required")
+            raise BadHeaders("Exactly one Host header required")
 
         # In the future, having the protocol version be a parameter to this
         # method would probably be good.  It would be nice if this method
@@ -740,8 +740,8 @@ class Request:
                     # there's a chance someone might notice and complain.
                     log.err(
                         err,
-                        u"Buggy state machine in %r/[%d]: "
-                        u"ebConsuming called" % (self, state[0]))
+                        "Buggy state machine in %r/[%d]: "
+                        "ebConsuming called" % (self, state[0]))
 
             def cbProducing(result):
                 if state == [None]:
@@ -779,7 +779,7 @@ class Request:
                     # Deferred failed.  It shouldn't have, so it's buggy.
                     # Log the exception in case anyone who can fix the code
                     # is watching.
-                    log.err(err, u"Producer is buggy")
+                    log.err(err, "Producer is buggy")
 
             consuming.addErrback(ebConsuming)
             producing.addCallbacks(cbProducing, ebProducing)
@@ -887,7 +887,7 @@ class LengthEnforcingConsumer:
             # better place than the direct caller of this method (some
             # arbitrary application code).
             _callAppFunction(self._producer.stopProducing)
-            self._finished.errback(WrongBodyLength(u"too many bytes written"))
+            self._finished.errback(WrongBodyLength("too many bytes written"))
             self._allowNoMoreWrites()
 
 
@@ -901,7 +901,7 @@ class LengthEnforcingConsumer:
         if self._finished is not None:
             self._allowNoMoreWrites()
             if self._length:
-                raise WrongBodyLength(u"too few bytes written")
+                raise WrongBodyLength("too few bytes written")
 
 
 
@@ -925,7 +925,7 @@ def makeStatefulDispatcher(name, template):
         func = getattr(self, '_' + name + '_' + self._state, None)
         if func is None:
             raise RuntimeError(
-                u"%r has no %s method in state %s" % (self, name, self._state))
+                "%r has no %s method in state %s" % (self, name, self._state))
         return func(*args, **kwargs)
     dispatcher.__doc__ = template.__doc__
     return dispatcher
@@ -1076,8 +1076,8 @@ class Response:
         already being delivered to another protocol.
         """
         raise RuntimeError(
-            u"Response already has protocol %r, cannot deliverBody "
-            u"again" % (self._bodyProtocol,))
+            "Response already has protocol %r, cannot deliverBody "
+            "again" % (self._bodyProtocol,))
 
 
     def _deliverBody_DEFERRED_CLOSE(self, protocol):
@@ -1105,7 +1105,7 @@ class Response:
         response body has been delivered to another protocol.
         """
         raise RuntimeError(
-            u"Response already finished, cannot deliverBody now.")
+            "Response already finished, cannot deliverBody now.")
 
 
     def _bodyDataReceived(self, data):
@@ -1143,7 +1143,7 @@ class Response:
         It is invalid for data to be delivered after it has been indicated
         that the response body has been completely delivered.
         """
-        raise RuntimeError(u"Cannot receive body data after _bodyDataFinished")
+        raise RuntimeError("Cannot receive body data after _bodyDataFinished")
 
 
     def _bodyDataReceived_FINISHED(self, data):
@@ -1151,8 +1151,8 @@ class Response:
         It is invalid for data to be delivered after the response body has
         been delivered to a protocol.
         """
-        raise RuntimeError(u"Cannot receive body data after "
-                           u"protocol disconnected")
+        raise RuntimeError("Cannot receive body data after "
+                           "protocol disconnected")
 
 
     def _bodyDataFinished(self, reason=None):
@@ -1172,7 +1172,7 @@ class Response:
         """
         self._state = 'DEFERRED_CLOSE'
         if reason is None:
-            reason = Failure(ResponseDone(u"Response body fully received"))
+            reason = Failure(ResponseDone("Response body fully received"))
         self._reason = reason
 
 
@@ -1181,7 +1181,7 @@ class Response:
         Disconnect the protocol and move to the C{'FINISHED'} state.
         """
         if reason is None:
-            reason = Failure(ResponseDone(u"Response body fully received"))
+            reason = Failure(ResponseDone("Response body fully received"))
         self._bodyProtocol.connectionLost(reason)
         self._bodyProtocol = None
         self._state = 'FINISHED'
@@ -1192,7 +1192,7 @@ class Response:
         It is invalid to attempt to notify the L{Response} of the end of the
         response body data more than once.
         """
-        raise RuntimeError(u"Cannot finish body data more than once")
+        raise RuntimeError("Cannot finish body data more than once")
 
 
     def _bodyDataFinished_FINISHED(self):
@@ -1200,8 +1200,8 @@ class Response:
         It is invalid to attempt to notify the L{Response} of the end of the
         response body data more than once.
         """
-        raise RuntimeError(u"Cannot finish body data after "
-                           u"protocol disconnected")
+        raise RuntimeError("Cannot finish body data after "
+                           "protocol disconnected")
 
 
 
@@ -1449,8 +1449,8 @@ class HTTP11ClientProtocol(Protocol):
                 self._finishedRequest.errback(
                     Failure(RequestGenerationFailed([err])))
             else:
-                log.err(err, u'Error writing request, but not in valid state '
-                             u'to finalize request: %s' % self._state)
+                log.err(err, 'Error writing request, but not in valid state '
+                             'to finalize request: %s' % self._state)
 
         _requestDeferred.addCallbacks(cbRequestWritten, ebRequestWriting)
 
@@ -1490,7 +1490,7 @@ class HTTP11ClientProtocol(Protocol):
         if self._parser is None:
             return
 
-        reason = ConnectionDone(u"synthetic!")
+        reason = ConnectionDone("synthetic!")
         connHeaders = self._parser.connHeaders.getRawHeaders(b'connection', ())
         if ((b'close' in connHeaders) or self._state != "QUIESCENT" or
             not self._currentRequest.persistent):

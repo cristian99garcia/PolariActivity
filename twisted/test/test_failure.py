@@ -5,7 +5,7 @@
 Test cases for the L{twisted.python.failure} module.
 """
 
-from __future__ import division, absolute_import
+
 
 import re
 import sys
@@ -590,12 +590,11 @@ class BrokenExceptionMetaclass(type):
 
 
 
-class BrokenExceptionType(Exception, object):
+class BrokenExceptionType(Exception, object, metaclass=BrokenExceptionMetaclass):
     """
     The aforementioned exception type which cnanot be presented as a string via
     C{str}.
     """
-    __metaclass__ = BrokenExceptionMetaclass
 
 
 

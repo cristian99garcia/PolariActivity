@@ -4,7 +4,7 @@
 Tests for positioning sentences.
 """
 
-from __future__ import absolute_import, division
+
 
 import itertools
 
@@ -154,5 +154,5 @@ class MixinTests(TestCase, SentenceTestsMixin):
         self.assertNotIn(None, sentenceAttributes)
 
         sentenceContents = self.protocol._SENTENCE_CONTENTS
-        sentenceSpecAttributes = itertools.chain(*sentenceContents.values())
+        sentenceSpecAttributes = itertools.chain(*list(sentenceContents.values()))
         self.assertIn(None, sentenceSpecAttributes)

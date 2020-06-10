@@ -9,7 +9,7 @@ Currently only the minimum APIs necessary for using systemd's socket activation
 feature are supported.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = ['ListenFDs']
 
@@ -76,7 +76,7 @@ class ListenFDs(object):
                 except (KeyError, ValueError):
                     pass
                 else:
-                    descriptors = range(start, start + count)
+                    descriptors = list(range(start, start + count))
                     del environ['LISTEN_PID'], environ['LISTEN_FDS']
 
         return cls(descriptors)

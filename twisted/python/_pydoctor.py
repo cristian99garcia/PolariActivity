@@ -9,14 +9,14 @@ FIXME: https://github.com/twisted/pydoctor/issues/106
 This documentation does not link to pydoctor API as there is no public API yet.
 """
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from compiler import ast
 from pydoctor import model, zopeinterface
 from pydoctor.sphinx import SphinxInventory
 
 
-class HeadRequest(urllib2.Request):
+class HeadRequest(urllib.request.Request):
     """
     A request for the HEAD HTTP method.
     """
@@ -116,7 +116,7 @@ class TwistedSphinxInventory(SphinxInventory):
         @return: The response for the HEAD method.
         @rtype: urllib2 response
         """
-        return urllib2.urlopen(HeadRequest(url))
+        return urllib.request.urlopen(HeadRequest(url))
 
 
 

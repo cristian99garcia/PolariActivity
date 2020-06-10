@@ -6,7 +6,7 @@
 Common functionality used within the implementation of various workers.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 from ._ithreads import AlreadyQuit
 

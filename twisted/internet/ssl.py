@@ -53,7 +53,7 @@ APIs listed above.
     throughout the documentation.
 """
 
-from __future__ import division, absolute_import
+
 
 # System imports
 from OpenSSL import SSL

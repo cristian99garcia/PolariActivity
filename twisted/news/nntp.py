@@ -28,7 +28,7 @@ Other desired features:
    - A control protocol
 """
 
-from __future__ import print_function
+
 
 import time
 
@@ -411,7 +411,7 @@ class NNTPClient(basic.LineReceiver):
 
     def _stateList(self, line):
         if line != '.':
-            data = filter(None, line.strip().split())
+            data = [_f for _f in line.strip().split() if _f]
             self._newLine((data[0], int(data[1]), int(data[2]), data[3]), 0)
         else:
             self.gotAllGroups(self._endState())
@@ -419,7 +419,7 @@ class NNTPClient(basic.LineReceiver):
 
     def _stateOverview(self, line):
         if line != '.':
-            self._newLine(filter(None, line.strip().split()), 0)
+            self._newLine([_f for _f in line.strip().split() if _f], 0)
         else:
             self.gotOverview(self._endState())
 

@@ -5,7 +5,7 @@
 HTTP errors.
 """
 
-from __future__ import division, absolute_import
+
 
 import re
 import sys
@@ -448,13 +448,13 @@ class FlattenerErrorTests(unittest.TestCase):
         u = {'u': ''} if _PY3 else {'u': 'u'}
         self.assertEqual(
             str(error.FlattenerError(
-                    RuntimeError("reason"), [u'abc\N{SNOWMAN}xyz'], [])),
+                    RuntimeError("reason"), ['abc\N{SNOWMAN}xyz'], [])),
             "Exception while flattening:\n"
             "  %(u)s'abc\\u2603xyz'\n" # Codepoint for SNOWMAN
             "RuntimeError: reason\n" % u)
         self.assertEqual(
             str(error.FlattenerError(
-                    RuntimeError("reason"), [u'01234567\N{SNOWMAN}9' * 10],
+                    RuntimeError("reason"), ['01234567\N{SNOWMAN}9' * 10],
                     [])),
             "Exception while flattening:\n"
             "  %(u)s'01234567\\u2603901234567\\u26039"

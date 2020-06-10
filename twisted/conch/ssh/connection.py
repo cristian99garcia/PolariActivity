@@ -8,7 +8,7 @@ allows access to the shell and port-forwarding.
 
 Maintainer: Paul Swartz
 """
-from __future__ import division, absolute_import
+
 
 import struct
 
@@ -17,7 +17,7 @@ from twisted.conch import error
 from twisted.internet import defer
 from twisted.python import log
 from twisted.python.compat import (
-    networkString, nativeString, long, _bytesChr as chr)
+    networkString, nativeString, int, _bytesChr as chr)
 
 class SSHConnection(service.SSHService):
     """
@@ -151,7 +151,7 @@ class SSHConnection(service.SSHService):
             log.err(e, 'channel open failed')
             if isinstance(e, error.ConchError):
                 textualInfo, reason = e.args
-                if isinstance(textualInfo, (int, long)):
+                if isinstance(textualInfo, int):
                     # See #3657 and #3071
                     textualInfo, reason = reason, textualInfo
             else:
@@ -630,7 +630,7 @@ OPEN_RESOURCE_SHORTAGE = 4
 EXTENDED_DATA_STDERR = 1
 
 messages = {}
-for name, value in locals().copy().items():
+for name, value in list(locals().copy().items()):
     if name[:4] == 'MSG_':
         messages[value] = name # doesn't handle doubles
 

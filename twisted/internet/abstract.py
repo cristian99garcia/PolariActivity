@@ -6,14 +6,14 @@
 Support for generic select()able objects.
 """
 
-from __future__ import division, absolute_import
+
 
 from socket import AF_INET6, inet_pton, error
 
 from zope.interface import implementer
 
 # Twisted Imports
-from twisted.python.compat import _PY3, unicode, lazyByteSlice
+from twisted.python.compat import _PY3, str, lazyByteSlice
 from twisted.python import reflect, failure
 from twisted.internet import interfaces, main
 
@@ -344,7 +344,7 @@ class FileDescriptor(_ConsumerMixin, _LogOwner):
         buffer and this descriptor has a registered streaming producer, its
         C{pauseProducing()} method will be called.
         """
-        if isinstance(data, unicode): # no, really, I mean it
+        if isinstance(data, str): # no, really, I mean it
             raise TypeError("Data must not be unicode")
         if not self.connected or self._writeDisconnected:
             return
@@ -372,7 +372,7 @@ class FileDescriptor(_ConsumerMixin, _LogOwner):
         data is written to the underlying file descriptor.
         """
         for i in iovec:
-            if isinstance(i, unicode): # no, really, I mean it
+            if isinstance(i, str): # no, really, I mean it
                 raise TypeError("Data must not be unicode")
         if not self.connected or not iovec or self._writeDisconnected:
             return

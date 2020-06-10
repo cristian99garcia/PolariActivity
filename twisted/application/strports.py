@@ -9,7 +9,7 @@ Construct listening port services from a simple string description.
 @see: L{twisted.internet.endpoints.clientFromString}
 """
 
-from __future__ import absolute_import, division
+
 
 import warnings
 

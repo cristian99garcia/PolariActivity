@@ -7,7 +7,7 @@
 Cred plugin for ssh key login.
 """
 
-from __future__ import absolute_import, division
+
 
 from zope.interface import implementer
 

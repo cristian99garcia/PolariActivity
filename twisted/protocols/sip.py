@@ -20,7 +20,7 @@ from twisted import cred
 from twisted.internet import protocol, defer, reactor
 from twisted.protocols import basic
 from twisted.python import log
-from twisted.python.compat import _PY3, iteritems, unicode
+from twisted.python.compat import _PY3, iteritems, str
 
 PORT = 5060
 
@@ -37,7 +37,7 @@ shortHeaders = {"call-id": "i",
                 }
 
 longHeaders = {}
-for k, v in shortHeaders.items():
+for k, v in list(shortHeaders.items()):
     longHeaders[v] = k
 del k, v
 
@@ -347,7 +347,7 @@ class URL:
             w(";%s" % v)
         if self.headers:
             w("?")
-            w("&".join([("%s=%s" % (specialCases.get(h) or dashCapitalize(h), v)) for (h, v) in self.headers.items()]))
+            w("&".join([("%s=%s" % (specialCases.get(h) or dashCapitalize(h), v)) for (h, v) in list(self.headers.items())]))
         return "".join(l)
 
 
@@ -513,7 +513,7 @@ class Message:
 
     def toString(self):
         s = "%s\r\n" % self._getHeaderLine()
-        for n, vs in self.headers.items():
+        for n, vs in list(self.headers.items()):
             for v in vs:
                 s += "%s: %s\r\n" % (specialCases.get(n) or dashCapitalize(n), v)
         s += "\r\n"
@@ -629,7 +629,7 @@ class MessagesParser(basic.LineReceiver):
 
     def dataReceived(self, data):
         try:
-            if isinstance(data, unicode):
+            if isinstance(data, str):
                 data = data.encode("utf-8")
             basic.LineReceiver.dataReceived(self, data)
         except:
@@ -829,7 +829,7 @@ class Base(protocol.DatagramProtocol):
         if self.debug:
             log.msg("Sending %r to %r" % (message.toString(), destURL))
         data = message.toString()
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             data = data.encode("utf-8")
         self.transport.write(data, (destURL.host, destURL.port or self.PORT))
 

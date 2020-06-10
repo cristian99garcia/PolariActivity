@@ -5,7 +5,7 @@
 Testing helpers related to the module system.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = ['NoReactor', 'AlternateReactor']
 

@@ -5,7 +5,7 @@
 Tests for generic file descriptor based reactor support code.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.trial.unittest import TestCase
 

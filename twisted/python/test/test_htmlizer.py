@@ -5,7 +5,7 @@
 Tests for L{twisted.python.htmlizer}.
 """
 
-from StringIO import StringIO
+from io import StringIO
 
 from twisted.trial.unittest import TestCase
 from twisted.python.htmlizer import filter
@@ -22,7 +22,7 @@ class FilterTests(TestCase):
         """
         input = StringIO("")
         output = StringIO()
-        filter(input, output)
+        list(filter(input, output))
         self.assertEqual(output.getvalue(), '<pre><span class="py-src-endmarker"></span></pre>\n')
 
 
@@ -34,7 +34,7 @@ class FilterTests(TestCase):
         """
         input = StringIO("foo\n")
         output = StringIO()
-        filter(input, output)
+        list(filter(input, output))
         self.assertEqual(
             output.getvalue(),
             '<pre><span class="py-src-variable">foo</span><span class="py-src-newline">\n'

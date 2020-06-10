@@ -10,7 +10,7 @@ Plugin system for Twisted.
 @author: Glyph Lefkowitz
 """
 
-from __future__ import absolute_import, division
+
 
 import os
 import sys
@@ -22,7 +22,7 @@ def _determinePickleModule():
     Determine which 'pickle' API module to use.
     """
     try:
-        import cPickle
+        import pickle
         return cPickle
     except ImportError:
         import pickle

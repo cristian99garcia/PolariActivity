@@ -26,7 +26,7 @@ class AccountManager:
             boolean:autoLogin, string:gatewayType)
         """
         data = []
-        for account in self.accounts.values():
+        for account in list(self.accounts.values()):
             data.append((account.accountName, account.isOnline(),
                          account.autoLogin, account.gatewayType))
         return data
@@ -36,7 +36,7 @@ class AccountManager:
 
     def getConnectionInfo(self):
         connectioninfo = []
-        for account in self.accounts.values():
+        for account in list(self.accounts.values()):
             connectioninfo.append(account.isOnline())
         return connectioninfo
 

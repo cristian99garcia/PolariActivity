@@ -5,7 +5,7 @@
 Test cases for L{twisted.logger._io}.
 """
 
-from __future__ import print_function
+
 
 import sys
 
@@ -58,10 +58,10 @@ class LoggingFileTests(unittest.TestCase):
         f = LoggingFile(self.logger)
 
         self.assertRaises(IOError, f.read)
-        self.assertRaises(IOError, f.next)
+        self.assertRaises(IOError, f.__next__)
         self.assertRaises(IOError, f.readline)
         self.assertRaises(IOError, f.readlines)
-        self.assertRaises(IOError, f.xreadlines)
+        self.assertRaises(IOError, f.__iter__)
         self.assertRaises(IOError, f.seek)
         self.assertRaises(IOError, f.tell)
         self.assertRaises(IOError, f.truncate)
@@ -159,14 +159,14 @@ class LoggingFileTests(unittest.TestCase):
         f.write("Hello")
         self.assertEqual(f.messages, [])
         f.write(", world!\n")
-        self.assertEqual(f.messages, [u"Hello, world!"])
+        self.assertEqual(f.messages, ["Hello, world!"])
         f.write("It's nice to meet you.\n\nIndeed.")
         self.assertEqual(
             f.messages,
             [
-                u"Hello, world!",
-                u"It's nice to meet you.",
-                u"",
+                "Hello, world!",
+                "It's nice to meet you.",
+                "",
             ]
         )
 
@@ -177,7 +177,7 @@ class LoggingFileTests(unittest.TestCase):
         """
         f = self.observedFile(encoding="utf-8")
         f.write(b"Hello, Mr. S\xc3\xa1nchez\n")
-        self.assertEqual(f.messages, [u"Hello, Mr. S\xe1nchez"])
+        self.assertEqual(f.messages, ["Hello, Mr. S\xe1nchez"])
 
 
     def test_writeUnicode(self):
@@ -185,8 +185,8 @@ class LoggingFileTests(unittest.TestCase):
         Unicode is unmodified.
         """
         f = self.observedFile(encoding="utf-8")
-        f.write(u"Hello, Mr. S\xe1nchez\n")
-        self.assertEqual(f.messages, [u"Hello, Mr. S\xe1nchez"])
+        f.write("Hello, Mr. S\xe1nchez\n")
+        self.assertEqual(f.messages, ["Hello, Mr. S\xe1nchez"])
 
 
     def test_writeLevel(self):
@@ -211,7 +211,7 @@ class LoggingFileTests(unittest.TestCase):
         f = self.observedFile()
         f.write("Hello\n")
         self.assertEqual(len(f.events), 1)
-        self.assertEqual(f.events[0]["log_format"], u"{log_io}")
+        self.assertEqual(f.events[0]["log_format"], "{log_io}")
 
 
     def test_writelinesBuffering(self):
@@ -223,14 +223,14 @@ class LoggingFileTests(unittest.TestCase):
         f.writelines(("Hello", ", ", ""))
         self.assertEqual(f.messages, [])
         f.writelines(("world!\n",))
-        self.assertEqual(f.messages, [u"Hello, world!"])
+        self.assertEqual(f.messages, ["Hello, world!"])
         f.writelines(("It's nice to meet you.\n\n", "Indeed."))
         self.assertEqual(
             f.messages,
             [
-                u"Hello, world!",
-                u"It's nice to meet you.",
-                u"",
+                "Hello, world!",
+                "It's nice to meet you.",
+                "",
             ]
         )
 
@@ -245,7 +245,7 @@ class LoggingFileTests(unittest.TestCase):
         print("Hello,", end=" ")
         print("world.")
 
-        self.assertEqual(f.messages, [u"Hello, world."])
+        self.assertEqual(f.messages, ["Hello, world."])
 
 
     def observedFile(self, **kwargs):

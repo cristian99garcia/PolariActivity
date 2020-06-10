@@ -6,7 +6,7 @@
 Very basic functionality for a Reactor implementation.
 """
 
-from __future__ import division, absolute_import
+
 
 import socket # needed only for sync-dns
 from zope.interface import implementer, classImplements
@@ -22,7 +22,7 @@ from twisted.internet.interfaces import IResolverSimple, IReactorPluggableResolv
 from twisted.internet.interfaces import IConnector, IDelayedCall
 from twisted.internet import fdesc, main, error, abstract, defer, threads
 from twisted.python import log, failure, reflect
-from twisted.python.compat import unicode, iteritems
+from twisted.python.compat import str, iteritems
 from twisted.python.runtime import seconds as runtimeSeconds, platform
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.python._oldstyle import _oldStyle
@@ -182,9 +182,9 @@ class DelayedCall:
             if hasattr(self.func, '__qualname__'):
                 func = self.func.__qualname__
             elif hasattr(self.func, '__name__'):
-                func = self.func.func_name
+                func = self.func.__name__
                 if hasattr(self.func, 'im_class'):
-                    func = self.func.im_class.__name__ + '.' + func
+                    func = self.func.__self__.__class__.__name__ + '.' + func
             else:
                 func = reflect.safe_repr(self.func)
         else:
@@ -201,7 +201,7 @@ class DelayedCall:
                 if self.kw:
                     L.append(", ")
             if self.kw:
-                L.append(", ".join(['%s=%s' % (k, reflect.safe_repr(v)) for (k, v) in self.kw.items()]))
+                L.append(", ".join(['%s=%s' % (k, reflect.safe_repr(v)) for (k, v) in list(self.kw.items())]))
             L.append(")")
 
         if self.debug:
@@ -889,7 +889,7 @@ class ReactorBase(object):
             is returned.  This forces unicode encoding to happen now, rather
             than implicitly later.
             """
-            if isinstance(arg, unicode):
+            if isinstance(arg, str):
                 try:
                     arg = arg.encode(defaultEncoding)
                 except UnicodeEncodeError:
@@ -976,7 +976,7 @@ class ReactorBase(object):
             called by a shutdown trigger created in L{_initThreadPool}.
             """
             triggers = [self._threadpoolStartupID, self.threadpoolShutdownID]
-            for trigger in filter(None, triggers):
+            for trigger in [_f for _f in triggers if _f]:
                 try:
                     self.removeSystemEventTrigger(trigger)
                 except ValueError:

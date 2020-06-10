@@ -29,7 +29,7 @@ fix::
 @see: U{Tcl/TkAqua FAQ for more info<http://wiki.tcl.tk/12987>}
 """
 
-import tkSimpleDialog, tkMessageBox
+import tkinter.simpledialog, tkinter.messagebox
 
 from twisted.internet import task
 
@@ -60,13 +60,13 @@ def installTkFunctions():
 
 def getPassword(prompt = '', confirm = 0):
     while 1:
-        try1 = tkSimpleDialog.askstring('Password Dialog', prompt, show='*')
+        try1 = tkinter.simpledialog.askstring('Password Dialog', prompt, show='*')
         if not confirm:
             return try1
-        try2 = tkSimpleDialog.askstring('Password Dialog', 'Confirm Password', show='*')
+        try2 = tkinter.simpledialog.askstring('Password Dialog', 'Confirm Password', show='*')
         if try1 == try2:
             return try1
         else:
-            tkMessageBox.showerror('Password Mismatch', 'Passwords did not match, starting over')
+            tkinter.messagebox.showerror('Password Mismatch', 'Passwords did not match, starting over')
 
 __all__ = ["install", "uninstall"]

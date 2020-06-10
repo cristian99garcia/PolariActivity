@@ -8,7 +8,7 @@ Partial in-memory terminal emulator
 @author: Jp Calderone
 """
 
-from __future__ import print_function
+
 
 import re, string
 
@@ -24,7 +24,7 @@ from twisted.conch.insults import insults
 
 FOREGROUND = 30
 BACKGROUND = 40
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = range(9)
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
 
 

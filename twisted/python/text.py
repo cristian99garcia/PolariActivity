@@ -24,7 +24,7 @@ def stringyString(object, indentation=''):
 
     if type(object) is dict:
         braces = '{}'
-        for key, value in object.items():
+        for key, value in list(object.items()):
             value = stringyString(value, indentation + '   ')
             if isMultiline(value):
                 if endsInNewline(value):
@@ -45,8 +45,8 @@ def stringyString(object, indentation=''):
             element = stringyString(element, indentation + ' ')
             sl.append(element.rstrip() + ',')
     else:
-        sl[:] = map(lambda s, i=indentation: i + s,
-                   str(object).split('\n'))
+        sl[:] = list(map(lambda s, i=indentation: i + s,
+                   str(object).split('\n')))
 
     if not sl:
         sl.append(indentation)

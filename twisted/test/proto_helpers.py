@@ -6,7 +6,7 @@
 Assorted functionality which is commonly useful when writing unit tests.
 """
 
-from __future__ import division, absolute_import
+
 
 from socket import AF_INET, AF_INET6
 from io import BytesIO
@@ -15,7 +15,7 @@ from zope.interface import implementer, implementedBy
 from zope.interface.verify import verifyClass
 
 from twisted.python import failure
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.internet.interfaces import (
     ITransport, IConsumer, IPushProducer, IConnector,
     IReactorCore, IReactorTCP, IReactorSSL, IReactorUNIX, IReactorSocket,
@@ -202,7 +202,7 @@ class StringTransport:
 
     # ITransport
     def write(self, data):
-        if isinstance(data, unicode): # no, really, I mean it
+        if isinstance(data, str): # no, really, I mean it
             raise TypeError("Data must not be unicode")
         self.io.write(data)
 

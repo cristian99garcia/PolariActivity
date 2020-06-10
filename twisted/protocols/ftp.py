@@ -719,7 +719,7 @@ class FTP(basic.LineReceiver, policies.TimeoutMixin, object):
     disconnected = False
 
     # States an FTP can be in
-    UNAUTH, INAUTH, AUTHED, RENAMING = range(4)
+    UNAUTH, INAUTH, AUTHED, RENAMING = list(range(4))
 
     # how long the DTP waits for a connection
     dtpTimeout = 10
@@ -733,7 +733,7 @@ class FTP(basic.LineReceiver, policies.TimeoutMixin, object):
     PUBLIC_COMMANDS = ['FEAT', 'QUIT']
     FEATURES = ['FEAT', 'MDTM', 'PASV', 'SIZE', 'TYPE A;I']
 
-    passivePortRange = xrange(0, 1)
+    passivePortRange = range(0, 1)
 
     listenFactory = reactor.listenTCP
 
@@ -939,7 +939,7 @@ class FTP(basic.LineReceiver, policies.TimeoutMixin, object):
 
 
     def ftp_PORT(self, address):
-        addr = map(int, address.split(','))
+        addr = list(map(int, address.split(',')))
         ip = '%d.%d.%d.%d' % tuple(addr[:4])
         port = addr[4] << 8 | addr[5]
 
@@ -986,7 +986,7 @@ class FTP(basic.LineReceiver, policies.TimeoutMixin, object):
         @return: Wire format of C{name}.
         @rtype: L{bytes}
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             return name.encode('utf-8')
         return name
 
@@ -1535,7 +1535,7 @@ class FTPFactory(policies.LimitTotalConnectionsFactory):
 
     welcomeMessage = "Twisted %s FTP Server" % (copyright.version,)
 
-    passivePortRange = xrange(0, 1)
+    passivePortRange = range(0, 1)
 
     def __init__(self, portal=None, userAnonymous='anonymous'):
         self.portal = portal

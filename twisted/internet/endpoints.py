@@ -12,7 +12,7 @@ parsed by the L{clientFromString} and L{serverFromString} functions.
 @since: 10.1
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import re
@@ -37,7 +37,7 @@ from twisted.internet.stdio import StandardIO, PipeAddress
 from twisted.internet.task import LoopingCall
 from twisted.plugin import IPlugin, getPlugins
 from twisted.python import log
-from twisted.python.compat import nativeString, unicode, _matchingString
+from twisted.python.compat import nativeString, str, _matchingString
 from twisted.python.components import proxyForInterface
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
@@ -1287,7 +1287,7 @@ _serverParsers = {"tcp": _parseTCP,
                   "ssl": _parseSSL,
                   }
 
-_OP, _STRING = range(2)
+_OP, _STRING = list(range(2))
 
 def _tokenize(description):
     """
@@ -1309,10 +1309,10 @@ def _tokenize(description):
             _OP, '='
             _STRING, 'world'
     """
-    empty = _matchingString(u'', description)
-    colon = _matchingString(u':', description)
-    equals = _matchingString(u'=', description)
-    backslash = _matchingString(u'\x5c', description)
+    empty = _matchingString('', description)
+    colon = _matchingString(':', description)
+    equals = _matchingString('=', description)
+    backslash = _matchingString('\x5c', description)
     current = empty
 
     ops = colon + equals
@@ -1346,7 +1346,7 @@ def _parse(description):
         C{_parse('a:b:d=1:c')} would be C{(['a', 'b', 'c'], {'d': '1'})}.
     """
     args, kw = [], {}
-    colon = _matchingString(u':', description)
+    colon = _matchingString(':', description)
     def add(sofar):
         if len(sofar) == 1:
             args.append(sofar[0])
@@ -1610,7 +1610,7 @@ def _loadCAsFromDir(directoryPath):
     """
     caCerts = {}
     for child in directoryPath.children():
-        if not child.asTextMode().basename().split(u'.')[-1].lower() == u'pem':
+        if not child.asTextMode().basename().split('.')[-1].lower() == 'pem':
             continue
         try:
             data = child.getContent()
@@ -1624,7 +1624,7 @@ def _loadCAsFromDir(directoryPath):
             pass
         else:
             caCerts[theCert.digest()] = theCert
-    return trustRootFromCertificates(caCerts.values())
+    return trustRootFromCertificates(list(caCerts.values()))
 
 
 
@@ -2000,9 +2000,9 @@ def _parseClientTLS(reactor, host, port, timeout=b'30', bindAddress=None,
     if kwargs:
         raise TypeError('unrecognized keyword arguments present',
                         list(kwargs.keys()))
-    host = host if isinstance(host, unicode) else host.decode("utf-8")
+    host = host if isinstance(host, str) else host.decode("utf-8")
     bindAddress = (bindAddress
-                   if isinstance(bindAddress, unicode) or bindAddress is None
+                   if isinstance(bindAddress, str) or bindAddress is None
                    else bindAddress.decode("utf-8"))
     port = int(port)
     timeout = int(timeout)

@@ -8,7 +8,7 @@ Things likely to be used by writers of unit tests.
 Maintainer: Jonathan Lange
 """
 
-from __future__ import division, absolute_import
+
 
 import inspect
 import warnings
@@ -264,7 +264,7 @@ class TestCase(SynchronousTestCase):
 
         @param reactor: The Twisted reactor.
         """
-        for name, method in self._reactorMethods.items():
+        for name, method in list(self._reactorMethods.items()):
             setattr(reactor, name, method)
         self._reactorMethods = {}
 

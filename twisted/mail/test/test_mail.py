@@ -9,7 +9,7 @@ import os
 import errno
 import shutil
 import pickle
-import StringIO
+import io
 import email.message
 import email.parser
 import tempfile
@@ -63,24 +63,24 @@ class DomainWithDefaultsTests(unittest.TestCase):
         d = mail.mail.DomainWithDefaultDict(d, 'Default')
 
         self.assertEqual(len(d), 10)
-        self.assertEqual(list(iter(d)), range(10))
-        self.assertEqual(list(d.iterkeys()), list(iter(d)))
+        self.assertEqual(list(iter(d)), list(range(10)))
+        self.assertEqual(list(d.keys()), list(iter(d)))
 
-        items = list(d.iteritems())
+        items = list(d.items())
         items.sort()
         self.assertEqual(items, [(x, x + 10) for x in range(10)])
 
-        values = list(d.itervalues())
+        values = list(d.values())
         values.sort()
-        self.assertEqual(values, range(10, 20))
+        self.assertEqual(values, list(range(10, 20)))
 
-        items = d.items()
+        items = list(d.items())
         items.sort()
         self.assertEqual(items, [(x, x + 10) for x in range(10)])
 
-        values = d.values()
+        values = list(d.values())
         values.sort()
-        self.assertEqual(values, range(10, 20))
+        self.assertEqual(values, list(range(10, 20)))
 
         for x in range(10):
             self.assertEqual(d[x], x + 10)
@@ -152,7 +152,7 @@ class DomainWithDefaultsTests(unittest.TestCase):
         """
         sut = mail.mail.DomainWithDefaultDict({}, 'Default')
 
-        sut.has_key('anything')
+        'anything' in sut
 
         message = (
             'twisted.mail.mail.DomainWithDefaultDict.has_key was deprecated '
@@ -504,7 +504,7 @@ class MaildirAppendStringTests(unittest.TestCase, _AppendTestMixin):
         self.assertEqual(len(mbox.listMessages()), 10)
         self.assertEqual(
             [len(mbox.getMessage(i).read()) for i in range(10)],
-            range(1, 11))
+            list(range(1, 11)))
         # test in the right order: last to first error location.
         self._setState(None, mbox, rename=False)
         d = self._append(None, mbox)
@@ -533,7 +533,7 @@ class MaildirAppendFileTests(unittest.TestCase, _AppendTestMixin):
         """
         mbox = mail.maildir.MaildirMailbox(self.d)
         messages = []
-        for i in xrange(1, 11):
+        for i in range(1, 11):
             temp = tempfile.TemporaryFile()
             temp.write("X" * i)
             temp.seek(0, 0)
@@ -554,7 +554,7 @@ class MaildirAppendFileTests(unittest.TestCase, _AppendTestMixin):
         self.assertEqual(len(mbox.listMessages()), 10)
         self.assertEqual(
             [len(mbox.getMessage(i).read()) for i in range(10)],
-            range(1, 11))
+            list(range(1, 11)))
 
 
 
@@ -623,7 +623,7 @@ class MaildirTests(unittest.TestCase):
             i = i + 1
 
         mb = mail.maildir.MaildirMailbox(self.d)
-        self.assertEqual(mb.listMessages(), range(1, 11))
+        self.assertEqual(mb.listMessages(), list(range(1, 11)))
         self.assertEqual(mb.listMessages(1), 2)
         self.assertEqual(mb.listMessages(5), 6)
 
@@ -854,10 +854,10 @@ class ServiceDomainTests(unittest.TestCase):
             smtp.Address('<someguy@someplace>'),
             ['user@host.name']
         )
-        fp = StringIO.StringIO(hdr)
+        fp = io.StringIO(hdr)
         emailParser = email.parser.Parser()
         m = emailParser.parse(fp)
-        self.assertEqual(len(m.items()), 1)
+        self.assertEqual(len(list(m.items())), 1)
         self.assertIn('Received', m)
 
 
@@ -915,7 +915,7 @@ class VirtualPOP3Tests(unittest.TestCase):
         self.S.addDomain('test.domain', self.D)
 
         portal = cred.portal.Portal(self.D)
-        map(portal.registerChecker, self.D.getCredentialsCheckers())
+        list(map(portal.registerChecker, self.D.getCredentialsCheckers()))
         self.S.portals[''] = self.S.portals['test.domain'] = portal
 
         self.P = mail.protocols.VirtualPOP3()
@@ -1093,7 +1093,7 @@ class Manager:
 class ManagedRelayerTests(unittest.TestCase):
     def setUp(self):
         self.manager = Manager()
-        self.messages = range(0, 20, 2)
+        self.messages = list(range(0, 20, 2))
         self.factory = object()
         self.relay = mail.relaymanager.ManagedRelayerMixin(self.manager)
         self.relay.messages = self.messages[:]
@@ -1690,7 +1690,7 @@ class LiveFireExerciseTests(unittest.TestCase):
         domain.addUser('user', 'password')
         service.addDomain('test.domain', domain)
         service.portals[''] = service.portals['test.domain']
-        map(service.portals[''].registerChecker, domain.getCredentialsCheckers())
+        list(map(service.portals[''].registerChecker, domain.getCredentialsCheckers()))
 
         service.setQueue(mail.relay.DomainQueuer(service))
 
@@ -1797,7 +1797,7 @@ class LiveFireExerciseTests(unittest.TestCase):
         return done
 
 
-aliasFile = StringIO.StringIO("""\
+aliasFile = io.StringIO("""\
 # Here's a comment
    # woop another one
 testuser:                   address1,address2, address3,
@@ -2237,34 +2237,34 @@ done""")
         })
 
         res1 = A1.resolve(aliases)
-        r1 = map(str, res1.objs)
+        r1 = list(map(str, res1.objs))
         r1.sort()
-        expected = map(str, [
+        expected = list(map(str, [
             mail.alias.AddressAlias('user1', None, None),
             mail.alias.MessageWrapper(DummyProcess(), 'echo'),
             mail.alias.FileWrapper('/file'),
-        ])
+        ]))
         expected.sort()
         self.assertEqual(r1, expected)
 
         res2 = A2.resolve(aliases)
-        r2 = map(str, res2.objs)
+        r2 = list(map(str, res2.objs))
         r2.sort()
-        expected = map(str, [
+        expected = list(map(str, [
             mail.alias.AddressAlias('user2', None, None),
             mail.alias.AddressAlias('user3', None, None)
-        ])
+        ]))
         expected.sort()
         self.assertEqual(r2, expected)
 
         res3 = A3.resolve(aliases)
-        r3 = map(str, res3.objs)
+        r3 = list(map(str, res3.objs))
         r3.sort()
-        expected = map(str, [
+        expected = list(map(str, [
             mail.alias.AddressAlias('user1', None, None),
             mail.alias.MessageWrapper(DummyProcess(), 'echo'),
             mail.alias.FileWrapper('/file'),
-        ])
+        ]))
         expected.sort()
         self.assertEqual(r3, expected)
 
@@ -2292,11 +2292,11 @@ done""")
         aliases['alias4'] = A4
 
         res = A4.resolve(aliases)
-        r = map(str, res.objs)
+        r = list(map(str, res.objs))
         r.sort()
-        expected = map(str, [
+        expected = list(map(str, [
             mail.alias.MessageWrapper(DummyProcess(), 'echo')
-        ])
+        ]))
         expected.sort()
         self.assertEqual(r, expected)
 
@@ -2647,6 +2647,6 @@ class _AttemptManagerTests(unittest.TestCase):
 from twisted.python.runtime import platformType
 import types
 if platformType != "posix":
-    for o in locals().values():
-        if isinstance(o, (types.ClassType, type)) and issubclass(o, unittest.TestCase):
+    for o in list(locals().values()):
+        if isinstance(o, type) and issubclass(o, unittest.TestCase):
             o.skip = "twisted.mail only works on posix"

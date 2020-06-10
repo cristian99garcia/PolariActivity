@@ -7,7 +7,7 @@ command line program I{mailmail}.
 """
 
 import sys
-from StringIO import StringIO
+from io import StringIO
 
 from twisted.trial.unittest import TestCase
 from twisted.mail.scripts.mailmail import parseOptions

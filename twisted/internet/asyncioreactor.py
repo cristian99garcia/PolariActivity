@@ -6,7 +6,7 @@
 asyncio-based reactor implementation.
 """
 
-from __future__ import absolute_import, division
+
 
 import errno
 
@@ -142,7 +142,7 @@ class AsyncioSelectorReactor(PosixReactorBase):
 
 
     def addReader(self, reader):
-        if reader in self._readers.keys() or \
+        if reader in list(self._readers.keys()) or \
            reader in self._continuousPolling._readers:
             return
 
@@ -164,7 +164,7 @@ class AsyncioSelectorReactor(PosixReactorBase):
 
 
     def addWriter(self, writer):
-        if writer in self._writers.keys() or \
+        if writer in list(self._writers.keys()) or \
            writer in self._continuousPolling._writers:
             return
 
@@ -191,7 +191,7 @@ class AsyncioSelectorReactor(PosixReactorBase):
     def removeReader(self, reader):
 
         # First, see if they're trying to remove a reader that we don't have.
-        if not (reader in self._readers.keys() \
+        if not (reader in list(self._readers.keys()) \
                 or self._continuousPolling.isReading(reader)):
             # We don't have it, so just return OK.
             return
@@ -215,7 +215,7 @@ class AsyncioSelectorReactor(PosixReactorBase):
     def removeWriter(self, writer):
 
         # First, see if they're trying to remove a writer that we don't have.
-        if not (writer in self._writers.keys() \
+        if not (writer in list(self._writers.keys()) \
                 or self._continuousPolling.isWriting(writer)):
             # We don't have it, so just return OK.
             return
@@ -238,7 +238,7 @@ class AsyncioSelectorReactor(PosixReactorBase):
 
 
     def removeAll(self):
-        return (self._removeAll(self._readers.keys(), self._writers.keys()) +
+        return (self._removeAll(list(self._readers.keys()), list(self._writers.keys())) +
                 self._continuousPolling.removeAll())
 
 

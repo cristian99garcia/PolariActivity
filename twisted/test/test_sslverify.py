@@ -6,7 +6,7 @@
 Tests for L{twisted.internet._sslverify}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import itertools
@@ -157,7 +157,7 @@ def makeCertificate(**kw):
     certificate.gmtime_adj_notBefore(0)
     certificate.gmtime_adj_notAfter(60 * 60 * 24 * 365) # One year
     for xname in certificate.get_issuer(), certificate.get_subject():
-        for (k, v) in kw.items():
+        for (k, v) in list(kw.items()):
             setattr(xname, k, nativeString(v))
 
     certificate.set_serial_number(counter())
@@ -485,7 +485,7 @@ class ClientOptionsTests(unittest.SynchronousTestCase):
         error = self.assertRaises(
             TypeError,
             sslverify.optionsForClientTLS,
-            hostname=u'alpha', someRandomThing=u'beta',
+            hostname='alpha', someRandomThing='beta',
         )
         self.assertEqual(
             str(error),
@@ -772,7 +772,7 @@ class OpenSSLOptionsTests(unittest.TestCase):
         @implementer(interfaces.IAcceptableCiphers)
         class FakeAcceptableCiphers(object):
             def selectCiphers(self, _):
-                return [sslverify.OpenSSLCipher(u'sentinel')]
+                return [sslverify.OpenSSLCipher('sentinel')]
 
         opts = sslverify.OpenSSLCertificateOptions(
             privateKey=self.sKey,
@@ -1297,7 +1297,7 @@ class ProtocolVersionTests(unittest.TestCase):
         options = context.set_options(0)
         if opts.method == SSL.SSLv23_METHOD:
             # Exclusions apply only to SSLv23_METHOD and no others.
-            for opt, exclude in self._EXCLUSION_OPS.items():
+            for opt, exclude in list(self._EXCLUSION_OPS.items()):
                 if options & opt:
                     protocols.discard(exclude)
         return protocols
@@ -1464,7 +1464,7 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         serverCA, serverCert = certificatesForAuthorityAndServer(serverIDNA)
         other = {}
         passClientCert = None
-        clientCA, clientCert = certificatesForAuthorityAndServer(u'client')
+        clientCA, clientCert = certificatesForAuthorityAndServer('client')
         if serverVerifies:
             other.update(trustRoot=clientCA)
 
@@ -1472,7 +1472,7 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
             if validClientCertificate:
                 passClientCert = clientCert
             else:
-                bogusCA, bogus = certificatesForAuthorityAndServer(u'client')
+                bogusCA, bogus = certificatesForAuthorityAndServer('client')
                 passClientCert = bogus
 
         serverOpts = sslverify.OpenSSLCertificateOptions(
@@ -1555,8 +1555,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         server, the connection is immediately dropped.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"wrong-host.example.com",
-            u"correct-host.example.com",
+            "wrong-host.example.com",
+            "correct-host.example.com",
         )
         self.assertEqual(cProto.wrappedProtocol.data, b'')
         self.assertEqual(sProto.wrappedProtocol.data, b'')
@@ -1574,8 +1574,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         connection proceeds normally.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
         )
         self.assertEqual(cProto.wrappedProtocol.data,
                          b'greetings!')
@@ -1592,8 +1592,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         received, the connection is aborted with an OpenSSL error.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             validCertificate=False,
         )
 
@@ -1613,8 +1613,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         should I{really} fail.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             validCertificate=False,
             useDefaultTrust=True,
         )
@@ -1635,8 +1635,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         default, so if we fake that out then it should trust ourselves again.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             useDefaultTrust=True,
             fakePlatformTrust=True,
         )
@@ -1656,8 +1656,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         L{sslverify.optionsForClientTLS}, communication proceeds.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             validCertificate=True,
             serverVerifies=True,
             clientPresentsCertificate=True,
@@ -1680,8 +1680,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         with an SSL error.
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             validCertificate=True,
             serverVerifies=True,
             validClientCertificate=False,
@@ -1711,11 +1711,11 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
                 names.append(conn.get_servername().decode("ascii"))
             ctx.set_tlsext_servername_callback(servername_received)
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"valid.example.com",
-            u"valid.example.com",
+            "valid.example.com",
+            "valid.example.com",
             setupServerContext
         )
-        self.assertEqual(names, [u"valid.example.com"])
+        self.assertEqual(names, ["valid.example.com"])
 
     if skipSNI is not None:
         test_hostnameIsIndicated.skip = skipSNI
@@ -1726,7 +1726,7 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         Hostnames are encoded as IDNA.
         """
         names = []
-        hello = u"h\N{LATIN SMALL LETTER A WITH ACUTE}llo.example.com"
+        hello = "h\N{LATIN SMALL LETTER A WITH ACUTE}llo.example.com"
         def setupServerContext(ctx):
             def servername_received(conn):
                 serverIDNA = sslverify._idnaText(conn.get_servername())
@@ -1768,12 +1768,12 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
                 return cert
         conn = Connection()
         self.assertIs(
-            sslverify.simpleVerifyHostname(conn, u'something.example.com'),
+            sslverify.simpleVerifyHostname(conn, 'something.example.com'),
             None
         )
         self.assertRaises(
             sslverify.SimpleVerificationError,
-            sslverify.simpleVerifyHostname, conn, u'nonsense'
+            sslverify.simpleVerifyHostname, conn, 'nonsense'
         )
 
     def test_surpriseFromInfoCallback(self):
@@ -1784,8 +1784,8 @@ class ServiceIdentityTests(unittest.SynchronousTestCase):
         be clobbered but there's no point testing for that).
         """
         cProto, sProto, pump = self.serviceIdentitySetup(
-            u"correct-host.example.com",
-            u"correct-host.example.com",
+            "correct-host.example.com",
+            "correct-host.example.com",
             buggyInfoCallback=True,
         )
         self.assertEqual(cProto.wrappedProtocol.data, b'')
@@ -2240,7 +2240,7 @@ class OpenSSLCipherTests(unittest.TestCase):
     if skipSSL:
         skip = skipSSL
 
-    cipherName = u'CIPHER-STRING'
+    cipherName = 'CIPHER-STRING'
 
     def test_constructorSetsFullName(self):
         """
@@ -2300,7 +2300,7 @@ class ExpandCipherStringTests(unittest.TestCase):
         """
         self.assertEqual(
             [],
-            sslverify._expandCipherString(u'', SSL.SSLv23_METHOD, 0)
+            sslverify._expandCipherString('', SSL.SSLv23_METHOD, 0)
         )
 
 
@@ -2318,7 +2318,7 @@ class ExpandCipherStringTests(unittest.TestCase):
         self.patch(sslverify.SSL, 'Context', lambda _: ctx)
         self.assertRaises(
             SSL.Error,
-            sslverify._expandCipherString, u'ALL', SSL.SSLv23_METHOD, 0
+            sslverify._expandCipherString, 'ALL', SSL.SSLv23_METHOD, 0
         )
 
 
@@ -2327,7 +2327,7 @@ class ExpandCipherStringTests(unittest.TestCase):
         L{sslverify._expandCipherString} always returns a L{list} of
         L{interfaces.ICipher}.
         """
-        ciphers = sslverify._expandCipherString(u'ALL', SSL.SSLv23_METHOD, 0)
+        ciphers = sslverify._expandCipherString('ALL', SSL.SSLv23_METHOD, 0)
         self.assertIsInstance(ciphers, list)
         bogus = []
         for c in ciphers:
@@ -2613,7 +2613,7 @@ class ECCurveTests(unittest.TestCase):
                    lambda self: FakeBinding(lib=lib))
         self.assertRaises(
             ValueError,
-            sslverify._OpenSSLECCurve, u"doesNotExist",
+            sslverify._OpenSSLECCurve, "doesNotExist",
         )
 
 

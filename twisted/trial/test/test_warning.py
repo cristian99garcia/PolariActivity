@@ -5,7 +5,7 @@
 Tests for Trial's interaction with the Python warning system.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys, warnings
 
@@ -56,7 +56,7 @@ class FlushWarningsTests(SynchronousTestCase):
         Assert that all the keys present in C{subset} are also present in
         C{set} and that the corresponding values are equal.
         """
-        for k, v in subset.items():
+        for k, v in list(subset.items()):
             self.assertEqual(set[k], v)
 
 

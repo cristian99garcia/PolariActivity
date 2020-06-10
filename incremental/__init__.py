@@ -7,7 +7,7 @@ Versions for Python packages.
 See L{Version}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import sys
@@ -21,7 +21,7 @@ if sys.version_info < (3, 0):
     _PY3 = False
 else:
     _PY3 = True
-    unicode = str
+    str = str
 
 
 def _nativeString(s):
@@ -32,7 +32,7 @@ def _nativeString(s):
     @raise UnicodeError: The input string is not ASCII encodable/decodable.
     @raise TypeError: The input is neither C{bytes} nor C{unicode}.
     """
-    if not isinstance(s, (bytes, unicode)):
+    if not isinstance(s, (bytes, str)):
         raise TypeError("%r is neither bytes nor unicode" % s)
     if _PY3:
         if isinstance(s, bytes):
@@ -41,7 +41,7 @@ def _nativeString(s):
             # Ensure we're limited to ASCII subset:
             s.encode("ascii")
     else:
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return s.encode("ascii")
         else:
             # Ensure we're limited to ASCII subset:

@@ -21,7 +21,7 @@ is intentionally only provided by TestCase, not SynchronousTestCase, is excepted
 of course.
 """
 
-from __future__ import division, absolute_import
+
 
 import gc, sys, weakref
 import unittest as pyunit

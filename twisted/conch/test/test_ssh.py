@@ -5,7 +5,7 @@
 Tests for L{twisted.conch.ssh}.
 """
 
-from __future__ import division, absolute_import
+
 
 import struct
 
@@ -122,7 +122,7 @@ class ConchTestAvatar(avatar.ConchUser):
 
     def logout(self):
         self.loggedOut = True
-        for listener in self.listeners.values():
+        for listener in list(self.listeners.values()):
             log.msg('stopListening %s' % listener)
             listener.stopListening()
 
@@ -336,7 +336,7 @@ if cryptography is not None and pyasn1 is not None:
 
         def buildProtocol(self, addr):
             proto = ConchTestServer()
-            proto.supportedPublicKeys = self.privateKeys.keys()
+            proto.supportedPublicKeys = list(self.privateKeys.keys())
             proto.factory = self
 
             if hasattr(self, 'expectedLoseConnection'):

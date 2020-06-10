@@ -9,7 +9,7 @@ Don't use this outside of Twisted.
 Maintainer: Christopher Armstrong
 """
 
-from __future__ import print_function
+
 
 import os
 
@@ -48,7 +48,7 @@ def sh(command, null=True, prompt=False):
     print("--$", command)
 
     if prompt:
-        if raw_input("run ?? ").startswith('n'):
+        if input("run ?? ").startswith('n'):
             return
     if null:
         command = "%s > /dev/null" % command

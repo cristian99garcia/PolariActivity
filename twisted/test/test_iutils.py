@@ -5,7 +5,7 @@
 Test running processes with the APIs in L{twisted.internet.utils}.
 """
 
-from __future__ import division, absolute_import
+
 
 import warnings, os, stat, sys, signal
 

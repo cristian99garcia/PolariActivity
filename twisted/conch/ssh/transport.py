@@ -10,7 +10,7 @@ RFC 4253.
 Maintainer: Paul Swartz
 """
 
-from __future__ import absolute_import, division
+
 
 import binascii
 import hmac
@@ -871,7 +871,7 @@ class SSHTransportBase(protocol.Protocol):
             self.sendDisconnect(DISCONNECT_KEY_EXCHANGE_FAILED,
                                 b"couldn't match all kex parts")
             return
-        if None in self.nextEncryptions.__dict__.values():
+        if None in list(self.nextEncryptions.__dict__.values()):
             self.sendDisconnect(DISCONNECT_KEY_EXCHANGE_FAILED,
                                 b"couldn't match all kex parts")
             return

@@ -7,7 +7,7 @@ Serial port support for Windows.
 Requires PySerial and pywin32.
 """
 
-from __future__ import division, absolute_import
+
 
 # system imports
 from serial import PARITY_NONE

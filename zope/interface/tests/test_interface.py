@@ -416,7 +416,7 @@ class InterfaceClassTests(unittest.TestCase):
         self.assertEqual(inst.__name__, 'ITesting')
         self.assertEqual(inst.__doc__, '')
         self.assertEqual(inst.__bases__, ())
-        self.assertEqual(inst.names(), ATTRS.keys())
+        self.assertEqual(inst.names(), list(ATTRS.keys()))
 
     def test_ctor_attrs_w___locals__(self):
         ATTRS = {'__locals__': {}}
@@ -425,7 +425,7 @@ class InterfaceClassTests(unittest.TestCase):
         self.assertEqual(inst.__name__, 'ITesting')
         self.assertEqual(inst.__doc__, '')
         self.assertEqual(inst.__bases__, ())
-        self.assertEqual(inst.names(), ATTRS.keys())
+        self.assertEqual(inst.names(), list(ATTRS.keys()))
 
     def test_ctor_attrs_w__decorator_non_return(self):
         from zope.interface.interface import _decorator_non_return
@@ -1057,7 +1057,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ICheckMe(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 pass
@@ -1078,7 +1078,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ICheckMe(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 pass
@@ -1108,7 +1108,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 pass
@@ -1121,13 +1121,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 pass
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 pass
@@ -1147,7 +1147,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
@@ -1171,13 +1171,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 "My method, overridden"
@@ -1236,7 +1236,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
@@ -1258,13 +1258,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 "My method, overridden"
@@ -1307,7 +1307,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
@@ -1329,13 +1329,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 "My method, overridden"
@@ -1377,7 +1377,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
@@ -1391,13 +1391,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 "My method, overridden"
@@ -1424,7 +1424,7 @@ class InterfaceTests(unittest.TestCase):
         
 
         class ISimple(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
@@ -1437,13 +1437,13 @@ class InterfaceTests(unittest.TestCase):
         
 
         class IBase(Interface):
-            attr = Attribute(u'My attr')
+            attr = Attribute('My attr')
 
             def method():
                 "My method"
 
         class IDerived(IBase):
-            attr2 = Attribute(u'My attr2')
+            attr2 = Attribute('My attr2')
 
             def method():
                 "My method, overridden"
@@ -2072,14 +2072,14 @@ class _Monkey(object):
     def __init__(self, module, **kw):
         self.module = module
         self.to_restore = dict([(key, getattr(module, key)) for key in kw])
-        for key, value in kw.items():
+        for key, value in list(kw.items()):
             setattr(module, key, value)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for key, value in self.to_restore.items():
+        for key, value in list(self.to_restore.items()):
             setattr(self.module, key, value)
 
 

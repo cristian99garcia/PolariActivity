@@ -175,7 +175,7 @@ class HierarchicalBucketFilter:
         """
         Remove empty buckets.
         """
-        for key, bucket in self.buckets.items():
+        for key, bucket in list(self.buckets.items()):
             bucket_is_empty = bucket.drip()
             if (bucket._refcount == 0) and bucket_is_empty:
                 del self.buckets[key]

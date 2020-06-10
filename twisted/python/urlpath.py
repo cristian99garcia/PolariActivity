@@ -6,10 +6,10 @@
 L{URLPath}, a representation of a URL.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.python.compat import (
-    nativeString, unicode, urllib_parse as urlparse, urlunquote, urlquote
+    nativeString, str, urllib_parse as urlparse, urlunquote, urlquote
 )
 
 from twisted.python.url import URL as _URL
@@ -96,7 +96,7 @@ class URLPath(object):
         @return: a new L{URLPath}
         """
         self = cls.__new__(cls)
-        self._url = urlInstance.replace(path=urlInstance.path or [u""])
+        self._url = urlInstance.replace(path=urlInstance.path or [""])
         self._scheme = self._url.scheme.encode("ascii")
         self._netloc = self._url.authority().encode("ascii")
         self._path = (_URL(path=self._url.path,
@@ -137,7 +137,7 @@ class URLPath(object):
         @return: a new L{URLPath} derived from the given string.
         @rtype: L{URLPath}
         """
-        if not isinstance(url, (str, unicode)):
+        if not isinstance(url, str):
             raise ValueError("'url' must be a str or unicode")
         if isinstance(url, bytes):
             # On Python 2, accepting 'str' (for compatibility) means we might
@@ -200,7 +200,7 @@ class URLPath(object):
         @return: a new L{URLPath}
         """
         return self._fromURL(newURL.replace(
-            fragment=u'', query=self._url.query if keepQuery else ()
+            fragment='', query=self._url.query if keepQuery else ()
         ))
 
 
@@ -247,7 +247,7 @@ class URLPath(object):
 
         @return: a new L{URLPath}
         """
-        return self._mod(self._url.click(u".."), keepQuery)
+        return self._mod(self._url.click(".."), keepQuery)
 
 
     def here(self, keepQuery=False):
@@ -260,7 +260,7 @@ class URLPath(object):
 
         @return: a new L{URLPath}
         """
-        return self._mod(self._url.click(u"."), keepQuery)
+        return self._mod(self._url.click("."), keepQuery)
 
 
     def click(self, st):

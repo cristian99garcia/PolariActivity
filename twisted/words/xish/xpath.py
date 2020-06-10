@@ -11,13 +11,13 @@ L{domish.Element<twisted.words.xish.domish.Element>} instances against
 XPath-like expressions.
 """
 
-from __future__ import absolute_import, division
+
 
 from io import StringIO
 
-from twisted.python.compat import StringType, unicode
+from twisted.python.compat import StringType, str
 
-class LiteralValue(unicode):
+class LiteralValue(str):
     def value(self, elem):
         return self
 
@@ -122,7 +122,7 @@ class _text_Function:
         pass
 
     def value(self, elem):
-        return unicode(elem)
+        return str(elem)
 
 
 class _Location:
@@ -162,7 +162,7 @@ class _Location:
             for c in elem.elements():
                 self.childLocation.queryForString(c, resultbuf)
         else:
-            resultbuf.write(unicode(elem))
+            resultbuf.write(str(elem))
 
     def queryForNodes(self, elem, resultlist):
         if not self.matchesPredicates(elem):

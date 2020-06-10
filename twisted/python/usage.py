@@ -12,8 +12,8 @@ U{http://twistedmatrix.com/projects/core/documentation/howto/options.html},
 or doc/core/howto/options.xhtml in your Twisted directory.
 """
 
-from __future__ import print_function
-from __future__ import division, absolute_import
+
+
 
 # System Imports
 import inspect
@@ -319,18 +319,18 @@ class Options(dict):
         reflect.accumulateClassList(self.__class__, 'optFlags', flags)
 
         for flag in flags:
-            long, short, doc = util.padTo(3, flag)
-            if not long:
+            int, short, doc = util.padTo(3, flag)
+            if not int:
                 raise ValueError("A flag cannot be without a name.")
 
-            docs[long] = doc
-            settings[long] = 0
+            docs[int] = doc
+            settings[int] = 0
             if short:
                 shortOpt = shortOpt + short
-                synonyms[short] = long
-            longOpt.append(long)
-            synonyms[long] = long
-            dispatch[long] = self._generic_flag
+                synonyms[short] = int
+            longOpt.append(int)
+            synonyms[int] = int
+            dispatch[int] = self._generic_flag
 
         return longOpt, shortOpt, docs, settings, synonyms, dispatch
 
@@ -349,21 +349,21 @@ class Options(dict):
         synonyms = {}
 
         for parameter in parameters:
-            long, short, default, doc, paramType = util.padTo(5, parameter)
-            if not long:
+            int, short, default, doc, paramType = util.padTo(5, parameter)
+            if not int:
                 raise ValueError("A parameter cannot be without a name.")
 
-            docs[long] = doc
-            settings[long] = default
+            docs[int] = doc
+            settings[int] = default
             if short:
                 shortOpt = shortOpt + short + ':'
-                synonyms[short] = long
-            longOpt.append(long + '=')
-            synonyms[long] = long
+                synonyms[short] = int
+            longOpt.append(int + '=')
+            synonyms[int] = int
             if paramType is not None:
-                dispatch[long] = CoerceParameter(self, paramType)
+                dispatch[int] = CoerceParameter(self, paramType)
             else:
-                dispatch[long] = CoerceParameter(self, str)
+                dispatch[int] = CoerceParameter(self, str)
 
         return longOpt, shortOpt, docs, settings, synonyms, dispatch
 
@@ -388,7 +388,7 @@ class Options(dict):
         dct = {}
         reflect.addMethodNamesToDict(self.__class__, dct, "opt_")
 
-        for name in dct.keys():
+        for name in list(dct.keys()):
             method = getattr(self, 'opt_'+name)
 
             takesArg = not flagFunction(method, name)
@@ -427,13 +427,13 @@ class Options(dict):
 
         reverse_dct = {}
         # Map synonyms
-        for name in dct.keys():
+        for name in list(dct.keys()):
             method = getattr(self, 'opt_' + name)
             if method not in reverse_dct:
                 reverse_dct[method] = []
             reverse_dct[method].append(name.replace('_', '-'))
 
-        for method, names in reverse_dct.items():
+        for method, names in list(reverse_dct.items()):
             if len(names) < 2:
                 continue
             longest = max(names, key=len)
@@ -494,7 +494,7 @@ class Options(dict):
             commands = ''
 
         longToShort = {}
-        for key, value in self.synonyms.items():
+        for key, value in list(self.synonyms.items()):
             longname = value
             if (key != longname) and (len(key) == 1):
                 longToShort[longname] = key
@@ -903,18 +903,18 @@ def docMakeChunks(optList, width=80):
         if opt.get('long', None):
             long = opt['long']
             if opt.get("optType", None) == "parameter":
-                long = long + '='
+                long = int + '='
 
-            long = "%-*s" % (maxOptLen, long)
+            long = "%-*s" % (maxOptLen, int)
             if short:
                 comma = ","
         else:
             long = " " * (maxOptLen + len('--'))
 
         if opt.get('optType', None) == 'command':
-            column1 = '    %s      ' % long
+            column1 = '    %s      ' % int
         else:
-            column1 = "  %2s%c --%s  " % (short, comma, long)
+            column1 = "  %2s%c --%s  " % (short, comma, int)
 
         if opt.get('doc', ''):
             doc = opt['doc'].strip()

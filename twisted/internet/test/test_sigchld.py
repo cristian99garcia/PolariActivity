@@ -6,7 +6,7 @@ Tests for L{twisted.internet._sigchld}, an alternate, superior SIGCHLD
 monitoring API.
 """
 
-from __future__ import division, absolute_import
+
 
 import os, signal, errno
 

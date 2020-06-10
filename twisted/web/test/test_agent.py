@@ -412,7 +412,7 @@ class HTTPConnectionPoolTests(TestCase, FakeReactorAndConnectMixin):
         def gotConnection(conn):
             self.assertIsInstance(conn, StubHTTPProtocol)
             # The new connection is not stored in the pool:
-            self.assertNotIn(conn, self.pool._connections.values())
+            self.assertNotIn(conn, list(self.pool._connections.values()))
 
         unknownKey = 12245
         d = self.pool.getConnection(unknownKey, DummyEndpoint())
@@ -549,7 +549,7 @@ class HTTPConnectionPoolTests(TestCase, FakeReactorAndConnectMixin):
             # And the old connection is still there:
             self.assertIn(protocol, self.pool._connections[key])
             # While the new connection is not:
-            self.assertNotIn(newConnection, self.pool._connections.values())
+            self.assertNotIn(newConnection, list(self.pool._connections.values()))
 
         d = self.pool._newConnection(key, DummyEndpoint())
         return d.addCallback(gotConnection)
@@ -868,7 +868,7 @@ class AgentTests(TestCase, FakeReactorAndConnectMixin, AgentTestsMixin):
         L{ValueError} saying such.
         """
         uri = URI.fromBytes(b"http://example.com:80")
-        uri.host = u'\u2603.com'.encode('utf8')
+        uri.host = '\u2603.com'.encode('utf8')
 
         with self.assertRaises(ValueError) as e:
             self.agent._getEndpoint(uri)
@@ -1234,7 +1234,7 @@ class AgentHTTPSTests(TestCase, FakeReactorAndConnectMixin):
         endpoint = self.makeEndpoint()
         contextFactory = endpoint._sslContextFactory
         self.assertIsInstance(contextFactory, ClientTLSOptions)
-        self.assertEqual(contextFactory._hostname, u"example.com")
+        self.assertEqual(contextFactory._hostname, "example.com")
 
 
     def test_connectHTTPSCustomConnectionCreator(self):

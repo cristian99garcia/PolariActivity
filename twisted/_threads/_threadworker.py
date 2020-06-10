@@ -6,7 +6,7 @@
 Implementation of an L{IWorker} based on native threads and queues.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 from zope.interface import implementer
 from ._ithreads import IExclusiveWorker

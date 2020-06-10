@@ -6,7 +6,7 @@
 Authoritative resolvers.
 """
 
-from __future__ import absolute_import, division
+
 
 import os
 import time
@@ -218,7 +218,7 @@ class FileAuthority(common.ResolverBase):
             else:
                 soa_ttl = default_ttl
             results = [dns.RRHeader(self.soa[0], dns.SOA, dns.IN, soa_ttl, self.soa[1], auth=True)]
-            for (k, r) in self.records.items():
+            for (k, r) in list(self.records.items()):
                 for rec in r:
                     if rec.ttl is not None:
                         ttl = rec.ttl
@@ -245,7 +245,7 @@ class PySourceAuthority(FileAuthority):
 
     def loadFile(self, filename):
         g, l = self.setupConfigNamespace(), {}
-        execfile(filename, g, l)
+        exec(compile(open(filename, "rb").read(), filename, 'exec'), g, l)
         if 'zone' not in l:
             raise ValueError("No zone defined in " + filename)
 
@@ -262,7 +262,7 @@ class PySourceAuthority(FileAuthority):
 
     def setupConfigNamespace(self):
         r = {}
-        items = dns.__dict__.iterkeys()
+        items = iter(dns.__dict__.keys())
         for record in [x for x in items if x.startswith('Record_')]:
             type = getattr(dns, record)
             f = self.wrapRecord(type)
@@ -311,7 +311,7 @@ class BindAuthority(FileAuthority):
         L = []
         for line in lines:
             L.append(line.split())
-        return filter(None, L)
+        return [_f for _f in L if _f]
 
 
     def parseLines(self, lines):
@@ -320,7 +320,7 @@ class BindAuthority(FileAuthority):
 
         self.records = {}
 
-        for (line, index) in zip(lines, range(len(lines))):
+        for (line, index) in zip(lines, list(range(len(lines)))):
             if line[0] == '$TTL':
                 TTL = dns.str2time(line[1])
             elif line[0] == '$ORIGIN':
@@ -352,7 +352,7 @@ class BindAuthority(FileAuthority):
             r.ttl = ttl
             self.records.setdefault(domain.lower(), []).append(r)
 
-            print('Adding IN Record', domain, ttl, r)
+            print(('Adding IN Record', domain, ttl, r))
             if type == 'SOA':
                 self.soa = (domain, r)
         else:
@@ -363,7 +363,7 @@ class BindAuthority(FileAuthority):
     # This file ends here.  Read no further.
     #
     def parseRecordLine(self, origin, ttl, line):
-        MARKERS = dns.QUERY_CLASSES.values() + dns.QUERY_TYPES.values()
+        MARKERS = list(dns.QUERY_CLASSES.values()) + list(dns.QUERY_TYPES.values())
         cls = 'IN'
         owner = origin
 
@@ -385,7 +385,7 @@ class BindAuthority(FileAuthority):
             line = line[1:]
 #            print 'domain is ', domain
 
-        if line[0] in dns.QUERY_CLASSES.values():
+        if line[0] in list(dns.QUERY_CLASSES.values()):
             cls = line[0]
             line = line[1:]
 #            print 'cls is ', cls
@@ -397,7 +397,7 @@ class BindAuthority(FileAuthority):
             ttl = int(line[0])
             line = line[1:]
 #            print 'ttl is ', ttl
-            if line[0] in dns.QUERY_CLASSES.values():
+            if line[0] in list(dns.QUERY_CLASSES.values()):
                 cls = line[0]
                 line = line[1:]
 #                print 'cls is ', cls

@@ -5,7 +5,7 @@
 Whitebox tests for TCP APIs.
 """
 
-from __future__ import division, absolute_import
+
 
 import errno, socket, os
 

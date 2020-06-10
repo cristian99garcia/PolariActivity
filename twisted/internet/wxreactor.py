@@ -23,7 +23,7 @@ expected and probably does not reflect on the reactor's ability to run
 real applications.
 """
 
-import Queue
+import queue
 try:
     from wx import PySimpleApp as wxPySimpleApp, CallAfter as wxCallAfter, \
          Timer as wxTimer
@@ -121,7 +121,7 @@ class WxReactor(_threadedselect.ThreadedSelectReactor):
         """
         Start the reactor.
         """
-        self._postQueue = Queue.Queue()
+        self._postQueue = queue.Queue()
         if not hasattr(self, "wxapp"):
             log.msg("registerWxApp() was not called on reactor, "
                     "registering my own wxApp instance.")
@@ -160,7 +160,7 @@ class WxReactor(_threadedselect.ThreadedSelectReactor):
             while 1:
                 try:
                     f = self._postQueue.get(timeout=0.01)
-                except Queue.Empty:
+                except queue.Empty:
                     continue
                 else:
                     if f is None:

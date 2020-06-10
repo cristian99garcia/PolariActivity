@@ -5,7 +5,7 @@
 Tests for ssh/transport.py and the classes therein.
 """
 
-from __future__ import absolute_import, division
+
 
 import struct
 import binascii
@@ -309,7 +309,7 @@ class MockOldFactoryPublicKeys(MockFactory):
         We used to map key types to public key blobs as strings.
         """
         keys = MockFactory.getPublicKeys(self)
-        for name, key in keys.items()[:]:
+        for name, key in list(keys.items())[:]:
             keys[name] = key.blob()
         return keys
 
@@ -326,7 +326,7 @@ class MockOldFactoryPrivateKeys(MockFactory):
         We used to map key types to cryptography key objects.
         """
         keys = MockFactory.getPrivateKeys(self)
-        for name, key in keys.items()[:]:
+        for name, key in list(keys.items())[:]:
             keys[name] = key.keyObject
         return keys
 
@@ -2141,7 +2141,7 @@ class SSHCiphersTests(unittest.TestCase):
         """
         ciphers = transport.SSHCiphers(b'A', b'B', b'C', b'D')
         iv = key = b'\x00' * 16
-        for cipName, (algClass, keySize, counter) in ciphers.cipherMap.items():
+        for cipName, (algClass, keySize, counter) in list(ciphers.cipherMap.items()):
             cip = ciphers._getCipher(cipName, iv, key)
             if cipName == b'none':
                 self.assertIsInstance(cip, transport._DummyCipher)
@@ -2180,7 +2180,7 @@ class SSHCiphersTests(unittest.TestCase):
         Test that setKeys sets up the MACs.
         """
         key = b'\x00' * 64
-        for macName, mod in transport.SSHCiphers.macMap.items():
+        for macName, mod in list(transport.SSHCiphers.macMap.items()):
             outMac = transport.SSHCiphers(b'none', b'none', macName, b'none')
             inMac = transport.SSHCiphers(b'none', b'none', b'none', macName)
             outMac.setKeys(b'', b'', b'', b'', key, b'')

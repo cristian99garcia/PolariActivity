@@ -6,7 +6,7 @@
 """
 Tests for L{twisted.trial.reporter}.
 """
-from __future__ import absolute_import, division
+
 
 import errno
 import os
@@ -32,7 +32,7 @@ if _PY3:
 else:
     # On Python 2, we want regular old StringIO, because otherwise subunit
     # complains
-    from StringIO import StringIO as BytesIO
+    from io import StringIO as BytesIO
 
 
 
@@ -62,7 +62,7 @@ class BrokenStream(object):
 
 class StringTest(unittest.SynchronousTestCase):
     def stringComparison(self, expect, output):
-        output = list(filter(None, output))
+        output = list([_f for _f in output if _f])
         self.assertTrue(len(expect) <= len(output),
                         "Must have more observed than expected"
                         "lines %d < %d" % (len(output), len(expect)))

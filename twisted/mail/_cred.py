@@ -5,7 +5,7 @@
 Credential managers for L{twisted.mail}.
 """
 
-from __future__ import absolute_import, division
+
 
 import hmac
 

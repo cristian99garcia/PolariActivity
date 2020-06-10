@@ -7,7 +7,7 @@
 Basic protocols, such as line-oriented, netstring, and int prefixed strings.
 """
 
-from __future__ import absolute_import, division
+
 
 # System imports
 import re
@@ -134,7 +134,7 @@ class NetstringReceiver(protocol.Protocol):
 
     # The following constants are used for determining if the NetstringReceiver
     # is parsing the length portion of a netstring, or the payload.
-    _PARSING_LENGTH, _PARSING_PAYLOAD = range(2)
+    _PARSING_LENGTH, _PARSING_PAYLOAD = list(range(2))
 
     def makeConnection(self, transport):
         """

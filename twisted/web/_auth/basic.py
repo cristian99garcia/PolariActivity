@@ -10,7 +10,7 @@ HTTP BASIC authentication.
 @see: U{http://tools.ietf.org/html/rfc2617}
 """
 
-from __future__ import division, absolute_import
+
 
 import binascii
 

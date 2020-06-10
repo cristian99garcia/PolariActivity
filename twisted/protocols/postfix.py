@@ -16,7 +16,7 @@ except ImportError:
 
 try:
     # Python 2
-    from urllib import quote as _quote, unquote as _unquote
+    from urllib.parse import quote as _quote, unquote as _unquote
 except ImportError:
     # Python 3
     from urllib.parse import quote as _quote, unquote as _unquote

@@ -5,7 +5,7 @@
 Tests for L{twisted.protocols.tls}.
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface.verify import verifyObject
 from zope.interface import Interface, directlyProvides, implementer
@@ -256,7 +256,7 @@ def handshakingClientAndServer(clientGreetingData=None,
             pass
 
     clientF = TLSMemoryBIOFactory(
-        optionsForClientTLS(u"example.com", trustRoot=authCert),
+        optionsForClientTLS("example.com", trustRoot=authCert),
         isClient=True,
         wrappedFactory=ClientFactory.forProtocol(lambda: Client(999999))
     )
@@ -652,7 +652,7 @@ class TLSMemoryBIOTests(TestCase):
         """
         Writing C{unicode} to L{TLSMemoryBIOProtocol} throws a C{TypeError}.
         """
-        notBytes = u"hello"
+        notBytes = "hello"
         result = []
         class SimpleSendingProtocol(Protocol):
             def connectionMade(self):

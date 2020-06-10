@@ -5,7 +5,7 @@
 Tests for L{twisted.python.log}.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 from twisted.python.compat import _PY3, NativeStringIO as StringIO
 
@@ -26,6 +26,7 @@ from twisted.logger import (
     LoggingFile, LogLevel as NewLogLevel, LogBeginner,
     LogPublisher as NewLogPublisher
 )
+import importlib
 
 
 class FakeWarning(Warning):
@@ -344,7 +345,7 @@ class LogPublisherTestCaseMixin:
         self.lp.addObserver(self.flo.emit)
 
         try:
-            str(u'\N{VULGAR FRACTION ONE HALF}')
+            str('\N{VULGAR FRACTION ONE HALF}')
         except UnicodeEncodeError:
             # This is the behavior we want - don't change anything.
             self._origEncoding = None
@@ -352,7 +353,7 @@ class LogPublisherTestCaseMixin:
             if _PY3:
                 self._origEncoding = None
                 return
-            reload(sys)
+            importlib.reload(sys)
             self._origEncoding = sys.getdefaultencoding()
             sys.setdefaultencoding('ascii')
 
@@ -396,7 +397,7 @@ class LogPublisherTests(LogPublisherTestCaseMixin,
         On Python 3, where Unicode is default message type, the
         message is logged normally.
         """
-        message = u"Hello, \N{VULGAR FRACTION ONE HALF} world."
+        message = "Hello, \N{VULGAR FRACTION ONE HALF} world."
         self.lp.msg(message)
         self.assertEqual(len(self.out), 1)
         if _PY3:
@@ -740,7 +741,7 @@ class FileObserverTests(LogPublisherTestCaseMixin,
         received = []
 
         def preStartObserver(x):
-            if 'pre-start' in x.keys():
+            if 'pre-start' in list(x.keys()):
                 received.append(x)
 
         newPublisher(evt)
@@ -1062,11 +1063,11 @@ class StdioOnnaStickTests(unittest.SynchronousTestCase):
 
         On Python 3, the prints are left unmodified.
         """
-        unicodeString = u"Hello, \N{VULGAR FRACTION ONE HALF} world."
+        unicodeString = "Hello, \N{VULGAR FRACTION ONE HALF} world."
         stdio = log.StdioOnnaStick(encoding="utf-8")
         self.assertEqual(stdio.encoding, "utf-8")
-        stdio.write(unicodeString + u"\n")
-        stdio.writelines([u"Also, " + unicodeString])
+        stdio.write(unicodeString + "\n")
+        stdio.writelines(["Also, " + unicodeString])
         oldStdout = sys.stdout
         sys.stdout = stdio
         self.addCleanup(setattr, sys, "stdout", oldStdout)
@@ -1075,10 +1076,10 @@ class StdioOnnaStickTests(unittest.SynchronousTestCase):
         if _PY3:
             self.assertEqual(self.getLogMessages(),
                              [unicodeString,
-                              u"Also, " + unicodeString,
+                              "Also, " + unicodeString,
                               unicodeString])
         else:
             self.assertEqual(self.getLogMessages(),
                              [unicodeString.encode("utf-8"),
-                              (u"Also, " + unicodeString).encode("utf-8"),
+                              ("Also, " + unicodeString).encode("utf-8"),
                               unicodeString.encode("utf-8")])

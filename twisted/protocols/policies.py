@@ -8,7 +8,7 @@ Resource limiting policies.
 @seealso: See also L{twisted.protocols.htb} for rate limiting.
 """
 
-from __future__ import division, absolute_import
+
 
 # system imports
 import sys
@@ -315,7 +315,7 @@ class ThrottlingFactory(WrappingFactory):
         Throttle reads on all protocols.
         """
         log.msg("Throttling reads on %s" % self)
-        for p in self.protocols.keys():
+        for p in list(self.protocols.keys()):
             p.throttleReads()
 
 
@@ -325,7 +325,7 @@ class ThrottlingFactory(WrappingFactory):
         """
         self.unthrottleReadsID = None
         log.msg("Stopped throttling reads on %s" % self)
-        for p in self.protocols.keys():
+        for p in list(self.protocols.keys()):
             p.unthrottleReads()
 
 
@@ -334,7 +334,7 @@ class ThrottlingFactory(WrappingFactory):
         Throttle writes on all protocols.
         """
         log.msg("Throttling writes on %s" % self)
-        for p in self.protocols.keys():
+        for p in list(self.protocols.keys()):
             p.throttleWrites()
 
 
@@ -344,7 +344,7 @@ class ThrottlingFactory(WrappingFactory):
         """
         self.unthrottleWritesID = None
         log.msg("Stopped throttling writes on %s" % self)
-        for p in self.protocols.keys():
+        for p in list(self.protocols.keys()):
             p.unthrottleWrites()
 
 

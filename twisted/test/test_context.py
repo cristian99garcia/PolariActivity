@@ -5,7 +5,7 @@
 Tests for L{twisted.python.context}.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.trial.unittest import SynchronousTestCase
 

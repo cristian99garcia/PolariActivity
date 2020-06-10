@@ -8,7 +8,7 @@ All of these tests are skipped on platforms other than Linux, as the release is
 only ever performed on Linux.
 """
 
-from __future__ import print_function
+
 
 import glob
 import operator
@@ -20,7 +20,7 @@ import shutil
 
 from datetime import date
 from io import BytesIO as StringIO
-from urllib2 import urlopen
+from urllib.request import urlopen
 
 from twisted.trial.unittest import TestCase
 
@@ -204,7 +204,7 @@ class StructureAssertingMixin(object):
         @type dirDict: C{dict}
         """
         children = [each.basename() for each in root.children()]
-        for pathSegment, expectation in dirDict.items():
+        for pathSegment, expectation in list(dirDict.items()):
             child = root.child(pathSegment)
             if callable(expectation):
                 self.assertTrue(expectation(child))

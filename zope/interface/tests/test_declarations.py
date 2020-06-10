@@ -46,20 +46,20 @@ class NamedTests(unittest.TestCase):
     def test_class(self):
         from zope.interface.declarations import named
 
-        @named(u'foo')
+        @named('foo')
         class Foo(object):
             pass
 
-        self.assertEqual(Foo.__component_name__, u'foo')
+        self.assertEqual(Foo.__component_name__, 'foo')
 
     def test_function(self):
         from zope.interface.declarations import named
 
-        @named(u'foo')
+        @named('foo')
         def doFoo(object):
             pass
 
-        self.assertEqual(doFoo.__component_name__, u'foo')
+        self.assertEqual(doFoo.__component_name__, 'foo')
 
     def test_instance(self):
         from zope.interface.declarations import named
@@ -67,9 +67,9 @@ class NamedTests(unittest.TestCase):
         class Foo(object):
             pass
         foo = Foo()
-        named(u'foo')(foo)
+        named('foo')(foo)
 
-        self.assertEqual(foo.__component_name__, u'foo')
+        self.assertEqual(foo.__component_name__, 'foo')
 
 
 class DeclarationTests(unittest.TestCase):
@@ -963,8 +963,8 @@ class Test_directlyProvides(unittest.TestCase):
                 if name == '__class__':
                     return self
                 return type.__getattribute__(self, name)
-        class Foo(object):
-            __metaclass__ = MetaClass
+        class Foo(object, metaclass=MetaClass):
+            pass
         obj = Foo()
         self.assertRaises(TypeError, self._callFUT, obj, IFoo)
 
@@ -1595,14 +1595,14 @@ class _Monkey(object):
     def __init__(self, module, **kw):
         self.module = module
         self.to_restore = dict([(key, getattr(module, key)) for key in kw])
-        for key, value in kw.items():
+        for key, value in list(kw.items()):
             setattr(module, key, value)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for key, value in self.to_restore.items():
+        for key, value in list(self.to_restore.items()):
             setattr(self.module, key, value)
 
 

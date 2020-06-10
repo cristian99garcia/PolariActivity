@@ -5,7 +5,7 @@
 Tests for L{twisted.test.iosim}.
 """
 
-from __future__ import absolute_import, division
+
 
 from twisted.test.iosim import FakeTransport
 from twisted.trial.unittest import TestCase

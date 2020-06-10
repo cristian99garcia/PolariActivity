@@ -781,7 +781,7 @@ class IAgentEndpointFactory(Interface):
 
 
 
-UNKNOWN_LENGTH = u"twisted.web.iweb.UNKNOWN_LENGTH"
+UNKNOWN_LENGTH = "twisted.web.iweb.UNKNOWN_LENGTH"
 
 __all__ = [
     "IUsernameDigestHash", "ICredentialFactory", "IRequest",

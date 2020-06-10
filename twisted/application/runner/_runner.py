@@ -109,7 +109,7 @@ class Runner(object):
         pidFilePath = self.options.get(RunnerOptions.pidFilePath)
         if pidFilePath is not None:
             pid = getpid()
-            pidFilePath.setContent(u"{}\n".format(pid).encode("utf-8"))
+            pidFilePath.setContent("{}\n".format(pid).encode("utf-8"))
 
 
     def removePIDFile(self):

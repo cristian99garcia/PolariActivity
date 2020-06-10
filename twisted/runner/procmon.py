@@ -179,7 +179,7 @@ class ProcessMonitor(service.Service):
         service.Service.stopService(self)
 
         # Cancel any outstanding restarts
-        for name, delayedCall in self.restart.items():
+        for name, delayedCall in list(self.restart.items()):
             if delayedCall.active():
                 delayedCall.cancel()
 
@@ -293,7 +293,7 @@ class ProcessMonitor(service.Service):
 
     def __repr__(self):
         l = []
-        for name, proc in self.processes.items():
+        for name, proc in list(self.processes.items()):
             uidgid = ''
             if proc[1] is not None:
                 uidgid = str(proc[1])

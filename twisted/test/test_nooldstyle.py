@@ -5,7 +5,7 @@
 Tests for L{twisted.python._oldstyle._oldStyle}.
 """
 
-from __future__ import absolute_import, division
+
 
 import types
 import inspect
@@ -66,7 +66,7 @@ class OldStyleDecoratorTests(unittest.TestCase):
         class SomeClassThatUsesOldStyle(SomeOldStyleClass):
             pass
 
-        self.assertEqual(type(SomeClassThatUsesOldStyle), types.ClassType)
+        self.assertEqual(type(SomeClassThatUsesOldStyle), type)
         updatedClass = _oldstyle._oldStyle(SomeClassThatUsesOldStyle)
         self.assertEqual(type(updatedClass), type)
         self.assertEqual(updatedClass.__bases__, (SomeOldStyleClass, object))
@@ -146,7 +146,7 @@ class NewStyleOnly(object):
         for name, val in inspect.getmembers(module):
             if hasattr(val, "__module__") \
                and val.__module__ == self.module:
-                if isinstance(val, types.ClassType):
+                if isinstance(val, type):
                     oldStyleClasses.append(fullyQualifiedName(val))
 
         if oldStyleClasses:

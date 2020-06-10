@@ -5,7 +5,7 @@
 Tests for L{twisted.conch.ssh.keys}.
 """
 
-from __future__ import absolute_import, division
+
 
 try:
     import cryptography
@@ -35,7 +35,7 @@ import os
 from twisted.conch.test import keydata
 from twisted.python import randbytes
 from twisted.trial import unittest
-from twisted.python.compat import long, _PY3
+from twisted.python.compat import int, _PY3
 from incremental import Version
 from twisted.python.filepath import FilePath
 
@@ -283,7 +283,7 @@ class KeyTests(unittest.TestCase):
         publicKey = keys.Key.fromString(public)
         self.assertTrue(publicKey.isPublic())
         self.assertEqual(publicKey.type(), type)
-        for k, v in publicKey.data().items():
+        for k, v in list(publicKey.data().items()):
             self.assertEqual(data[k], v)
 
 
@@ -291,7 +291,7 @@ class KeyTests(unittest.TestCase):
         privateKey = keys.Key.fromString(private)
         self.assertFalse(privateKey.isPublic())
         self.assertEqual(privateKey.type(), type)
-        for k, v in data.items():
+        for k, v in list(data.items()):
             self.assertEqual(privateKey.data()[k], v)
 
 
@@ -592,7 +592,7 @@ xEm4DxjEoaIp8dW/JOzXQ2EF+WaSOgdYsw3Ac+rnnjnNptCdOEDGP6QBkt+oXj4P
         """
         Test that the PublicKey object is initialized correctly.
         """
-        obj = keys.Key._fromRSAComponents(n=long(5), e=long(3))._keyObject
+        obj = keys.Key._fromRSAComponents(n=int(5), e=int(3))._keyObject
         key = keys.Key(obj)
         self.assertEqual(key._keyObject, obj)
 
@@ -604,7 +604,7 @@ xEm4DxjEoaIp8dW/JOzXQ2EF+WaSOgdYsw3Ac+rnnjnNptCdOEDGP6QBkt+oXj4P
         rsa1 = keys.Key(self.rsaObj)
         rsa2 = keys.Key(self.rsaObj)
         rsa3 = keys.Key(
-            keys.Key._fromRSAComponents(n=long(5), e=long(3))._keyObject)
+            keys.Key._fromRSAComponents(n=int(5), e=int(3))._keyObject)
         dsa = keys.Key(self.dsaObj)
         self.assertTrue(rsa1 == rsa2)
         self.assertFalse(rsa1 == rsa3)
@@ -620,7 +620,7 @@ xEm4DxjEoaIp8dW/JOzXQ2EF+WaSOgdYsw3Ac+rnnjnNptCdOEDGP6QBkt+oXj4P
         rsa1 = keys.Key(self.rsaObj)
         rsa2 = keys.Key(self.rsaObj)
         rsa3 = keys.Key(
-            keys.Key._fromRSAComponents(n=long(5), e=long(3))._keyObject)
+            keys.Key._fromRSAComponents(n=int(5), e=int(3))._keyObject)
         dsa = keys.Key(self.dsaObj)
         self.assertFalse(rsa1 != rsa2)
         self.assertTrue(rsa1 != rsa3)

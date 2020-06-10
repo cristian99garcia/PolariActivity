@@ -8,7 +8,7 @@ A miscellany of code used to run Trial tests.
 Maintainer: Jonathan Lange
 """
 
-from __future__ import absolute_import, division
+
 
 __all__ = [
     'TestSuite',
@@ -138,9 +138,9 @@ def _getMethodNameInClass(method):
 
     getattr(method.im_class, method.__name__) != method
     """
-    if getattr(method.im_class, method.__name__, object()) != method:
-        for alias in dir(method.im_class):
-            if getattr(method.im_class, alias, object()) == method:
+    if getattr(method.__self__.__class__, method.__name__, object()) != method:
+        for alias in dir(method.__self__.__class__):
+            if getattr(method.__self__.__class__, alias, object()) == method:
                 return alias
     return method.__name__
 
@@ -442,7 +442,7 @@ class TestLoader(object):
         Given a class which contains test cases, return a sorted list of
         C{TestCase} instances.
         """
-        if not (isinstance(klass, type) or isinstance(klass, types.ClassType)):
+        if not (isinstance(klass, type) or isinstance(klass, type)):
             raise TypeError("%r is not a class" % (klass,))
         if not isTestCase(klass):
             raise ValueError("%r is not a test case" % (klass,))
@@ -466,7 +466,7 @@ class TestLoader(object):
         """
         if not isinstance(method, types.MethodType):
             raise TypeError("%r not a method" % (method,))
-        return self._makeCase(method.im_class, _getMethodNameInClass(method))
+        return self._makeCase(method.__self__.__class__, _getMethodNameInClass(method))
 
     def _makeCase(self, klass, methodName):
         return klass(methodName)
@@ -561,7 +561,7 @@ class TestLoader(object):
             if isPackage(thing):
                 return self.loadPackage(thing, recurse)
             return self.loadModule(thing)
-        elif isinstance(thing, types.ClassType):
+        elif isinstance(thing, type):
             return self.loadClass(thing)
         elif isinstance(thing, type):
             return self.loadClass(thing)
@@ -618,7 +618,7 @@ class TestLoader(object):
         seen = set()
         for thing in things:
             if isinstance(thing, types.MethodType):
-                thing = (thing, thing.im_class)
+                thing = (thing, thing.__self__.__class__)
             else:
                 thing = (thing,)
 

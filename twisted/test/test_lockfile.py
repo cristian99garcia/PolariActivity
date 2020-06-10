@@ -6,7 +6,7 @@
 Tests for L{twisted.python.lockfile}.
 """
 
-from __future__ import absolute_import, division
+
 
 import errno
 import os

@@ -6,7 +6,7 @@
 Tests for implementations of L{IReactorUDP} and L{IReactorMulticast}.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.trial import unittest
 

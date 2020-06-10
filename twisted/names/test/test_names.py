@@ -5,7 +5,7 @@
 Test cases for twisted.names.
 """
 
-from __future__ import absolute_import, division
+
 
 import socket
 import operator
@@ -41,7 +41,7 @@ class NoFileAuthority(authority.FileAuthority):
 
 soa_record = dns.Record_SOA(
                     mname = b'test-domain.com',
-                    rname = u'root.test-domain.com',
+                    rname = 'root.test-domain.com',
                     serial = 100,
                     refresh = 1234,
                     minimum = 7654,
@@ -62,7 +62,7 @@ reverse_soa = dns.Record_SOA(
                 )
 
 my_soa = dns.Record_SOA(
-    mname = u'my-domain.com',
+    mname = 'my-domain.com',
     rname = b'postmaster.test-domain.com',
     serial = 130,
     refresh = 12345,
@@ -81,7 +81,7 @@ test_domain_com = NoFileAuthority(
             dns.Record_SPF(b'v=spf1 mx/30 mx:example.org/30 -all'),
             dns.Record_SPF(b'v=spf1 +mx a:\0colo',
                            b'.example.com/28 -all not valid'),
-            dns.Record_MX(10, u'host.test-domain.com'),
+            dns.Record_MX(10, 'host.test-domain.com'),
             dns.Record_HINFO(os=b'Linux', cpu=b'A Fast One, Dontcha know'),
             dns.Record_CNAME(b'canonical.name.com'),
             dns.Record_MB(b'mailbox.test-domain.com'),
@@ -422,7 +422,7 @@ class ServerDNSTests(unittest.TestCase):
         Test DNS 'AXFR' queries (Zone transfer)
         """
         default_ttl = soa_record.expire
-        results = [copy.copy(r) for r in reduce(operator.add, test_domain_com.records.values())]
+        results = [copy.copy(r) for r in reduce(operator.add, list(test_domain_com.records.values()))]
         for r in results:
             if r.ttl is None:
                 r.ttl = default_ttl

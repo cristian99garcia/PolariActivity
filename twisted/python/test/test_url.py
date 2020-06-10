@@ -6,10 +6,10 @@
 Tests for L{twisted.python.url}.
 """
 
-from __future__ import unicode_literals
+
 
 from ..url import URL
-unicode = type(u'')
+str = type('')
 from unittest import TestCase
 
 theurl = "http://www.foo.com/a/nice/path/?zot=23&zut"
@@ -87,20 +87,20 @@ class TestURL(TestCase):
 
         @param u: The L{URL} to test.
         """
-        self.assertTrue(isinstance(u.scheme, unicode)
+        self.assertTrue(isinstance(u.scheme, str)
                         or u.scheme is None, repr(u))
-        self.assertTrue(isinstance(u.host, unicode)
+        self.assertTrue(isinstance(u.host, str)
                         or u.host is None, repr(u))
         for seg in u.path:
-            self.assertIsInstance(seg, unicode, repr(u))
+            self.assertIsInstance(seg, str, repr(u))
         for (k, v) in u.query:
-            self.assertIsInstance(k, unicode, repr(u))
-            self.assertTrue(v is None or isinstance(v, unicode), repr(u))
-        self.assertIsInstance(u.fragment, unicode, repr(u))
+            self.assertIsInstance(k, str, repr(u))
+            self.assertTrue(v is None or isinstance(v, str), repr(u))
+        self.assertIsInstance(u.fragment, str, repr(u))
 
 
     def assertURL(self, u, scheme, host, path, query,
-                  fragment, port, userinfo=u''):
+                  fragment, port, userinfo=''):
         """
         The given L{URL} should have the given components.
 
@@ -133,39 +133,39 @@ class TestURL(TestCase):
         """
         def check(u):
             self.assertUnicoded(u)
-            self.assertURL(u, u'http', u'', [], [], u'', 80, u'')
+            self.assertURL(u, 'http', '', [], [], '', 80, '')
 
-        check(URL(u'http', u''))
-        check(URL(u'http', u'', [], []))
-        check(URL(u'http', u'', [], [], u''))
+        check(URL('http', ''))
+        check(URL('http', '', [], []))
+        check(URL('http', '', [], [], ''))
 
 
     def test_init(self):
         """
         L{URL} should accept L{unicode} parameters.
         """
-        u = URL(u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)], u'f')
+        u = URL('s', 'h', ['p'], [('k', 'v'), ('k', None)], 'f')
         self.assertUnicoded(u)
-        self.assertURL(u, u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)],
-                       u'f', None)
+        self.assertURL(u, 's', 'h', ['p'], [('k', 'v'), ('k', None)],
+                       'f', None)
 
-        self.assertURL(URL(u'http', u'\xe0', [u'\xe9'],
-                           [(u'\u03bb', u'\u03c0')], u'\u22a5'),
-                       u'http', u'\xe0', [u'\xe9'],
-                       [(u'\u03bb', u'\u03c0')], u'\u22a5', 80)
+        self.assertURL(URL('http', '\xe0', ['\xe9'],
+                           [('\u03bb', '\u03c0')], '\u22a5'),
+                       'http', '\xe0', ['\xe9'],
+                       [('\u03bb', '\u03c0')], '\u22a5', 80)
 
 
     def test_initPercent(self):
         """
         L{URL} should accept (and not interpret) percent characters.
         """
-        u = URL(u's', u'%68', [u'%70'], [(u'%6B', u'%76'), (u'%6B', None)],
-                u'%66')
+        u = URL('s', '%68', ['%70'], [('%6B', '%76'), ('%6B', None)],
+                '%66')
         self.assertUnicoded(u)
         self.assertURL(u,
-                       u's', u'%68', [u'%70'],
-                       [(u'%6B', u'%76'), (u'%6B', None)],
-                       u'%66', None)
+                       's', '%68', ['%70'],
+                       [('%6B', '%76'), ('%6B', None)],
+                       '%66', None)
 
 
     def test_repr(self):
@@ -175,10 +175,10 @@ class TestURL(TestCase):
         to read.
         """
         self.assertEqual(
-            repr(URL(scheme=u'http', host=u'foo', path=[u'bar'],
-                     query=[(u'baz', None), (u'k', u'v')],
-                     fragment=u'frob')),
-            "URL.fromText(%s)" % (repr(u"http://foo/bar?baz&k=v#frob"),)
+            repr(URL(scheme='http', host='foo', path=['bar'],
+                     query=[('baz', None), ('k', 'v')],
+                     fragment='frob')),
+            "URL.fromText(%s)" % (repr("http://foo/bar?baz&k=v#frob"),)
         )
 
 
@@ -236,9 +236,9 @@ class TestURL(TestCase):
         An URL created with the empty string for a fragment compares equal
         to an URL created with an unspecified fragment.
         """
-        self.assertEqual(URL(fragment=u''), URL())
-        self.assertEqual(URL.fromText(u"http://localhost/#"),
-                         URL.fromText(u"http://localhost/"))
+        self.assertEqual(URL(fragment=''), URL())
+        self.assertEqual(URL.fromText("http://localhost/#"),
+                         URL.fromText("http://localhost/"))
 
 
     def test_child(self):
@@ -248,16 +248,16 @@ class TestURL(TestCase):
         """
         urlpath = URL.fromText(theurl)
         self.assertEqual("http://www.foo.com/a/nice/path/gong?zot=23&zut",
-                          urlpath.child(u'gong').asText())
+                          urlpath.child('gong').asText())
         self.assertEqual("http://www.foo.com/a/nice/path/gong%2F?zot=23&zut",
-                          urlpath.child(u'gong/').asText())
+                          urlpath.child('gong/').asText())
         self.assertEqual(
             "http://www.foo.com/a/nice/path/gong%2Fdouble?zot=23&zut",
-            urlpath.child(u'gong/double').asText()
+            urlpath.child('gong/double').asText()
         )
         self.assertEqual(
             "http://www.foo.com/a/nice/path/gong%2Fdouble%2F?zot=23&zut",
-            urlpath.child(u'gong/double/').asText()
+            urlpath.child('gong/double/').asText()
         )
 
 
@@ -276,7 +276,7 @@ class TestURL(TestCase):
         L{URL.child} of a L{URL} without a path produces a L{URL} with a single
         path segment.
         """
-        childURL = URL(host=u"www.foo.com").child(u"c")
+        childURL = URL(host="www.foo.com").child("c")
         self.assertTrue(childURL.rooted)
         self.assertEqual("http://www.foo.com/c", childURL.asText())
 
@@ -289,14 +289,14 @@ class TestURL(TestCase):
         urlpath = URL.fromText(theurl)
         self.assertEqual(
             "http://www.foo.com/a/nice/path/sister?zot=23&zut",
-            urlpath.sibling(u'sister').asText()
+            urlpath.sibling('sister').asText()
         )
         # Use an url without trailing '/' to check child removal.
         theurl2 = "http://www.foo.com/a/nice/path?zot=23&zut"
         urlpath = URL.fromText(theurl2)
         self.assertEqual(
             "http://www.foo.com/a/nice/sister?zot=23&zut",
-            urlpath.sibling(u'sister').asText()
+            urlpath.sibling('sister').asText()
         )
 
 
@@ -416,29 +416,29 @@ class TestURL(TestCase):
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?foo=bar",
             URL.fromText("http://www.foo.com/a/nice/path/")
-            .add(u"foo", u"bar").asText())
+            .add("foo", "bar").asText())
         self.assertEqual(
             "http://www.foo.com/?foo=bar",
-            URL(host=u"www.foo.com").add(u"foo", u"bar")
+            URL(host="www.foo.com").add("foo", "bar")
             .asText())
         urlpath = URL.fromText(theurl)
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=23&zut&burp",
-            urlpath.add(u"burp").asText())
+            urlpath.add("burp").asText())
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=23&zut&burp=xxx",
-            urlpath.add(u"burp", u"xxx").asText())
+            urlpath.add("burp", "xxx").asText())
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=23&zut&burp=xxx&zing",
-            urlpath.add(u"burp", u"xxx").add(u"zing").asText())
+            urlpath.add("burp", "xxx").add("zing").asText())
         # Note the inversion!
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=23&zut&zing&burp=xxx",
-            urlpath.add(u"zing").add(u"burp", u"xxx").asText())
+            urlpath.add("zing").add("burp", "xxx").asText())
         # Note the two values for the same name.
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=23&zut&burp=xxx&zot=32",
-            urlpath.add(u"burp", u"xxx").add(u"zot", u'32')
+            urlpath.add("burp", "xxx").add("zot", '32')
             .asText())
 
 
@@ -449,17 +449,17 @@ class TestURL(TestCase):
         urlpath = URL.fromText(theurl)
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=32&zut",
-            urlpath.set(u"zot", u'32').asText())
+            urlpath.set("zot", '32').asText())
         # Replace name without value with name/value and vice-versa.
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot&zut=itworked",
-            urlpath.set(u"zot").set(u"zut", u"itworked").asText()
+            urlpath.set("zot").set("zut", "itworked").asText()
         )
         # Q: what happens when the query has two values and we replace?
         # A: we replace both values with a single one
         self.assertEqual(
             "http://www.foo.com/a/nice/path/?zot=32&zut",
-            urlpath.add(u"zot", u"xxx").set(u"zot", u'32').asText()
+            urlpath.add("zot", "xxx").set("zot", '32').asText()
         )
 
 
@@ -467,10 +467,10 @@ class TestURL(TestCase):
         """
         L{URL.remove} removes all instances of a query parameter.
         """
-        url = URL.fromText(u"https://example.com/a/b/?foo=1&bar=2&foo=3")
+        url = URL.fromText("https://example.com/a/b/?foo=1&bar=2&foo=3")
         self.assertEqual(
-            url.remove(u"foo"),
-            URL.fromText(u"https://example.com/a/b/?bar=2")
+            url.remove("foo"),
+            URL.fromText("https://example.com/a/b/?bar=2")
         )
 
 
@@ -480,7 +480,7 @@ class TestURL(TestCase):
         in the value of the parameter.
         """
         u = URL.fromText('http://localhost/?=x=x=x')
-        self.assertEqual(u.get(u''), ['x=x=x'])
+        self.assertEqual(u.get(''), ['x=x=x'])
         self.assertEqual(u.asText(), 'http://localhost/?=x%3Dx%3Dx')
         u = URL.fromText('http://localhost/?foo=x=x=x&bar=y')
         self.assertEqual(u.query, (('foo', 'x=x=x'),
@@ -492,15 +492,15 @@ class TestURL(TestCase):
         """
         An empty L{URL} should serialize as the empty string.
         """
-        self.assertEqual(URL().asText(), u'')
+        self.assertEqual(URL().asText(), '')
 
 
     def test_justQueryText(self):
         """
         An L{URL} with query text should serialize as just query text.
         """
-        u = URL(query=[(u"hello", u"world")])
-        self.assertEqual(u.asText(), u'?hello=world')
+        u = URL(query=[("hello", "world")])
+        self.assertEqual(u.asText(), '?hello=world')
 
 
     def test_identicalEqual(self):
@@ -676,7 +676,7 @@ class TestURL(TestCase):
         self.assertEqual(url.asText(),
                          'http://someuser:@example.com/some-segment@ignore')
         self.assertEqual(
-            url.replace(userinfo=u"someuser").asText(),
+            url.replace(userinfo="someuser").asText(),
             'http://someuser@example.com/some-segment@ignore'
         )
 
@@ -685,9 +685,9 @@ class TestURL(TestCase):
         """
         L{URL.fromText} parses custom port numbers as integers.
         """
-        portURL = URL.fromText(u"http://www.example.com:8080/")
+        portURL = URL.fromText("http://www.example.com:8080/")
         self.assertEqual(portURL.port, 8080)
-        self.assertEqual(portURL.asText(), u"http://www.example.com:8080/")
+        self.assertEqual(portURL.asText(), "http://www.example.com:8080/")
 
 
     def test_mailto(self):
@@ -697,8 +697,8 @@ class TestURL(TestCase):
         L{URL.fromText}/L{URL.asText} round-trips cleanly for a C{mailto:} URL
         representing an email address.
         """
-        self.assertEqual(URL.fromText(u"mailto:user@example.com").asText(),
-                         u"mailto:user@example.com")
+        self.assertEqual(URL.fromText("mailto:user@example.com").asText(),
+                         "mailto:user@example.com")
 
 
     def test_queryIterable(self):
@@ -706,8 +706,8 @@ class TestURL(TestCase):
         When a L{URL} is created with a C{query} argument, the C{query}
         argument is converted into an N-tuple of 2-tuples.
         """
-        url = URL(query=[[u'alpha', u'beta']])
-        self.assertEqual(url.query, ((u'alpha', u'beta'),))
+        url = URL(query=[['alpha', 'beta']])
+        self.assertEqual(url.query, (('alpha', 'beta'),))
 
 
     def test_pathIterable(self):
@@ -715,8 +715,8 @@ class TestURL(TestCase):
         When a L{URL} is created with a C{path} argument, the C{path} is
         converted into a tuple.
         """
-        url = URL(path=[u'hello', u'world'])
-        self.assertEqual(url.path, (u'hello', u'world'))
+        url = URL(path=['hello', 'world'])
+        self.assertEqual(url.path, ('hello', 'world'))
 
 
     def test_invalidArguments(self):
@@ -756,20 +756,20 @@ class TestURL(TestCase):
             URL(path=[Unexpected(),])
         assertRaised(raised, defaultExpectation, "path segment")
         with self.assertRaises(TypeError) as raised:
-            URL(query=[(u"name", Unexpected()),])
+            URL(query=[("name", Unexpected()),])
         assertRaised(raised, defaultExpectation + " or NoneType",
                      "query parameter value")
         with self.assertRaises(TypeError) as raised:
-            URL(query=[(Unexpected(), u"value"),])
+            URL(query=[(Unexpected(), "value"),])
         assertRaised(raised, defaultExpectation, "query parameter name")
         # No custom error message for this one, just want to make sure
         # non-2-tuples don't get through.
         with self.assertRaises(TypeError):
             URL(query=[Unexpected()])
         with self.assertRaises(ValueError):
-            URL(query=[(u'k', u'v', u'vv')])
+            URL(query=[('k', 'v', 'vv')])
         with self.assertRaises(ValueError):
-            URL(query=[(u'k',)])
+            URL(query=[('k',)])
 
         url = URL.fromText("https://valid.example.com/")
         with self.assertRaises(TypeError) as raised:
@@ -790,9 +790,9 @@ class TestURL(TestCase):
         you want.
         """
         with self.assertRaises(TypeError) as raised:
-            URL(path=u'foo')
+            URL(path='foo')
         self.assertEqual(
             str(raised.exception),
             "expected iterable of text for path, got text itself: {}"
-            .format(repr(u'foo'))
+            .format(repr('foo'))
         )

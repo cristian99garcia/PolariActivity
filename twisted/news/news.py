@@ -6,7 +6,7 @@
 Maintainer: Jp Calderone
 """
 
-from __future__ import print_function
+
 
 from twisted.news import nntp
 from twisted.internet import protocol, reactor

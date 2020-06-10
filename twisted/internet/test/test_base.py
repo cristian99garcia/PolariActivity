@@ -7,7 +7,7 @@ Tests for L{twisted.internet.base}.
 
 import socket
 try:
-    from Queue import Queue
+    from queue import Queue
 except ImportError:
     from queue import Queue
 

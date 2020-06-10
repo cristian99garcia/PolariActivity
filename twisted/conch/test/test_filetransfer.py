@@ -6,7 +6,7 @@
 Tests for L{twisted.conch.ssh.filetransfer}.
 """
 
-from __future__ import division, absolute_import
+
 
 import os
 import re
@@ -24,7 +24,7 @@ from twisted.conch.ssh import common, connection, filetransfer, session
 from twisted.internet import defer
 from twisted.protocols import loopback
 from twisted.python import components
-from twisted.python.compat import long, networkString
+from twisted.python.compat import int, networkString
 
 
 class TestAvatar(avatar.ConchUser):
@@ -402,7 +402,7 @@ class OurServerOurClientTests(SFTPTestBase):
             def append(f):
                 files.append(f)
                 return openDir
-            d = defer.maybeDeferred(openDir.next)
+            d = defer.maybeDeferred(openDir.__next__)
             self._emptyBuffers()
             d.addCallback(append)
             d.addCallback(_getFiles)
@@ -686,10 +686,10 @@ class ConstantsTests(unittest.TestCase):
             for line in excerpt.splitlines():
                 m = re.match('^\s*#define SSH_([A-Z_]+)\s+([0-9x]*)\s*$', line)
                 if m:
-                    constants[m.group(1)] = long(m.group(2), 0)
+                    constants[m.group(1)] = int(m.group(2), 0)
         self.assertTrue(
             len(constants) > 0, "No constants found (the test must be buggy).")
-        for k, v in constants.items():
+        for k, v in list(constants.items()):
             self.assertEqual(v, getattr(filetransfer, k))
 
 

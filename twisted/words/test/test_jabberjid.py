@@ -5,7 +5,7 @@
 Tests for L{twisted.words.protocols.jabber.jid}.
 """
 
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.trial import unittest
 
 from twisted.words.protocols.jabber import jid
@@ -207,14 +207,14 @@ class JIDTests(unittest.TestCase):
         Test unicode representation of JIDs.
         """
         j = jid.JID(tuple=('user', 'host', 'resource'))
-        self.assertEqual(u"user@host/resource", unicode(j))
+        self.assertEqual("user@host/resource", str(j))
 
     def test_repr(self):
         """
         Test representation of JID objects.
         """
         j = jid.JID(tuple=('user', 'host', 'resource'))
-        self.assertEqual("JID(%s)" % repr(u'user@host/resource'), repr(j))
+        self.assertEqual("JID(%s)" % repr('user@host/resource'), repr(j))
 
 class InternJIDTests(unittest.TestCase):
     def test_identity(self):

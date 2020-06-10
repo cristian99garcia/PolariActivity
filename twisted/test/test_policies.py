@@ -5,7 +5,7 @@
 Test code for policies.
 """
 
-from __future__ import division, absolute_import
+
 
 from zope.interface import Interface, implementer, implementedBy
 
@@ -21,7 +21,7 @@ from twisted.protocols import policies
 try:
     import builtins
 except ImportError:
-    import __builtin__ as builtins
+    import builtins as builtins
 
 
 
@@ -381,7 +381,7 @@ class ThrottlingTests(unittest.TestCase):
         def _check123(results):
             self.assertEqual([c.connected for c in (c1, c2, c3)], [1, 1, 1])
             self.assertEqual([c.disconnected for c in (c1, c2, c3)], [0, 0, 1])
-            self.assertEqual(len(tServer.protocols.keys()), 2)
+            self.assertEqual(len(list(tServer.protocols.keys())), 2)
             return results
 
         def _lose1(results):

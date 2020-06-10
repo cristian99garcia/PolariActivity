@@ -5,7 +5,7 @@
 Address objects for network connections.
 """
 
-from __future__ import division, absolute_import
+
 
 import warnings, os
 

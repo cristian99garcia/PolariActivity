@@ -36,7 +36,7 @@ implement onion routing.  It can also be used to run TLS over unusual
 transports, such as UNIX sockets and stdio.
 """
 
-from __future__ import division, absolute_import
+
 
 from OpenSSL.SSL import Error, ZeroReturnError, WantReadError
 from OpenSSL.SSL import TLSv1_METHOD, Context, Connection
@@ -50,7 +50,7 @@ except TypeError as e:
 
 from zope.interface import implementer, providedBy, directlyProvides
 
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.python.failure import Failure
 from twisted.python import log
 from twisted.python.reflect import safe_str
@@ -554,7 +554,7 @@ class TLSMemoryBIOProtocol(ProtocolWrapper):
         If C{loseConnection} was called, subsequent calls to C{write} will
         drop the bytes on the floor.
         """
-        if isinstance(bytes, unicode):
+        if isinstance(bytes, str):
             raise TypeError("Must write bytes to a TLS transport, not unicode.")
         # Writes after loseConnection are not supported, unless a producer has
         # been registered, in which case writes can happen until the producer

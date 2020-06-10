@@ -5,7 +5,7 @@
 Tests for L{twisted.web.util}.
 """
 
-from __future__ import absolute_import, division
+
 
 import gc
 
@@ -55,7 +55,7 @@ class RedirectToTests(TestCase):
         """
         request = Request(DummyChannel(), True)
         request.method = b'GET'
-        targetURL = u'http://target.example.com/4321'
+        targetURL = 'http://target.example.com/4321'
         self.assertRaises(TypeError, redirectTo, targetURL, request)
 
 
@@ -93,8 +93,8 @@ class FailureElementTests(TestCase):
             50, "    print 'hello'")
         d = flattenString(None, element)
         expected = (
-            u"<div><span>50</span><span>"
-            u" \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}print 'hello'</span></div>")
+            "<div><span>50</span><span>"
+            " \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}print 'hello'</span></div>")
         d.addCallback(
             self.assertEqual, expected.encode('utf-8'))
         return d
@@ -113,12 +113,12 @@ class FailureElementTests(TestCase):
             self.frame)
 
         source = [
-            u' \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}message = '
-            u'"This is a problem"',
+            ' \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}message = '
+            '"This is a problem"',
 
-            u' \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}raise Exception(message)',
-            u'# Figure out the line number from which the exception will be '
-            u'raised.',
+            ' \N{NO-BREAK SPACE} \N{NO-BREAK SPACE}raise Exception(message)',
+            '# Figure out the line number from which the exception will be '
+            'raised.',
         ]
         d = flattenString(None, element)
         if _PY3:
@@ -127,7 +127,7 @@ class FailureElementTests(TestCase):
                 '</div>' % (
                     ["", "Highlight"][lineNumber == 1],
                     self.base + lineNumber,
-                    (u" \N{NO-BREAK SPACE}" * 4 + sourceLine))
+                    (" \N{NO-BREAK SPACE}" * 4 + sourceLine))
                 for (lineNumber, sourceLine)
                 in enumerate(source)]).encode("utf8")
 
@@ -137,7 +137,7 @@ class FailureElementTests(TestCase):
                 '</div>' % (
                     ["", "Highlight"][lineNumber == 1],
                     self.base + lineNumber,
-                    (u" \N{NO-BREAK SPACE}" * 4 + sourceLine).encode('utf8'))
+                    (" \N{NO-BREAK SPACE}" * 4 + sourceLine).encode('utf8'))
                 for (lineNumber, sourceLine)
                 in enumerate(source)])
 

@@ -527,10 +527,10 @@ class TLSServerFactory(protocol.ServerFactory):
         def connectionMade(self):
             self.factory.input = []
             self.output = self.output[:]
-            map(self.sendLine, self.output.pop(0))
+            list(map(self.sendLine, self.output.pop(0)))
         def lineReceived(self, line):
             self.factory.input.append(line)
-            map(self.sendLine, self.output.pop(0))
+            list(map(self.sendLine, self.output.pop(0)))
             if line == 'STLS':
                 self.transport.startTLS(self.context)
 
@@ -625,7 +625,7 @@ class POP3TimeoutTests(POP3HelperMixin, unittest.TestCase):
         pop3testserver.TIMEOUT_RESPONSE = True
 
         methods = [login, quit]
-        map(self.connected.addCallback, map(strip, methods))
+        list(map(self.connected.addCallback, list(map(strip, methods))))
         self.connected.addCallback(self._cbStopClient)
         self.connected.addErrback(self._ebGeneral)
         return self.loopback()

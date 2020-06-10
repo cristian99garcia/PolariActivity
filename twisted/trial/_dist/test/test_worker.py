@@ -6,7 +6,7 @@ Test for distributed trial worker side.
 """
 
 import os
-from cStringIO import StringIO
+from io import StringIO
 
 from zope.interface.verify import verifyObject
 

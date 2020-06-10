@@ -11,7 +11,7 @@ import subprocess
 
 from io import BytesIO, StringIO
 
-from twisted.python.compat import unicode, _PY3
+from twisted.python.compat import str, _PY3
 from twisted.python.reflect import requireModule
 
 if requireModule('cryptography') and requireModule('pyasn1'):
@@ -338,7 +338,7 @@ class KeyGenTests(TestCase):
         FilePath(filename).setContent(privateRSA_openssh)
         displayPublicKey({'filename': filename})
         displayed = self.stdout.getvalue().strip('\n')
-        if isinstance(displayed, unicode):
+        if isinstance(displayed, str):
             displayed = displayed.encode("ascii")
         self.assertEqual(
             displayed,
@@ -355,7 +355,7 @@ class KeyGenTests(TestCase):
         FilePath(filename).setContent(privateRSA_openssh_encrypted)
         displayPublicKey({'filename': filename, 'pass': 'encrypted'})
         displayed = self.stdout.getvalue().strip('\n')
-        if isinstance(displayed, unicode):
+        if isinstance(displayed, str):
             displayed = displayed.encode("ascii")
         self.assertEqual(
             displayed,
@@ -373,7 +373,7 @@ class KeyGenTests(TestCase):
         self.patch(getpass, 'getpass', lambda x: 'encrypted')
         displayPublicKey({'filename': filename})
         displayed = self.stdout.getvalue().strip('\n')
-        if isinstance(displayed, unicode):
+        if isinstance(displayed, str):
             displayed = displayed.encode("ascii")
         self.assertEqual(
             displayed,

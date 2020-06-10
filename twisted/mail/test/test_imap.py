@@ -64,11 +64,11 @@ def sortNest(l):
 
 class IMAP4UTF7Tests(unittest.TestCase):
     tests = [
-        [u'Hello world', b'Hello world'],
-        [u'Hello & world', b'Hello &- world'],
-        [u'Hello\xffworld', b'Hello&AP8-world'],
-        [u'\xff\xfe\xfd\xfc', b'&AP8A,gD9APw-'],
-        [u'~peter/mail/\u65e5\u672c\u8a9e/\u53f0\u5317',
+        ['Hello world', b'Hello world'],
+        ['Hello & world', b'Hello &- world'],
+        ['Hello\xffworld', b'Hello&AP8-world'],
+        ['\xff\xfe\xfd\xfc', b'&AP8A,gD9APw-'],
+        ['~peter/mail/\u65e5\u672c\u8a9e/\u53f0\u5317',
          b'~peter/mail/&ZeVnLIqe-/&U,BTFw-'], # example from RFC 2060
     ]
 
@@ -78,7 +78,7 @@ class IMAP4UTF7Tests(unittest.TestCase):
         I{imap4-utf-7} codec should produce the same result as not
         specifying the error policy.
         """
-        text = u'Hello world'
+        text = 'Hello world'
         self.assertEqual(
             text.encode('imap4-utf-7', 'strict'),
             text.encode('imap4-utf-7'))
@@ -100,7 +100,7 @@ class IMAP4UTF7Tests(unittest.TestCase):
         reader class.
         """
         reader = codecs.getreader('imap4-utf-7')(BytesIO(b'Hello&AP8-world'))
-        self.assertEqual(reader.read(), u'Hello\xffworld')
+        self.assertEqual(reader.read(), 'Hello\xffworld')
 
 
     def test_getwriter(self):
@@ -110,7 +110,7 @@ class IMAP4UTF7Tests(unittest.TestCase):
         """
         output = BytesIO()
         writer = codecs.getwriter('imap4-utf-7')(output)
-        writer.write(u'Hello\xffworld')
+        writer.write('Hello\xffworld')
         self.assertEqual(output.getvalue(), b'Hello&AP8-world')
 
 
@@ -138,12 +138,12 @@ class IMAP4UTF7Tests(unittest.TestCase):
         characters which are in ASCII using the corresponding ASCII byte.
         """
         # All printables represent themselves
-        for o in chain(range(0x20, 0x26), range(0x27, 0x7f)):
+        for o in chain(list(range(0x20, 0x26)), list(range(0x27, 0x7f))):
             charbyte = chr(o).encode()
             self.assertEqual(charbyte, chr(o).encode('imap4-utf-7'))
             self.assertEqual(chr(o), charbyte.decode('imap4-utf-7'))
-        self.assertEqual(u'&'.encode('imap4-utf-7'), b'&-')
-        self.assertEqual(b'&-'.decode('imap4-utf-7'), u'&')
+        self.assertEqual('&'.encode('imap4-utf-7'), b'&-')
+        self.assertEqual(b'&-'.decode('imap4-utf-7'), '&')
 
 
 
@@ -739,7 +739,7 @@ class IMAP4HelperTests(unittest.TestCase):
     def test_files(self):
         inputStructure = [
             'foo', 'bar', 'baz', BytesIO(b'this is a file\r\n'), 'buz',
-            u'biz'
+            'biz'
         ]
 
         output = '"foo" "bar" "baz" {16}\r\nthis is a file\r\n "buz" "biz"'
@@ -1399,7 +1399,7 @@ class IMAP4ServerTests(IMAP4HelperMixin, unittest.TestCase):
 
     def _cbTestCreate(self, ignored, succeed, fail):
         self.assertEqual(self.result, [1] * len(succeed) + [0] * len(fail))
-        mbox = SimpleServer.theAccount.mailboxes.keys()
+        mbox = list(SimpleServer.theAccount.mailboxes.keys())
         answers = ['inbox', 'testbox', 'test/box', 'test', 'test/box/box']
         mbox.sort()
         answers.sort()
@@ -1419,7 +1419,7 @@ class IMAP4ServerTests(IMAP4HelperMixin, unittest.TestCase):
         d2 = self.loopback()
         d = defer.gatherResults([d1, d2])
         d.addCallback(lambda _:
-                      self.assertEqual(SimpleServer.theAccount.mailboxes.keys(), []))
+                      self.assertEqual(list(SimpleServer.theAccount.mailboxes.keys()), []))
         return d
 
 
@@ -1500,7 +1500,7 @@ class IMAP4ServerTests(IMAP4HelperMixin, unittest.TestCase):
         d2 = self.loopback()
         d = defer.gatherResults([d1, d2])
         d.addCallback(lambda _:
-                      self.assertEqual(SimpleServer.theAccount.mailboxes.keys(),
+                      self.assertEqual(list(SimpleServer.theAccount.mailboxes.keys()),
                                         [b'NEWNAME']))
         return d
 
@@ -1542,7 +1542,7 @@ class IMAP4ServerTests(IMAP4HelperMixin, unittest.TestCase):
 
 
     def _cbTestHierarchicalRename(self, ignored):
-        mboxes = SimpleServer.theAccount.mailboxes.keys()
+        mboxes = list(SimpleServer.theAccount.mailboxes.keys())
         expected = [b'newname', b'newname/m1', b'newname/m2']
         mboxes = list(sorted(mboxes))
         self.assertEqual(mboxes, [s.upper() for s in expected])
@@ -2285,7 +2285,7 @@ class UnsolicitedResponseTests(IMAP4HelperMixin, unittest.TestCase):
 
     def _cbTestFlagChange(self, ignored, flags):
         E = self.client.events
-        expect = [[b'flagsChanged', {x[0]: x[1]}] for x in flags.items()]
+        expect = [[b'flagsChanged', {x[0]: x[1]}] for x in list(flags.items())]
         E.sort()
         expect.sort()
         self.assertEqual(E, expect)
@@ -3907,12 +3907,12 @@ class NewFetchTests(unittest.TestCase, IMAP4HelperMixin):
     def fetch(self, messages, uid):
         self.received_messages = messages
         self.received_uid = uid
-        return iter(zip(range(len(self.msgObjs)), self.msgObjs))
+        return iter(zip(list(range(len(self.msgObjs))), self.msgObjs))
 
 
     def _fetchWork(self, uid):
         if uid:
-            for (i, msg) in zip(range(len(self.msgObjs)), self.msgObjs):
+            for (i, msg) in zip(list(range(len(self.msgObjs))), self.msgObjs):
                 self.expected[i]['UID'] = str(msg.getUID())
 
         def result(R):
@@ -4464,7 +4464,7 @@ class DefaultSearchTests(IMAP4HelperMixin, unittest.TestCase):
         """
         Pretend to be a mailbox and let C{self.server} lookup messages on me.
         """
-        return list(zip(range(1, len(self.msgObjs) + 1), self.msgObjs))
+        return list(zip(list(range(1, len(self.msgObjs) + 1)), self.msgObjs))
 
 
     def _messageSetSearchTest(self, queryTerms, expectedMessages):
@@ -4740,7 +4740,7 @@ class FetchSearchStoreTests(unittest.TestCase, IMAP4HelperMixin):
             self.server_received_parts and self.server_received_parts.sort()
 
             if self.uid:
-                for (k, v) in self.expected.items():
+                for (k, v) in list(self.expected.items()):
                     v['UID'] = str(k)
 
             self.assertEqual(self.result, self.expected)
@@ -4868,7 +4868,7 @@ class CopyWorkerTests(unittest.TestCase):
 
         m = FakeMailbox()
         msgs = [FakeyMessage({b'Header-Counter': intToBytes(i)}, (), b'Date', b'Body ' + intToBytes(i), i + 10, None) for i in range(1, 11)]
-        d = f([im for im in zip(range(1, 11), msgs)], 'tag', m)
+        d = f([im for im in zip(list(range(1, 11)), msgs)], 'tag', m)
 
         def cbCopy(results):
             seen = []
@@ -4897,10 +4897,10 @@ class CopyWorkerTests(unittest.TestCase):
 
         m = MessageCopierMailbox()
         msgs = [object() for i in range(1, 11)]
-        d = f([im for im in zip(range(1, 11), msgs)], b'tag', m)
+        d = f([im for im in zip(list(range(1, 11)), msgs)], b'tag', m)
 
         def cbCopy(results):
-            self.assertEqual(results, zip([1] * 10, range(1, 11)))
+            self.assertEqual(results, list(zip([1] * 10, list(range(1, 11)))))
             for (orig, new) in zip(msgs, m.msgs):
                 self.assertIdentical(orig, new)
 
@@ -4938,7 +4938,7 @@ class TLSTests(IMAP4HelperMixin, unittest.TestCase):
         self.client.requireTransportSecurity = True
 
         methods = [login, list, status, examine, logout]
-        map(self.connected.addCallback, map(strip, methods))
+        list(map(self.connected.addCallback, list(map(strip, methods))))
         self.connected.addCallbacks(self._cbStopClient, self._ebGeneral)
         def check(ignored):
             self.assertEqual(self.server.startedTLS, True)
@@ -5076,7 +5076,7 @@ class TimeoutTests(IMAP4HelperMixin, unittest.TestCase):
             self.assertNotEqual(self.server.state, 'timeout')
 
         def cbAdvance(ignored):
-            for i in xrange(4):
+            for i in range(4):
                 c.advance(.5)
 
         SlowMailbox.fetchDeferred.addCallback(cbAdvance)

@@ -9,7 +9,7 @@ The source-code-marshallin'est abstract-object-serializin'est persister
 this side of Marmalade!
 """
 
-from __future__ import division, absolute_import
+
 
 import types, re
 
@@ -20,13 +20,13 @@ except ImportError:
 
 
 try:
-    import copy_reg
+    import copyreg
 except:
     import copyreg as copy_reg
 
 from twisted.python import reflect, log
 from twisted.persisted import crefutil
-from twisted.python.compat import unicode, _PY3, _constructMethod
+from twisted.python.compat import str, _PY3, _constructMethod
 
 ###########################
 # Abstract Object Classes #
@@ -69,12 +69,12 @@ class _NoStateObj:
 NoStateObj = _NoStateObj()
 
 _SIMPLE_BUILTINS = [
-    bool, bytes, unicode, int, float, complex, type(None),
+    bool, bytes, str, int, float, complex, type(None),
     slice, type(Ellipsis)
 ]
 
 try:
-    _SIMPLE_BUILTINS.append(long)
+    _SIMPLE_BUILTINS.append(int)
 except NameError:
     pass
 
@@ -197,7 +197,7 @@ def prettify(obj):
 
         elif t is dict:
             out = ['{']
-            for k,v in obj.items():
+            for k,v in list(obj.items()):
                 out.append('\n\0%s: %s,' % (prettify(k), prettify(v)))
             out.append(len(obj) and '\n\0}' or '}')
             return ''.join(out)
@@ -349,7 +349,7 @@ class AOTUnjellier:
 
         elif t is dict:
             d = {}
-            for k,v in ao.items():
+            for k,v in list(ao.items()):
                 kvd = crefutil._DictKeyAndValue(d)
                 self.unjellyInto(kvd, 0, k)
                 self.unjellyInto(kvd, 1, v)
@@ -481,7 +481,7 @@ def _classOfMethod(methodObject):
     """
     if _PY3:
         return methodObject.__self__.__class__
-    return methodObject.im_class
+    return methodObject.__self__.__class__
 
 
 
@@ -497,7 +497,7 @@ def _funcOfMethod(methodObject):
     """
     if _PY3:
         return methodObject.__func__
-    return methodObject.im_func
+    return methodObject.__func__
 
 
 
@@ -513,7 +513,7 @@ def _selfOfMethod(methodObject):
     """
     if _PY3:
         return methodObject.__self__
-    return methodObject.im_self
+    return methodObject.__self__
 
 
 
@@ -595,12 +595,12 @@ class AOTJellier:
 
             elif objType is dict:
                 d = {}
-                for k,v in obj.items():
+                for k,v in list(obj.items()):
                     d[self.jellyToAO(k)] = self.jellyToAO(v)
                 retval.setObj(d)
 
-            elif objType in copy_reg.dispatch_table:
-                unpickleFunc, state = copy_reg.dispatch_table[objType](obj)
+            elif objType in copyreg.dispatch_table:
+                unpickleFunc, state = copyreg.dispatch_table[objType](obj)
 
                 retval.setObj(Copyreg( reflect.fullFuncName(unpickleFunc),
                                        self.jellyToAO(state)))

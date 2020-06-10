@@ -7,7 +7,7 @@
 
 from twisted.trial import unittest
 from twisted.mail import bounce
-import cStringIO
+import io
 import email.message
 import email.parser
 
@@ -17,7 +17,7 @@ class BounceTests(unittest.TestCase):
     """
 
     def testBounceFormat(self):
-        from_, to, s = bounce.generateBounce(cStringIO.StringIO('''\
+        from_, to, s = bounce.generateBounce(io.StringIO('''\
 From: Moshe Zadka <moshez@example.com>
 To: nonexistent@example.org
 Subject: test
@@ -26,7 +26,7 @@ Subject: test
         self.assertEqual(from_, '')
         self.assertEqual(to, 'moshez@example.com')
         emailParser = email.parser.Parser()
-        mess = emailParser.parse(cStringIO.StringIO(s))
+        mess = emailParser.parse(io.StringIO(s))
         self.assertEqual(mess['To'], 'moshez@example.com')
         self.assertEqual(mess['From'], 'postmaster@example.org')
         self.assertEqual(mess['subject'], 'Returned Mail: see transcript for details')

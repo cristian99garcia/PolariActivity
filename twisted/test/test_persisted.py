@@ -2,7 +2,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import division, absolute_import
+
 
 # System Imports
 import sys
@@ -10,14 +10,14 @@ import sys
 from twisted.trial import unittest
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
 import io
 
 try:
-    from cStringIO import StringIO as _oldStyleCStringIO
+    from io import StringIO as _oldStyleCStringIO
 except ImportError:
     skipStringIO = "No cStringIO available."
 else:
@@ -26,7 +26,7 @@ else:
 try:
     import copyreg
 except:
-    import copy_reg as copyreg
+    import copyreg as copyreg
 
 # Twisted Imports
 from twisted.persisted import styles, aot, crefutil
@@ -349,7 +349,7 @@ class StringIOTransitionTests(unittest.TestCase):
         )
         loaded = pickle.loads(pickledStringIWithText)
         self.assertIsInstance(loaded, io.StringIO)
-        self.assertEqual(loaded.getvalue(), u"test")
+        self.assertEqual(loaded.getvalue(), "test")
 
 
 
@@ -367,7 +367,7 @@ class NonDictState:
 
 class AOTTests(unittest.TestCase):
     def test_simpleTypes(self):
-        obj = (1, 2.0, 3j, True, slice(1, 2, 3), 'hello', u'world',
+        obj = (1, 2.0, 3j, True, slice(1, 2, 3), 'hello', 'world',
                sys.maxsize + 1, None, Ellipsis)
         rtObj = aot.unjellyFromSource(aot.jellyToSource(obj))
         self.assertEqual(obj, rtObj)
@@ -422,7 +422,7 @@ class AOTTests(unittest.TestCase):
         d = {'hello': 'world', "method": aj}
         l = [1, 2, 3,
              "he\tllo\n\n\"x world!",
-             u"goodbye \n\t\u1010 world!",
+             "goodbye \n\t\u1010 world!",
              1, 1.0, 100 ** 100, unittest, aot.AOTJellier, d,
              funktion
              ]

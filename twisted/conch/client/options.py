@@ -35,10 +35,10 @@ class ConchOptions(usage.Options):
         optActions={
             "user": usage.CompleteUsernames(),
             "ciphers": usage.CompleteMultiList(
-                SSHCiphers.cipherMap.keys(),
+                list(SSHCiphers.cipherMap.keys()),
                 descr='ciphers to choose from'),
             "macs": usage.CompleteMultiList(
-                SSHCiphers.macMap.keys(),
+                list(SSHCiphers.macMap.keys()),
                 descr='macs to choose from'),
             "host-key-algorithms": usage.CompleteMultiList(
                 SSHClientTransport.supportedPublicKeys,

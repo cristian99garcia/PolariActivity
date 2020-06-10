@@ -215,14 +215,14 @@ class LoggerTests(unittest.TestCase):
         log = TestLogger()
 
         log.warn(
-            u"*",
+            "*",
             log_format="#",
             log_level=LogLevel.error,
             log_namespace="*namespace*",
             log_source="*source*",
         )
 
-        self.assertEqual(log.event["log_format"], u"*")
+        self.assertEqual(log.event["log_format"], "*")
         self.assertEqual(log.event["log_level"], LogLevel.warn)
         self.assertEqual(log.event["log_namespace"], log.namespace)
         self.assertIsNone(log.event["log_source"])

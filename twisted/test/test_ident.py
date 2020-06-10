@@ -21,7 +21,7 @@ from twisted.test.proto_helpers import StringTransport
 try:
     import builtins
 except ImportError:
-    import __builtin__ as builtins
+    import builtins as builtins
 
 
 

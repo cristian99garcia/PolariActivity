@@ -5,7 +5,7 @@
 Cred errors.
 """
 
-from __future__ import division, absolute_import
+
 
 
 class Unauthorized(Exception):

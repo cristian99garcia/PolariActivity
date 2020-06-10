@@ -1,7 +1,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+
 
 from twisted.application.reactors import Reactor
 from twisted.python.compat import _PY3

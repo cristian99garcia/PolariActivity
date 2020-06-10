@@ -22,7 +22,7 @@ Stanzas.
 @type Reset: Basic object.
 """
 
-from __future__ import absolute_import, division
+
 
 from binascii import hexlify
 from hashlib import sha1
@@ -31,13 +31,14 @@ from zope.interface import directlyProvides, implementer
 from twisted.internet import defer, protocol
 from twisted.internet.error import ConnectionLost
 from twisted.python import failure, log, randbytes
-from twisted.python.compat import intern, iteritems, itervalues, unicode
+from twisted.python.compat import intern, iteritems, itervalues, str
 from twisted.words.protocols.jabber import error, ijabber, jid
 from twisted.words.xish import domish, xmlstream
 from twisted.words.xish.xmlstream import STREAM_CONNECTED_EVENT
 from twisted.words.xish.xmlstream import STREAM_START_EVENT
 from twisted.words.xish.xmlstream import STREAM_END_EVENT
 from twisted.words.xish.xmlstream import STREAM_ERROR_EVENT
+import sys
 
 try:
     from twisted.internet import ssl
@@ -46,8 +47,8 @@ except ImportError:
 if ssl and not ssl.supported:
     ssl = None
 
-STREAM_AUTHD_EVENT = intern("//event/stream/authd")
-INIT_FAILED_EVENT = intern("//event/xmpp/initfailed")
+STREAM_AUTHD_EVENT = sys.intern("//event/stream/authd")
+INIT_FAILED_EVENT = sys.intern("//event/xmpp/initfailed")
 
 NS_STREAMS = 'http://etherx.jabber.org/streams'
 NS_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls'
@@ -63,11 +64,11 @@ def hashPassword(sid, password):
     @param password: The password to be hashed.
     @type password: C{unicode}.
     """
-    if not isinstance(sid, unicode):
+    if not isinstance(sid, str):
         raise TypeError("The session identifier must be a unicode object")
-    if not isinstance(password, unicode):
+    if not isinstance(password, str):
         raise TypeError("The password must be a unicode object")
-    input = u"%s%s" % (sid, password)
+    input = "%s%s" % (sid, password)
     return sha1(input.encode('utf-8')).hexdigest()
 
 

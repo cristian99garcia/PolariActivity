@@ -74,10 +74,9 @@ class MetaMetaClass(type):
         return type.__getattribute__(self, name)
     
 
-class MetaClass(object):
+class MetaClass(object, metaclass=MetaMetaClass):
     """Odd classes
     """
-    __metaclass__ = MetaMetaClass
 
     def __init__(self, name, bases, dict):
         self.__name__ = name

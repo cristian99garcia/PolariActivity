@@ -11,7 +11,7 @@ parse string representations into them with proper checking for illegal
 characters, case folding and canonicalisation through L{stringprep<twisted.words.protocols.jabber.xmpp_stringprep>}.
 """
 
-from twisted.python.compat import _PY3, unicode
+from twisted.python.compat import _PY3, str
 from twisted.words.protocols.jabber.xmpp_stringprep import nodeprep, resourceprep, nameprep
 
 class InvalidFormat(Exception):
@@ -81,7 +81,7 @@ def prep(user, host, resource):
 
     if user:
         try:
-            user = nodeprep.prepare(unicode(user))
+            user = nodeprep.prepare(str(user))
         except UnicodeError:
             raise InvalidFormat("Invalid character in username")
     else:
@@ -91,13 +91,13 @@ def prep(user, host, resource):
         raise InvalidFormat("Server address required.")
     else:
         try:
-            host = nameprep.prepare(unicode(host))
+            host = nameprep.prepare(str(host))
         except UnicodeError:
             raise InvalidFormat("Invalid character in hostname")
 
     if resource:
         try:
-            resource = resourceprep.prepare(unicode(resource))
+            resource = resourceprep.prepare(str(resource))
         except UnicodeError:
             raise InvalidFormat("Invalid character in resource")
     else:
@@ -153,7 +153,7 @@ class JID(object):
         @rtype: L{unicode}
         """
         if self.user:
-            return u"%s@%s" % (self.user, self.host)
+            return "%s@%s" % (self.user, self.host)
         else:
             return self.host
 
@@ -183,12 +183,12 @@ class JID(object):
         """
         if self.user:
             if self.resource:
-                return u"%s@%s/%s" % (self.user, self.host, self.resource)
+                return "%s@%s/%s" % (self.user, self.host, self.resource)
             else:
-                return u"%s@%s" % (self.user, self.host)
+                return "%s@%s" % (self.user, self.host)
         else:
             if self.resource:
-                return u"%s/%s" % (self.host, self.resource)
+                return "%s/%s" % (self.host, self.resource)
             else:
                 return self.host
 

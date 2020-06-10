@@ -292,7 +292,7 @@ class Date(Argument):
             return None
         
         try:
-            year, month, day = map(positiveInt, args)
+            year, month, day = list(map(positiveInt, args))
         except ValueError:
             raise InputError("Invalid date")
         if (month, day) == (2, 29):

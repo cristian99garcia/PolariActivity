@@ -9,7 +9,7 @@ Future Plans:
     - Get rid of some toplevels, maybe.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = [
     'IEncodable', 'IRecord',
@@ -60,7 +60,7 @@ from twisted.internet.error import CannotListenError
 from twisted.python import log, failure
 from twisted.python import util as tputil
 from twisted.python import randbytes
-from twisted.python.compat import _PY3, unicode, comparable, cmp, nativeString
+from twisted.python.compat import _PY3, str, comparable, cmp, nativeString
 
 
 if _PY3:
@@ -113,7 +113,7 @@ def randomSource():
 PORT = 53
 
 (A, NS, MD, MF, CNAME, SOA, MB, MG, MR, NULL, WKS, PTR, HINFO, MINFO, MX, TXT,
- RP, AFSDB) = range(1, 19)
+ RP, AFSDB) = list(range(1, 19))
 AAAA = 28
 SRV = 33
 NAPTR = 35
@@ -153,7 +153,7 @@ QUERY_TYPES = {
     SPF: 'SPF'
 }
 
-IXFR, AXFR, MAILB, MAILA, ALL_RECORDS = range(251, 256)
+IXFR, AXFR, MAILB, MAILA, ALL_RECORDS = list(range(251, 256))
 
 # "Extended" queries (Hey, half of these are deprecated, good job)
 EXT_QUERIES = {
@@ -165,10 +165,10 @@ EXT_QUERIES = {
 }
 
 REV_TYPES = dict([
-    (v, k) for (k, v) in chain(QUERY_TYPES.items(), EXT_QUERIES.items())
+    (v, k) for (k, v) in chain(list(QUERY_TYPES.items()), list(EXT_QUERIES.items()))
 ])
 
-IN, CS, CH, HS = range(1, 5)
+IN, CS, CH, HS = list(range(1, 5))
 ANY = 255
 
 QUERY_CLASSES = {
@@ -179,18 +179,18 @@ QUERY_CLASSES = {
     ANY: 'ANY'
 }
 REV_CLASSES = dict([
-    (v, k) for (k, v) in QUERY_CLASSES.items()
+    (v, k) for (k, v) in list(QUERY_CLASSES.items())
 ])
 
 
 # Opcodes
-OP_QUERY, OP_INVERSE, OP_STATUS = range(3)
+OP_QUERY, OP_INVERSE, OP_STATUS = list(range(3))
 OP_NOTIFY = 4 # RFC 1996
 OP_UPDATE = 5 # RFC 2136
 
 
 # Response Codes
-OK, EFORMAT, ESERVER, ENAME, ENOTIMP, EREFUSED = range(6)
+OK, EFORMAT, ESERVER, ENAME, ENOTIMP, EREFUSED = list(range(6))
 # https://tools.ietf.org/html/rfc6891#section-9
 EBADVERSION = 16
 
@@ -417,7 +417,7 @@ class Name:
         @param name: A name.
         @type name: L{unicode} or L{bytes}
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             name = name.encode('idna')
         if not isinstance(name, bytes):
             raise TypeError("%r is not a byte string" % (name,))
@@ -2062,7 +2062,7 @@ def _getDisplayableArguments(obj, alwaysShow, fieldNames):
         argspec = inspect.getargspec(obj.__class__.__init__)
         # Reverse the args and defaults to avoid mapping positional arguments
         # which don't have a default.
-        defaults = dict(zip(reversed(argspec.args), reversed(argspec.defaults)))
+        defaults = dict(list(zip(reversed(argspec.args), reversed(argspec.defaults))))
         for name in fieldNames:
             defaultValue = defaults.get(name)
             fieldValue = getattr(obj, name, defaultValue)

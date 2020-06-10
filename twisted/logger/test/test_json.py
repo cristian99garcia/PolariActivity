@@ -9,7 +9,7 @@ from io import StringIO, BytesIO
 
 from zope.interface.verify import verifyObject, BrokenMethodImplementation
 
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 
 from twisted.trial.unittest import TestCase
 
@@ -42,7 +42,7 @@ def savedJSONInvariants(testCase, savedJSON):
 
     @raise AssertionError: If any of the preconditions fail.
     """
-    testCase.assertIsInstance(savedJSON, unicode)
+    testCase.assertIsInstance(savedJSON, str)
     testCase.assertEqual(savedJSON.count("\n"), 0)
     return savedJSON
 
@@ -81,8 +81,8 @@ class SaveLoadTests(TestCase):
         keys will be converted.
         """
         self.assertEqual(
-            eventFromJSON(self.savedEventJSON({1: 2, u"3": u"4"})),
-            {u"1": 2, u"3": u"4"}
+            eventFromJSON(self.savedEventJSON({1: 2, "3": "4"})),
+            {"1": 2, "3": "4"}
         )
 
 
@@ -92,8 +92,8 @@ class SaveLoadTests(TestCase):
         result in a placeholder.
         """
         self.assertEqual(
-            eventFromJSON(self.savedEventJSON({u"1": 2, u"3": object()})),
-            {u"1": 2, u"3": {u"unpersistable": True}}
+            eventFromJSON(self.savedEventJSON({"1": 2, "3": object()})),
+            {"1": 2, "3": {"unpersistable": True}}
         )
 
 
@@ -103,9 +103,9 @@ class SaveLoadTests(TestCase):
         """
         self.assertEqual(
             eventFromJSON(self.savedEventJSON(
-                {u"\u1234": u"\u4321", u"3": object()}
+                {"\u1234": "\u4321", "3": object()}
             )),
-            {u"\u1234": u"\u4321", u"3": {u"unpersistable": True}}
+            {"\u1234": "\u4321", "3": {"unpersistable": True}}
         )
 
 
@@ -120,7 +120,7 @@ class SaveLoadTests(TestCase):
             else:
                 return bytes(x)
 
-        inputEvent = {"hello": asbytes(range(255))}
+        inputEvent = {"hello": asbytes(list(range(255)))}
         if bytes is not str:
             # On Python 3, bytes keys will be skipped by the JSON encoder. Not
             # much we can do about that.  Let's make sure that we don't get an
@@ -128,7 +128,7 @@ class SaveLoadTests(TestCase):
             inputEvent.update({b"skipped": "okay"})
         self.assertEqual(
             eventFromJSON(self.savedEventJSON(inputEvent)),
-            {u"hello": asbytes(range(255)).decode("charmap")}
+            {"hello": asbytes(list(range(255))).decode("charmap")}
         )
 
 
@@ -250,7 +250,7 @@ class FileLogObserverTests(TestCase):
         @param kwargs: Keyword arguments to pass to L{jsonFileLogObserver}.
         @type kwargs: L{dict}
         """
-        recordSeparator = kwargs.get("recordSeparator", u"\x1e")
+        recordSeparator = kwargs.get("recordSeparator", "\x1e")
 
         with StringIO() as fileHandle:
             observer = jsonFileLogObserver(fileHandle, **kwargs)
@@ -258,7 +258,7 @@ class FileLogObserverTests(TestCase):
             observer(event)
             self.assertEqual(
                 fileHandle.getvalue(),
-                u'{0}{{"x": 1}}\n'.format(recordSeparator)
+                '{0}{{"x": 1}}\n'.format(recordSeparator)
             )
 
 
@@ -277,7 +277,7 @@ class FileLogObserverTests(TestCase):
         serialzed as JSON text to a file when it observes events.
         This test sets the record separator to C{u""}.
         """
-        self.assertObserverWritesJSON(recordSeparator=u"")
+        self.assertObserverWritesJSON(recordSeparator="")
 
 
     def test_failureFormatting(self):
@@ -348,8 +348,8 @@ class LogFileReaderTests(TestCase):
         """
         events = eventsFromJSONLogFile(fileHandle, **kwargs)
 
-        self.assertEqual(next(events), {u"x": 1})
-        self.assertEqual(next(events), {u"y": 2})
+        self.assertEqual(next(events), {"x": 1})
+        self.assertEqual(next(events), {"y": 2})
         self.assertRaises(StopIteration, next, events)  # No more events
 
 
@@ -359,8 +359,8 @@ class LogFileReaderTests(TestCase):
         detects use of C{u"\\x1e"} as the record separator.
         """
         with StringIO(
-            u'\x1e{"x": 1}\n'
-            u'\x1e{"y": 2}\n'
+            '\x1e{"x": 1}\n'
+            '\x1e{"y": 2}\n'
         ) as fileHandle:
             self._readEvents(fileHandle)
             self.assertEqual(len(self.errorEvents), 0)
@@ -372,8 +372,8 @@ class LogFileReaderTests(TestCase):
         detects use of C{u""} as the record separator.
         """
         with StringIO(
-            u'{"x": 1}\n'
-            u'{"y": 2}\n'
+            '{"x": 1}\n'
+            '{"y": 2}\n'
         ) as fileHandle:
             self._readEvents(fileHandle)
             self.assertEqual(len(self.errorEvents), 0)
@@ -386,10 +386,10 @@ class LogFileReaderTests(TestCase):
         """
         # Use u"\x08" (backspace)... because that seems weird enough.
         with StringIO(
-            u'\x08{"x": 1}\n'
-            u'\x08{"y": 2}\n'
+            '\x08{"x": 1}\n'
+            '\x08{"y": 2}\n'
         ) as fileHandle:
-            self._readEvents(fileHandle, recordSeparator=u"\x08")
+            self._readEvents(fileHandle, recordSeparator="\x08")
             self.assertEqual(len(self.errorEvents), 0)
 
 
@@ -398,8 +398,8 @@ class LogFileReaderTests(TestCase):
         L{eventsFromJSONLogFile} handles buffering a partial event.
         """
         with StringIO(
-            u'\x1e{"x": 1}\n'
-            u'\x1e{"y": 2}\n'
+            '\x1e{"x": 1}\n'
+            '\x1e{"y": 2}\n'
         ) as fileHandle:
             # Use a buffer size smaller than the event text.
             self._readEvents(fileHandle, bufferSize=1)
@@ -411,19 +411,19 @@ class LogFileReaderTests(TestCase):
         If the JSON text for a record is truncated, skip it.
         """
         with StringIO(
-            u'\x1e{"x": 1'
-            u'\x1e{"y": 2}\n'
+            '\x1e{"x": 1'
+            '\x1e{"y": 2}\n'
         ) as fileHandle:
             events = eventsFromJSONLogFile(fileHandle)
 
-            self.assertEqual(next(events), {u"y": 2})
+            self.assertEqual(next(events), {"y": 2})
             self.assertRaises(StopIteration, next, events)  # No more events
 
             # We should have logged the lost record
             self.assertEqual(len(self.errorEvents), 1)
             self.assertEqual(
                 self.errorEvents[0]["log_format"],
-                u"Unable to read truncated JSON record: {record!r}"
+                "Unable to read truncated JSON record: {record!r}"
             )
             self.assertEqual(self.errorEvents[0]["record"], b'{"x": 1')
 
@@ -434,10 +434,10 @@ class LogFileReaderTests(TestCase):
         as-is.
         """
         # The Euro currency sign is u"\u20ac"
-        with StringIO(u'\x1e{"currency": "\u20ac"}\n') as fileHandle:
+        with StringIO('\x1e{"currency": "\u20ac"}\n') as fileHandle:
             events = eventsFromJSONLogFile(fileHandle)
 
-            self.assertEqual(next(events), {u"currency": u"\u20ac"})
+            self.assertEqual(next(events), {"currency": "\u20ac"})
             self.assertRaises(StopIteration, next, events)  # No more events
             self.assertEqual(len(self.errorEvents), 0)
 
@@ -452,7 +452,7 @@ class LogFileReaderTests(TestCase):
             events = eventsFromJSONLogFile(fileHandle)
 
             # The Euro currency sign is u"\u20ac"
-            self.assertEqual(next(events), {u"currency": u"\u20ac"})
+            self.assertEqual(next(events), {"currency": "\u20ac"})
             self.assertRaises(StopIteration, next, events)  # No more events
             self.assertEqual(len(self.errorEvents), 0)
 
@@ -468,7 +468,7 @@ class LogFileReaderTests(TestCase):
         with BytesIO(b'\x1e{"x": "\xe2\x82\xac"}\n') as fileHandle:
             events = eventsFromJSONLogFile(fileHandle, bufferSize=8)
 
-            self.assertEqual(next(events), {u"x": u"\u20ac"})  # Got unicode
+            self.assertEqual(next(events), {"x": "\u20ac"})  # Got unicode
             self.assertRaises(StopIteration, next, events)  # No more events
             self.assertEqual(len(self.errorEvents), 0)
 
@@ -485,14 +485,14 @@ class LogFileReaderTests(TestCase):
         ) as fileHandle:
             events = eventsFromJSONLogFile(fileHandle)
 
-            self.assertEqual(next(events), {u"y": 2})
+            self.assertEqual(next(events), {"y": 2})
             self.assertRaises(StopIteration, next, events)  # No more events
 
             # We should have logged the lost record
             self.assertEqual(len(self.errorEvents), 1)
             self.assertEqual(
                 self.errorEvents[0]["log_format"],
-                u"Unable to decode UTF-8 for JSON record: {record!r}"
+                "Unable to decode UTF-8 for JSON record: {record!r}"
             )
             self.assertEqual(
                 self.errorEvents[0]["record"],
@@ -505,19 +505,19 @@ class LogFileReaderTests(TestCase):
         If the JSON text for a record is invalid, skip it.
         """
         with StringIO(
-            u'\x1e{"x": }\n'
-            u'\x1e{"y": 2}\n'
+            '\x1e{"x": }\n'
+            '\x1e{"y": 2}\n'
         ) as fileHandle:
             events = eventsFromJSONLogFile(fileHandle)
 
-            self.assertEqual(next(events), {u"y": 2})
+            self.assertEqual(next(events), {"y": 2})
             self.assertRaises(StopIteration, next, events)  # No more events
 
             # We should have logged the lost record
             self.assertEqual(len(self.errorEvents), 1)
             self.assertEqual(
                 self.errorEvents[0]["log_format"],
-                u"Unable to read JSON record: {record!r}"
+                "Unable to read JSON record: {record!r}"
             )
             self.assertEqual(self.errorEvents[0]["record"], b'{"x": }\n')
 
@@ -527,8 +527,8 @@ class LogFileReaderTests(TestCase):
         Multiple events without a record separator are skipped.
         """
         with StringIO(
-            u'\x1e{"x": 1}\n'
-            u'{"y": 2}\n'
+            '\x1e{"x": 1}\n'
+            '{"y": 2}\n'
         ) as fileHandle:
             events = eventsFromJSONLogFile(fileHandle)
 
@@ -538,7 +538,7 @@ class LogFileReaderTests(TestCase):
             self.assertEqual(len(self.errorEvents), 1)
             self.assertEqual(
                 self.errorEvents[0]["log_format"],
-                u"Unable to read JSON record: {record!r}"
+                "Unable to read JSON record: {record!r}"
             )
             self.assertEqual(
                 self.errorEvents[0]["record"],

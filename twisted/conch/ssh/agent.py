@@ -9,7 +9,7 @@ U{PROTOCOL.agent<http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.
 Maintainer: Paul Swartz
 """
 
-from __future__ import absolute_import, division
+
 
 import struct
 
@@ -291,6 +291,6 @@ AGENTC_REMOVE_IDENTITY          = 18
 AGENTC_REMOVE_ALL_IDENTITIES    = 19
 
 messages = {}
-for name, value in locals().copy().items():
+for name, value in list(locals().copy().items()):
     if name[:7] == 'AGENTC_':
         messages[value] = name[7:] # doesn't handle doubles

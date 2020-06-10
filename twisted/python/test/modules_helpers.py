@@ -6,7 +6,7 @@ Facilities for helping test code which interacts with Python's module system
 to load code.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 

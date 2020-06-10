@@ -5,7 +5,7 @@
 Tests for L{twisted.application.app} and L{twisted.scripts.twistd}.
 """
 
-from __future__ import absolute_import, division
+
 
 import errno
 import inspect
@@ -20,7 +20,7 @@ except ImportError:
     pwd = grp = None
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -1778,7 +1778,7 @@ class DaemonizeTests(unittest.TestCase):
         message is Unicode, the child encodes the message as ascii
         with backslash Unicode code points.
         """
-        self.assertErrorWritten(raised=u"\u2022",
+        self.assertErrorWritten(raised="\u2022",
                                 reported=b'1 RuntimeError: \\u2022')
 
 
@@ -1880,7 +1880,7 @@ class DaemonizeTests(unittest.TestCase):
         this splits a unicode escape sequence.
         """
         self.assertErrorWritten(
-            raised=u"\u2022" * 30,
+            raised="\u2022" * 30,
             reported=b'1 RuntimeError: ' + b'\\u2022' * 14,
         )
 

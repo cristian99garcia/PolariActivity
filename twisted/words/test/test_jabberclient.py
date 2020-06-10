@@ -5,12 +5,12 @@
 Tests for L{twisted.words.protocols.jabber.client}
 """
 
-from __future__ import absolute_import, division
+
 
 from hashlib import sha1
 
 from twisted.internet import defer
-from twisted.python.compat import unicode
+from twisted.python.compat import str
 from twisted.trial import unittest
 from twisted.words.protocols.jabber import client, error, jid, xmlstream
 from twisted.words.protocols.jabber.sasl import SASLInitiatingInitializer
@@ -98,7 +98,7 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
         super(IQAuthInitializerTests, self).setUp()
         self.init = client.IQAuthInitializer(self.xmlstream)
         self.authenticator.jid = jid.JID('user@example.com/resource')
-        self.authenticator.password = u'secret'
+        self.authenticator.password = 'secret'
 
 
     def testPlainText(self):
@@ -140,9 +140,9 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             The server checks the credentials and responds with an empty result
             signalling success.
             """
-            self.assertEqual('user', unicode(iq.query.username))
-            self.assertEqual('secret', unicode(iq.query.password))
-            self.assertEqual('resource', unicode(iq.query.resource))
+            self.assertEqual('user', str(iq.query.username))
+            self.assertEqual('secret', str(iq.query.password))
+            self.assertEqual('resource', str(iq.query.resource))
 
             # Send server response
             response = xmlstream.toResponse(iq, 'result')
@@ -196,17 +196,17 @@ class IQAuthInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             The server checks the credentials and responds with an empty result
             signalling success.
             """
-            self.assertEqual('user', unicode(iq.query.username))
+            self.assertEqual('user', str(iq.query.username))
             self.assertEqual(sha1(b'12345secret').hexdigest(),
-                              unicode(iq.query.digest))
-            self.assertEqual('resource', unicode(iq.query.resource))
+                              str(iq.query.digest))
+            self.assertEqual('resource', str(iq.query.resource))
 
             # Send server response
             response = xmlstream.toResponse(iq, 'result')
             self.pipe.source.send(response)
 
         # Digest authentication relies on the stream session identifier. Set it.
-        self.xmlstream.sid = u'12345'
+        self.xmlstream.sid = '12345'
 
         # Set up an observer for the request for authentication fields
         d1 = self.waitFor(IQ_AUTH_GET, onAuthGet)
@@ -312,7 +312,7 @@ class BindInitializerTests(InitiatingInitializerHarness, unittest.TestCase):
             response = xmlstream.toResponse(iq, 'result')
             response.addElement((NS_BIND, 'bind'))
             response.bind.addElement('jid',
-                                     content=u'user@example.com/other resource')
+                                     content='user@example.com/other resource')
             self.pipe.source.send(response)
 
         def cb(result):

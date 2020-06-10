@@ -6,7 +6,7 @@ Test the C{I...Endpoint} implementations that wrap the L{IReactorTCP},
 L{IReactorSSL}, and L{IReactorUNIX} interfaces found in
 L{twisted.internet.endpoints}.
 """
-from __future__ import division, absolute_import
+
 
 import socket
 
@@ -3591,7 +3591,7 @@ class WrapClientTLSParserTests(unittest.TestCase):
             endpoint._wrappedEndpoint._host, b'xn--xample-9ua.example.com')
         connectionCreator = connectionCreatorFromEndpoint(reactor, endpoint)
         self.assertEqual(connectionCreator._hostname,
-                         u'\xe9xample.example.com')
+                         '\xe9xample.example.com')
 
 
     def test_tls(self):
@@ -3671,7 +3671,7 @@ class WrapClientTLSParserTests(unittest.TestCase):
         reactor = object()
         endpoint = endpoints.clientFromString(reactor, b'tls:example.com:443')
         creator = connectionCreatorFromEndpoint(reactor, endpoint)
-        self.assertEqual(creator._hostname, u'example.com')
+        self.assertEqual(creator._hostname, 'example.com')
         self.assertEqual(endpoint._wrappedEndpoint._host, b'example.com')
 
 
@@ -3692,8 +3692,8 @@ def replacingGlobals(function, **newGlobals):
     @return: a new function, like C{function}, but with new global scope.
     """
     try:
-        codeObject = function.func_code
-        funcGlobals = function.func_globals
+        codeObject = function.__code__
+        funcGlobals = function.__globals__
     except AttributeError:
         codeObject = function.__code__
         funcGlobals = function.__globals__

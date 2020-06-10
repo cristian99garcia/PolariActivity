@@ -2,7 +2,7 @@
 You don't really want to use this module. Try insults.py instead.
 """
 
-from __future__ import print_function
+
 
 from twisted.internet import protocol
 

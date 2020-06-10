@@ -26,7 +26,7 @@ import base64
 import glob
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -205,7 +205,7 @@ class DirDBM:
         @return: a L{list} of file-contents (values).
         """
         vals = []
-        keys = self.keys()
+        keys = list(self.keys())
         for key in keys:
             vals.append(self[key])
         return vals
@@ -216,7 +216,7 @@ class DirDBM:
         @return: a L{list} of 2-tuples containing key/value pairs.
         """
         items = []
-        keys = self.keys()
+        keys = list(self.keys())
         for key in keys:
             items.append((key, self[key]))
         return items
@@ -270,7 +270,7 @@ class DirDBM:
         """
         @see: L{DirDBM.has_key}
         """
-        return self.has_key(key)
+        return key in self
 
 
     def update(self, dict):
@@ -281,7 +281,7 @@ class DirDBM:
         @type dict: mapping
         @param dict: A mapping of key/value pairs to add to this dirdbm.
         """
-        for key, val in dict.items():
+        for key, val in list(dict.items()):
             self[key]=val
 
 
@@ -301,7 +301,7 @@ class DirDBM:
 
         d = self.__class__(path.path)
         d.clear()
-        for k in self.keys():
+        for k in list(self.keys()):
             d[k] = self[k]
         return d
 
@@ -310,7 +310,7 @@ class DirDBM:
         """
         Delete all key/value pairs in this dirdbm.
         """
-        for k in self.keys():
+        for k in list(self.keys()):
             del self[k]
 
 

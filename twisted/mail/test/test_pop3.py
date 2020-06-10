@@ -5,9 +5,9 @@
 Test cases for Ltwisted.mail.pop3} module.
 """
 
-from __future__ import print_function
 
-import StringIO
+
+import io
 import hmac
 import base64
 import itertools
@@ -53,14 +53,14 @@ class UtilityTests(unittest.TestCase):
         c = pop3._IteratorBuffer(output.extend, input, 6)
         i = iter(c)
         self.assertEqual(output, []) # nothing is buffer
-        i.next()
+        next(i)
         self.assertEqual(output, []) # '012' is buffered
-        i.next()
+        next(i)
         self.assertEqual(output, []) # '012345' is buffered
-        i.next()
+        next(i)
         self.assertEqual(output, ['012', '345', '6']) # nothing is buffered
         for n in range(5):
-            i.next()
+            next(i)
         self.assertEqual(output, ['012', '345', '6', '7', '8', '9', '012', '345'])
 
 
@@ -168,11 +168,11 @@ class ListMailbox:
 
     def listMessages(self, i=None):
         if i is None:
-            return map(len, self.list)
+            return list(map(len, self.list))
         return len(self.list[i])
 
     def getMessage(self, i):
-        return StringIO.StringIO(self.list[i])
+        return io.StringIO(self.list[i])
 
     def getUidl(self, i):
         return i
@@ -285,13 +285,13 @@ class DummyMailbox(pop3.Mailbox):
 
     def listMessages(self, i=None):
         if i is None:
-            return map(len, self.messages)
+            return list(map(len, self.messages))
         if i >= len(self.messages):
             raise self.exceptionType()
         return len(self.messages[i])
 
     def getMessage(self, i):
-        return StringIO.StringIO(self.messages[i])
+        return io.StringIO(self.messages[i])
 
     def getUidl(self, i):
         if i >= len(self.messages):
@@ -446,7 +446,7 @@ class TestMailbox:
 
 class CapabilityTests(unittest.TestCase):
     def setUp(self):
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p = pop3.POP3()
         p.factory = TestServerFactory()
         p.transport = internet.protocol.FileWrapper(s)
@@ -456,7 +456,7 @@ class CapabilityTests(unittest.TestCase):
         self.caps = p.listCapabilities()
         self.pcaps = s.getvalue().splitlines()
 
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p.mbox = TestMailbox()
         p.transport = internet.protocol.FileWrapper(s)
         p.do_CAPA()
@@ -501,7 +501,7 @@ class CapabilityTests(unittest.TestCase):
 
 class GlobalCapabilitiesTests(unittest.TestCase):
     def setUp(self):
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p = pop3.POP3()
         p.factory = TestServerFactory()
         p.factory.pue = p.factory.puld = False
@@ -512,7 +512,7 @@ class GlobalCapabilitiesTests(unittest.TestCase):
         self.caps = p.listCapabilities()
         self.pcaps = s.getvalue().splitlines()
 
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p.mbox = TestMailbox()
         p.transport = internet.protocol.FileWrapper(s)
         p.do_CAPA()
@@ -550,7 +550,7 @@ class SASLTests(unittest.TestCase):
         ch.addUser('testuser', 'testpassword')
         p.portal.registerChecker(ch)
 
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p.transport = internet.protocol.FileWrapper(s)
         p.connectionMade()
 
@@ -592,7 +592,7 @@ More message text for you.
         p.schedule = list
         self.pop3Server = p
 
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p.transport = internet.protocol.FileWrapper(s)
         p.connectionMade()
         s.truncate(0)

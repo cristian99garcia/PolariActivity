@@ -35,12 +35,12 @@ class AFKManager(GObject.GObject):
         self.timeout_ids = { }  # Nickname: id
 
     def stop_counting(self, nickname):
-        if nickname in self.timeout_ids.keys() and self.timeout_ids[nickname] != None:
+        if nickname in list(self.timeout_ids.keys()) and self.timeout_ids[nickname] != None:
             GObject.source_remove(self.timeout_ids[nickname])
 
     def start_counting(self, nickname, restart=True):
-        if not nickname in self.timeout_ids.keys() or restart:
-            if nickname in self.timeout_ids.keys():
+        if not nickname in list(self.timeout_ids.keys()) or restart:
+            if nickname in list(self.timeout_ids.keys()):
                 self.emit("user-back", nickname)
 
             self.stop_counting(nickname)
@@ -48,7 +48,7 @@ class AFKManager(GObject.GObject):
             self.timeout_ids[nickname] = id
 
     def remove_nickname(self, nickname):
-        if nickname in self.timeout_ids.keys():
+        if nickname in list(self.timeout_ids.keys()):
             self.stop_counting(nickname)
             self.timeout_ids.pop(nickname)
 

@@ -9,7 +9,7 @@ allows access to a shell and a python interpreter over SSH.
 Maintainer: Paul Swartz
 """
 
-from __future__ import division, absolute_import
+
 
 import struct
 import signal
@@ -244,7 +244,7 @@ class SSHSessionProcessProtocol(protocol.ProcessProtocol):
                 sigvalue = getattr(signal, signame, None)
                 if sigvalue is not None:
                     self._signalValuesToNames[sigvalue] = signame
-            for k, v in signal.__dict__.items():
+            for k, v in list(signal.__dict__.items()):
                 # Check for platform specific signals, ignoring Python specific
                 # SIG_DFL and SIG_IGN
                 if k.startswith('SIG') and not k.startswith('SIG_'):

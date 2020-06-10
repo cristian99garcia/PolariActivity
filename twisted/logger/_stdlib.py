@@ -10,7 +10,7 @@ import logging as stdlibLogging
 
 from zope.interface import implementer
 
-from twisted.python.compat import _PY3, currentframe, unicode
+from twisted.python.compat import _PY3, currentframe, str
 from ._levels import LogLevel
 from ._format import formatEvent
 from ._observer import ILogObserver
@@ -33,7 +33,7 @@ def _reverseLogLevelMapping():
     @return: the reversed mapping
     """
     mapping = {}
-    for logLevel, pyLogLevel in toStdlibLogLevelMapping.items():
+    for logLevel, pyLogLevel in list(toStdlibLogLevelMapping.items()):
         mapping[pyLogLevel] = logLevel
         mapping[stdlibLogging.getLevelName(pyLogLevel)] = logLevel
     return mapping
@@ -135,7 +135,7 @@ class StringifiableFromEvent(object):
 
 
     def __bytes__(self):
-        return unicode(self).encode("utf-8")
+        return str(self).encode("utf-8")
 
     if _PY3:
         __str__ = __unicode__

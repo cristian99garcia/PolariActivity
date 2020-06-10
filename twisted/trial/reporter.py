@@ -8,7 +8,7 @@
 Defines classes that handle the results of tests.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import os

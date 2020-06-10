@@ -79,16 +79,16 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
 
-        @named(u'foo')
+        @named('foo')
         class Foo(object):
             pass
         foo = Foo()
-        _info = u'info'
+        _info = 'info'
 
         comp = self._makeOne()
         comp.registerUtility(foo, ifoo, info=_info)
         self.assertEqual(
-            comp._utility_registrations[ifoo, u'foo'],
+            comp._utility_registrations[ifoo, 'foo'],
             (foo, _info, None))
 
     def test_registerUtility_both_factory_and_component(self):
@@ -107,8 +107,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         _monkey, _events = self._wrapEvents()
@@ -139,8 +139,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         def _factory():
             return _to_reg
@@ -169,8 +169,8 @@ class ComponentsTests(unittest.TestCase):
         class Foo(object):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = Foo()
         comp = self._makeOne()
         self.assertRaises(TypeError,
@@ -187,8 +187,8 @@ class ComponentsTests(unittest.TestCase):
         class Foo(object):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = Foo()
         directlyProvides(_to_reg, ifoo)
         comp = self._makeOne()
@@ -214,8 +214,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name, _info)
@@ -230,9 +230,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info1 = u'info1'
-        _info2 = u'info2'
-        _name = u'name'
+        _info1 = 'info1'
+        _info2 = 'info2'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name, _info1)
@@ -242,7 +242,7 @@ class ComponentsTests(unittest.TestCase):
         self.assertEqual(len(_events), 2)  # unreg, reg
         self.assertEqual(comp._utility_registrations[(ifoo, _name)],
                          (_to_reg, _info2, None))  # replaced
-        self.assertEqual(comp.utilities._subscribers[0][ifoo][u''],
+        self.assertEqual(comp.utilities._subscribers[0][ifoo][''],
                          (_to_reg,))
 
     def test_registerUtility_w_different_names_same_component(self):
@@ -251,9 +251,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _other_reg = object()
         _to_reg = object()
         comp = self._makeOne()
@@ -266,7 +266,7 @@ class ComponentsTests(unittest.TestCase):
                          (_other_reg, _info, None))
         self.assertEqual(comp._utility_registrations[(ifoo, _name2)],
                          (_to_reg, _info, None))
-        self.assertEqual(comp.utilities._subscribers[0][ifoo][u''],
+        self.assertEqual(comp.utilities._subscribers[0][ifoo][''],
                          (_other_reg, _to_reg,))
 
     def test_registerUtility_replaces_existing_reg(self):
@@ -278,8 +278,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _before, _after = object(), object()
         comp = self._makeOne()
         comp.registerUtility(_before, ifoo, _name, _info)
@@ -316,9 +316,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -333,8 +333,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         _monkey, _events = self._wrapEvents()
@@ -361,7 +361,7 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _name = u'name'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         _monkey, _events = self._wrapEvents()
@@ -378,7 +378,7 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _name = u'name'
+        _name = 'name'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name)
@@ -409,8 +409,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         def _factory():
             return _to_reg
@@ -443,8 +443,8 @@ class ComponentsTests(unittest.TestCase):
         class Foo(object):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = Foo()
         directlyProvides(_to_reg, ifoo)
         comp = self._makeOne()
@@ -477,8 +477,8 @@ class ComponentsTests(unittest.TestCase):
         class Foo(object):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = Foo()
         directlyProvides(_to_reg, ifoo)
         comp = self._makeOne()
@@ -507,9 +507,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -525,9 +525,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = dict()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -546,9 +546,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = dict()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -569,9 +569,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = dict()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -593,9 +593,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _other_reg = object()
         _to_reg = object()
         comp = self._makeOne()
@@ -613,9 +613,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         # First register something hashable
         _other_reg = object()
         # Then it transfers to something unhashable
@@ -640,9 +640,9 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, _name1, _info)
@@ -724,8 +724,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, name=_name1)
@@ -747,8 +747,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _name1 = 'name1'
+        _name2 = 'name2'
         _to_reg = object()
         comp = self._makeOne()
         comp.registerUtility(_to_reg, ifoo, name=_name1)
@@ -765,16 +765,16 @@ class ComponentsTests(unittest.TestCase):
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
 
-        @named(u'foo')
+        @named('foo')
         class Foo(object):
             pass
-        _info = u'info'
+        _info = 'info'
 
         comp = self._makeOne()
         comp.registerAdapter(Foo, (ibar,), ifoo, info=_info)
 
         self.assertEqual(
-            comp._adapter_registrations[(ibar,), ifoo, u'foo'],
+            comp._adapter_registrations[(ibar,), ifoo, 'foo'],
             (Foo, _info))
 
     def test_registerAdapter_w_explicit_provided_and_required(self):
@@ -786,8 +786,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -819,8 +819,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         class _Factory(object):
             def __init__(self, context):
@@ -839,8 +839,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         @implementer(ifoo)
         class _Factory(object):
@@ -874,8 +874,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             def __init__(self, context):
                 self._context = context
@@ -890,8 +890,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             def __init__(self, context):
                 self._context = context
@@ -908,8 +908,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             def __init__(self, context):
                 self._context = context
@@ -946,8 +946,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             def __init__(self, context):
                 self._context = context
@@ -984,8 +984,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             def __init__(self, context):
                 self._context = context
@@ -1002,8 +1002,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         class _Factory(object):
             __component_adapts__ = (ibar,)
             def __init__(self, context):
@@ -1037,8 +1037,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _name = u'name'
+        _info = 'info'
+        _name = 'name'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -1185,9 +1185,9 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IFoo')
-        _info = u'info'
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _info = 'info'
+        _name1 = 'name1'
+        _name2 = 'name2'
         class _Factory(object):
             def __init__(self, context):
                 pass
@@ -1469,8 +1469,8 @@ class ComponentsTests(unittest.TestCase):
         class _Factory2(object):
             def __init__(self, context1, context2):
                 self.context = context1, context2
-        _name1 = u'name1'
-        _name2 = u'name2'
+        _name1 = 'name1'
+        _name2 = 'name2'
         comp = self._makeOne()
         comp.registerAdapter(_Factory1, (ibar, ibaz), ifoo, name=_name1)
         comp.registerAdapter(_Factory2, (ibar, ibaz), ifoo, name=_name2)
@@ -1488,8 +1488,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _name = u'name'
-        _info = u'info'
+        _name = 'name'
+        _info = 'info'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -1506,8 +1506,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _blank = u''
-        _info = u'info'
+        _blank = ''
+        _info = 'info'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -1544,8 +1544,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _blank = u''
+        _info = 'info'
+        _blank = ''
         _to_reg = object()
         @implementer(ifoo)
         class _Factory(object):
@@ -1582,8 +1582,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _info = u'info'
-        _blank = u''
+        _info = 'info'
+        _blank = ''
         class _Factory(object):
             __component_adapts__ = (ibar,)
             def __init__(self, context):
@@ -1618,8 +1618,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _blank = u''
-        _info = u'info'
+        _blank = ''
+        _info = 'info'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -1642,8 +1642,8 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IFoo')
-        _info = u'info'
-        _blank = u''
+        _info = 'info'
+        _blank = ''
         class _Factory(object):
             def __init__(self, context):
                 pass
@@ -1674,7 +1674,7 @@ class ComponentsTests(unittest.TestCase):
             pass
         ifoo = IFoo('IFoo')
         ibar = IFoo('IBar')
-        _nonblank = u'nonblank'
+        _nonblank = 'nonblank'
         comp = self._makeOne()
         self.assertRaises(TypeError, comp.unregisterSubscriptionAdapter,
                           required=ifoo, provided=ibar, name=_nonblank)
@@ -1884,7 +1884,7 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _nonblank = u'nonblank'
+        _nonblank = 'nonblank'
         comp = self._makeOne()
         def _factory(context):
             pass
@@ -1899,8 +1899,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _blank = u''
-        _info = u'info'
+        _blank = ''
+        _info = 'info'
         _to_reg = object()
         def _factory(context):
             return _to_reg
@@ -1931,8 +1931,8 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _info = u'info'
-        _blank = u''
+        _info = 'info'
+        _blank = ''
         class _Factory(object):
             __component_adapts__ = (ifoo,)
             def __init__(self, context):
@@ -1989,7 +1989,7 @@ class ComponentsTests(unittest.TestCase):
         class IFoo(InterfaceClass):
             pass
         ifoo = IFoo('IFoo')
-        _nonblank = u'nonblank'
+        _nonblank = 'nonblank'
         comp = self._makeOne()
         self.assertRaises(TypeError, comp.unregisterHandler,
                           required=(ifoo,), name=_nonblank)
@@ -2162,7 +2162,7 @@ class UtilityRegistrationTests(unittest.TestCase):
             def __repr__(self):
                 return '_REGISTRY'
         registry = _Registry()
-        name = u'name'
+        name = 'name'
         doc = 'DOCSTRING'
         klass = self._getTargetClass()
         return (klass(registry, ifoo, name, component, doc, factory),
@@ -2348,7 +2348,7 @@ class AdapterRegistrationTests(unittest.TestCase):
             def __repr__(self):
                 return '_REGISTRY'
         registry = _Registry()
-        name = u'name'
+        name = 'name'
         doc = 'DOCSTRING'
         klass = self._getTargetClass()
         return (klass(registry, (ibar,), ifoo, name, component, doc),
@@ -2557,7 +2557,7 @@ class SubscriptionRegistrationTests(unittest.TestCase):
             def __repr__(self):
                 return '_REGISTRY'
         registry = _Registry()
-        name = u'name'
+        name = 'name'
         doc = 'DOCSTRING'
         klass = self._getTargetClass()
         return (klass(registry, (ibar,), ifoo, name, component, doc),
@@ -2593,7 +2593,7 @@ class HandlerRegistrationTests(unittest.TestCase):
             def __repr__(self):
                 return '_REGISTRY'
         registry = _Registry()
-        name = u'name'
+        name = 'name'
         doc = 'DOCSTRING'
         klass = self._getTargetClass()
         return (klass(registry, (ifoo,), name, component, doc),
@@ -2643,14 +2643,14 @@ class _Monkey(object):
     def __init__(self, module, **kw):
         self.module = module
         self.to_restore = dict([(key, getattr(module, key)) for key in kw])
-        for key, value in kw.items():
+        for key, value in list(kw.items()):
             setattr(module, key, value)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for key, value in self.to_restore.items():
+        for key, value in list(self.to_restore.items()):
             setattr(self.module, key, value)
 
 def test_suite():

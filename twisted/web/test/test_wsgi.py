@@ -328,7 +328,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         The C{'REQUEST_METHOD'} key of the C{environ} C{dict} passed to the
         application is always a native string.
         """
-        for method in b"GET", u"GET":
+        for method in b"GET", "GET":
             request, result = self.prepareRequest()
             request.requestReceived(method)
             result.addCallback(self.environKeyEqual('REQUEST_METHOD', 'GET'))
@@ -381,10 +381,10 @@ class EnvironTests(WSGITestsMixin, TestCase):
             # Native strings are rejected by Request.requestReceived() before
             # t.w.wsgi has any say in the matter.
             request, result = self.prepareRequest()
-            self.assertRaises(TypeError, request.requestReceived, path=u"/res")
+            self.assertRaises(TypeError, request.requestReceived, path="/res")
         else:
             request, result = self.prepareRequest()
-            request.requestReceived(path=u"/res")
+            request.requestReceived(path="/res")
             result.addCallback(self.environKeyEqual('SCRIPT_NAME', '/res'))
             self.assertIsInstance(self.successResultOf(result), str)
 
@@ -440,10 +440,10 @@ class EnvironTests(WSGITestsMixin, TestCase):
             # t.w.wsgi has any say in the matter.
             request, result = self.prepareRequest()
             self.assertRaises(
-                TypeError, request.requestReceived, path=u"/res/foo/bar")
+                TypeError, request.requestReceived, path="/res/foo/bar")
         else:
             request, result = self.prepareRequest()
-            request.requestReceived(path=u"/res/foo/bar")
+            request.requestReceived(path="/res/foo/bar")
             result.addCallback(self.environKeyEqual('PATH_INFO', '/foo/bar'))
             self.assertIsInstance(self.successResultOf(result), str)
 
@@ -493,10 +493,10 @@ class EnvironTests(WSGITestsMixin, TestCase):
             # t.w.wsgi has any say in the matter.
             request, result = self.prepareRequest()
             self.assertRaises(
-                TypeError, request.requestReceived, path=u"/res?foo=bar")
+                TypeError, request.requestReceived, path="/res?foo=bar")
         else:
             request, result = self.prepareRequest()
-            request.requestReceived(path=u"/res?foo=bar")
+            request.requestReceived(path="/res?foo=bar")
             result.addCallback(self.environKeyEqual('QUERY_STRING', 'foo=bar'))
             self.assertIsInstance(self.successResultOf(result), str)
 
@@ -522,7 +522,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         The C{'CONTENT_TYPE'} key of the C{environ} C{dict} passed to the
         application is always a native string.
         """
-        for contentType in b"x-foo/bar", u"x-foo/bar":
+        for contentType in b"x-foo/bar", "x-foo/bar":
             request, result = self.prepareRequest()
             request.requestHeaders.addRawHeader(b"Content-Type", contentType)
             request.requestReceived()
@@ -551,7 +551,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         The C{'CONTENT_LENGTH'} key of the C{environ} C{dict} passed to the
         application is always a native string.
         """
-        for contentLength in b"1234", u"1234":
+        for contentLength in b"1234", "1234":
             request, result = self.prepareRequest()
             request.requestHeaders.addRawHeader(b"Content-Length", contentLength)
             request.requestReceived()
@@ -584,7 +584,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         The C{'SERVER_NAME'} key of the C{environ} C{dict} passed to the
         application is always a native string.
         """
-        for serverName in b"host.example.com", u"host.example.com":
+        for serverName in b"host.example.com", "host.example.com":
             request, result = self.prepareRequest()
             # This is kind of a cheat; getRequestHostname() breaks in Python 3
             # when the "Host" request header is set to a native string because
@@ -645,7 +645,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         The C{'SERVER_PROTOCOL'} key of the C{environ} C{dict} passed to the
         application is always a native string.
         """
-        for serverProtocol in b"1.1", u"1.1":
+        for serverProtocol in b"1.1", "1.1":
             request, result = self.prepareRequest()
             # In Python 3, native strings can be rejected by Request.write()
             # which will cause a crash after the bit we're trying to test, so
@@ -804,7 +804,7 @@ class EnvironTests(WSGITestsMixin, TestCase):
         errors = environ["wsgi.errors"]
 
         with warnings.catch_warnings(record=True) as caught:
-            errors.write(u"fred")
+            errors.write("fred")
         self.assertEqual(1, len(caught))
         self.assertEqual(UnicodeWarning, caught[0].category)
         self.assertEqual(
@@ -1143,7 +1143,7 @@ class InputStreamStringIOTests(InputStreamTestMixin, TestCase):
     """
     def getFileType(self):
         try:
-            from StringIO import StringIO
+            from io import StringIO
         except ImportError:
             raise SkipTest("StringIO.StringIO is not available.")
         else:
@@ -1160,7 +1160,7 @@ class InputStreamCStringIOTests(InputStreamTestMixin, TestCase):
     """
     def getFileType(self):
         try:
-            from cStringIO import StringIO
+            from io import StringIO
         except ImportError:
             raise SkipTest("cStringIO.StringIO is not available.")
         else:
@@ -1224,7 +1224,7 @@ class StartResponseTests(WSGITestsMixin, TestCase):
         The response status passed to the I{start_response} callable MUST be a
         native string in Python 2 and Python 3.
         """
-        status = b"200 OK" if _PY3 else u"200 OK"
+        status = b"200 OK" if _PY3 else "200 OK"
 
         def application(environ, startResponse):
             startResponse(status, [])
@@ -1419,7 +1419,7 @@ class StartResponseTests(WSGITestsMixin, TestCase):
         Each header key passed to the I{start_response} callable MUST be at
         native string in Python 2 and Python 3.
         """
-        key = b"key" if _PY3 else u"key"
+        key = b"key" if _PY3 else "key"
 
         def application(environ, startResponse):
             startResponse("200 OK", [(key, "value")])
@@ -1441,7 +1441,7 @@ class StartResponseTests(WSGITestsMixin, TestCase):
         Each header value passed to the I{start_response} callable MUST be at
         native string in Python 2 and Python 3.
         """
-        value = b"value" if _PY3 else u"value"
+        value = b"value" if _PY3 else "value"
 
         def application(environ, startResponse):
             startResponse("200 OK", [("key", value)])
@@ -1742,7 +1742,7 @@ class StartResponseTests(WSGITestsMixin, TestCase):
         """
         def application(environ, startResponse):
             write = startResponse("200 OK", [])
-            write(u"bogus")
+            write("bogus")
             return iter(())
 
         request, result = self.prepareRequest(application)

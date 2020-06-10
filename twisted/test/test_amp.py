@@ -6,7 +6,7 @@
 Tests for L{twisted.protocols.amp}.
 """
 
-from __future__ import absolute_import, division
+
 
 import datetime
 import decimal
@@ -287,9 +287,9 @@ class SimpleSymmetricCommandProtocol(FactoryNotifier):
 
     def okiwont(self, magicWord, list=None):
         if list is None:
-            response = u'list omitted'
+            response = 'list omitted'
         else:
-            response = u'%s accepted' % (list[0]['name'])
+            response = '%s accepted' % (list[0]['name'])
         return dict(response=response)
     DontRejectMe.responder(okiwont)
 
@@ -386,7 +386,7 @@ class AmpBoxTests(unittest.TestCase):
         """
         Verify that TypeError is raised when trying to serialize Unicode keys.
         """
-        a = amp.AmpBox(**{u'key': 'value'})
+        a = amp.AmpBox(**{'key': 'value'})
         self.assertRaises(TypeError, a.serialize)
 
     def test_serializeUnicodeValueRaises(self):
@@ -394,7 +394,7 @@ class AmpBoxTests(unittest.TestCase):
         Verify that TypeError is raised when trying to serialize Unicode
         values.
         """
-        a = amp.AmpBox(key=u'value')
+        a = amp.AmpBox(key='value')
         self.assertRaises(TypeError, a.serialize)
 
 
@@ -625,7 +625,7 @@ class CommandDispatchTests(unittest.TestCase):
                                                    b'print': b"ignored",
                                                    b'_answer': b"1"}))
         self.assertEqual(answers, [dict(hello=b"yay",
-                                         Print=u"ignored")])
+                                         Print="ignored")])
 
 
     def _localCallbackErrorLoggingTest(self, callResult):
@@ -1244,7 +1244,7 @@ class AMPTests(unittest.TestCase):
             ClientClass=SimpleSymmetricCommandProtocol)
         L = []
         HELLO = b'world'
-        HELLO_UNICODE = u'wor\u1234ld'
+        HELLO_UNICODE = 'wor\u1234ld'
         c.sendUnicodeHello(HELLO, HELLO_UNICODE).addCallback(L.append)
         p.flush()
         self.assertEqual(L[0]['hello'], HELLO)
@@ -1603,7 +1603,7 @@ class AMPTests(unittest.TestCase):
             ServerClass=SimpleSymmetricCommandProtocol,
             ClientClass=SimpleSymmetricCommandProtocol)
         L = []
-        c.callRemote(DontRejectMe, magicWord=u'please').addCallback(L.append)
+        c.callRemote(DontRejectMe, magicWord='please').addCallback(L.append)
         p.flush()
         response = L.pop().get('response')
         self.assertEqual(response, 'list omitted')
@@ -1617,8 +1617,8 @@ class AMPTests(unittest.TestCase):
             ServerClass=SimpleSymmetricCommandProtocol,
             ClientClass=SimpleSymmetricCommandProtocol)
         L = []
-        c.callRemote(DontRejectMe, magicWord=u'please',
-                list=[{'name': u'foo'}]).addCallback(L.append)
+        c.callRemote(DontRejectMe, magicWord='please',
+                list=[{'name': 'foo'}]).addCallback(L.append)
         p.flush()
         response = L.pop().get('response')
         self.assertEqual(response, 'foo accepted')
@@ -2375,7 +2375,7 @@ class ProtocolIncludingArgument(amp.Argument):
         @type obj: L{object}
         @type protocol: L{amp.AMP}
         """
-        ident = u"%d:%d" % (id(obj), id(protocol))
+        ident = "%d:%d" % (id(obj), id(protocol))
         return ident.encode("ascii")
 
 
@@ -2557,7 +2557,7 @@ class CommandTests(unittest.TestCase):
         protocol = object()
         argument = object()
         objects = {'weird': argument}
-        ident = u"%d:%d" % (id(argument), id(protocol))
+        ident = "%d:%d" % (id(argument), id(protocol))
         self.assertEqual(
             ProtocolIncludingCommand.makeArguments(objects, protocol),
             {b'weird': ident.encode("ascii")})
@@ -2642,7 +2642,7 @@ class CommandTests(unittest.TestCase):
         """
         error = self.assertRaises(
             TypeError, type, "NewCommand", (amp.Command, ),
-            {"commandName": u"FOO"})
+            {"commandName": "FOO"})
         self.assertRegex(
             str(error), "^Command names must be byte strings, got: u?'FOO'$")
 
@@ -2653,7 +2653,7 @@ class CommandTests(unittest.TestCase):
         """
         error = self.assertRaises(
             TypeError, type, "NewCommand", (amp.Command, ),
-            {"arguments": [(u"foo", None)]})
+            {"arguments": [("foo", None)]})
         self.assertRegex(
             str(error), "^Argument names must be byte strings, got: u?'foo'$")
 
@@ -2664,7 +2664,7 @@ class CommandTests(unittest.TestCase):
         """
         error = self.assertRaises(
             TypeError, type, "NewCommand", (amp.Command, ),
-            {"response": [(u"foo", None)]})
+            {"response": [("foo", None)]})
         self.assertRegex(
             str(error), "^Response names must be byte strings, got: u?'foo'$")
 
@@ -2687,7 +2687,7 @@ class CommandTests(unittest.TestCase):
         """
         error = self.assertRaises(
             TypeError, type, "NewCommand", (amp.Command, ),
-            {"errors": [(ZeroDivisionError, u"foo")]})
+            {"errors": [(ZeroDivisionError, "foo")]})
         self.assertRegex(
             str(error), "^Error names must be byte strings, got: u?'foo'$")
 
@@ -2711,7 +2711,7 @@ class CommandTests(unittest.TestCase):
         """
         error = self.assertRaises(
             TypeError, type, "NewCommand", (amp.Command, ),
-            {"fatalErrors": [(ZeroDivisionError, u"foo")]})
+            {"fatalErrors": [(ZeroDivisionError, "foo")]})
         self.assertRegex(
             str(error), "^Fatal error names must be byte strings, "
             "got: u?'foo'$")
@@ -2821,8 +2821,8 @@ class ListOfUnicodeTests(unittest.TestCase, ListOfTestsMixin):
 
     objects = {
         "empty": [],
-        "single": [u"foo"],
-        "multiple": [u"\N{SNOWMAN}", u"Hello", u"world"]}
+        "single": ["foo"],
+        "multiple": ["\N{SNOWMAN}", "Hello", "world"]}
 
 
 
@@ -2947,7 +2947,7 @@ class FloatTests(unittest.TestCase):
         is not a L{float}.
         """
         argument = amp.Float()
-        self.assertRaises(ValueError, argument.toString, u"1.234")
+        self.assertRaises(ValueError, argument.toString, "1.234")
         self.assertRaises(ValueError, argument.toString, b"1.234")
         self.assertRaises(ValueError, argument.toString, 1234)
 
