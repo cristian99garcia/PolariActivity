@@ -258,7 +258,7 @@ class ChatBox(Gtk.VBox):
     def set_entries_theme(self):
         theme_entry = "GtkEntry {border-radius:0px 30px 30px 0px;}"
         css_provider_entry = Gtk.CssProvider()
-        css_provider_entry.load_from_data(theme_entry)
+        css_provider_entry.load_from_data(theme_entry.encode('utf-8'))
 
         style_context = self.entry.get_style_context()
         style_context.add_provider(css_provider_entry,
