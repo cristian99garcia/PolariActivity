@@ -5,7 +5,7 @@
 Tests for L{incremental.update}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import os
@@ -107,7 +107,7 @@ __all__ = ["__version__"]
         """
         out = []
         with self.assertRaises(ValueError):
-            _run(u'inctestpkg', path=None, newversion=None,
+            _run('inctestpkg', path=None, newversion=None,
                  patch=False, rc=False, post=False, dev=True, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
 
@@ -149,7 +149,7 @@ __all__ = ["__version__"]
         version of the package on the given path
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None,
+        _run('inctestpkg', path=None, newversion=None,
              patch=False, rc=False, post=False, dev=True, create=False,
              _date=self.date, _getcwd=self.getcwd, _print=out.append)
 
@@ -168,7 +168,7 @@ __version__ = Version('inctestpkg', 1, 2, 3, dev=0)
 __all__ = ["__version__"]
 ''')
 
-        _run(u'inctestpkg', path=None, newversion=None,
+        _run('inctestpkg', path=None, newversion=None,
              patch=False, rc=False, post=False, dev=True, create=False,
              _date=self.date, _getcwd=self.getcwd, _print=out.append)
 
@@ -225,7 +225,7 @@ __all__ = ["__version__"]
         version of the package on the given path
         """
         out = []
-        _run(u'inctestpkg', path=self.packagedir.path, newversion=None,
+        _run('inctestpkg', path=self.packagedir.path, newversion=None,
              patch=False, rc=False, post=False, dev=True, create=False,
              _date=self.date, _print=out.append)
 
@@ -249,7 +249,7 @@ __all__ = ["__version__"]
         `incremental.update package --dev` increments the dev version.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=False,
              post=False, dev=True, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -273,7 +273,7 @@ __all__ = ["__version__"]
         `incremental.update package --patch` increments the patch version.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=True, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=True, rc=False,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -309,7 +309,7 @@ __all__ = ["__version__"]
 """)
 
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=True, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=True, rc=False,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -333,7 +333,7 @@ __all__ = ["__version__"]
         version and makes it a release candidate.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=True, rc=True,
+        _run('inctestpkg', path=None, newversion=None, patch=True, rc=True,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -369,7 +369,7 @@ __all__ = ["__version__"]
 """)
 
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=True,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=True,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -406,7 +406,7 @@ __all__ = ["__version__"]
 """)
 
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=True,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=True,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -436,7 +436,7 @@ next_released_version = "inctestpkg 16.8.0rc1"
         candidate, will issue the major/minor, sans release candidate or dev.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=True,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=True,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -460,7 +460,7 @@ introduced_in = Version('inctestpkg', 16, 8, 0, release_candidate=1).short()
 next_released_version = "inctestpkg 16.8.0rc1"
 """)
 
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=False,
              post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -491,7 +491,7 @@ next_released_version = "inctestpkg 16.8.0"
         """
         out = []
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=False, post=False, dev=False, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
 
@@ -504,7 +504,7 @@ next_released_version = "inctestpkg 16.8.0"
         `incremental.update package --post` increments the post version.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=False,
              post=True, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -535,7 +535,7 @@ __all__ = ["__version__"]
 """)
 
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=False,
              post=True, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -565,7 +565,7 @@ __all__ = ["__version__"]
 """)
 
         out = []
-        _run(u'inctestpkg', path=None, newversion=None, patch=False, rc=False,
+        _run('inctestpkg', path=None, newversion=None, patch=False, rc=False,
              post=True, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 
@@ -596,25 +596,25 @@ next_released_version = "inctestpkg 1.2.3post2"
         """
         out = []
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion="1", patch=True,
+            _run('inctestpkg', path=None, newversion="1", patch=True,
                  rc=False, post=False, dev=False, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --newversion")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion="1", patch=False,
+            _run('inctestpkg', path=None, newversion="1", patch=False,
                  rc=True, post=False, dev=False, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --newversion")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion="1", patch=False,
+            _run('inctestpkg', path=None, newversion="1", patch=False,
                  rc=False, post=True, dev=False, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --newversion")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion="1", patch=False,
+            _run('inctestpkg', path=None, newversion="1", patch=False,
                  rc=False, post=False, dev=True, create=False,
                  _date=self.date, _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --newversion")
@@ -625,19 +625,19 @@ next_released_version = "inctestpkg 1.2.3post2"
         """
         out = []
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=True,
+            _run('inctestpkg', path=None, newversion=None, patch=True,
                  rc=False, post=False, dev=True, create=False, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --dev")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=True, post=False, dev=True, create=False, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --dev")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=False, post=True, dev=True, create=False, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --dev")
@@ -649,31 +649,31 @@ next_released_version = "inctestpkg 1.2.3post2"
         """
         out = []
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=True,
+            _run('inctestpkg', path=None, newversion=None, patch=True,
                  rc=False, post=False, dev=False, create=True, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --create")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion="1", patch=False,
+            _run('inctestpkg', path=None, newversion="1", patch=False,
                  rc=False, post=False, dev=False, create=True, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --create")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=True, post=False, dev=False, create=True, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --create")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=False, post=True, dev=False, create=True, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --create")
 
         with self.assertRaises(ValueError) as e:
-            _run(u'inctestpkg', path=None, newversion=None, patch=False,
+            _run('inctestpkg', path=None, newversion=None, patch=False,
                  rc=False, post=False, dev=True, create=True, _date=self.date,
                  _getcwd=self.getcwd, _print=out.append)
         self.assertEqual(e.exception.args[0], "Only give --create")
@@ -684,7 +684,7 @@ next_released_version = "inctestpkg 1.2.3post2"
         set that version in the package.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion="1.2.3rc1post2dev3",
+        _run('inctestpkg', path=None, newversion="1.2.3rc1post2dev3",
              patch=False, rc=False, post=False, dev=False, create=False,
              _date=self.date, _getcwd=self.getcwd, _print=out.append)
 
@@ -716,7 +716,7 @@ next_released_version = "inctestpkg 1.2.3rc1post2dev3"
         version in the package.
         """
         out = []
-        _run(u'inctestpkg', path=None, newversion="1", patch=False,
+        _run('inctestpkg', path=None, newversion="1", patch=False,
              rc=False, post=False, dev=False, create=False, _date=self.date,
              _getcwd=self.getcwd, _print=out.append)
 

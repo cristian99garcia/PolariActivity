@@ -5,7 +5,7 @@
 Unit tests for L{constantly}.
 """
 
-from __future__ import division, absolute_import
+
 
 from twisted.trial.unittest import TestCase
 
@@ -1000,7 +1000,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__lt__} returns C{NotImplemented}
         when comparing constants of different types.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__lt__(ValuedLetters.alpha)
         )
@@ -1011,7 +1011,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__le__} returns C{NotImplemented}
         when comparing constants of different types.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__le__(ValuedLetters.alpha)
         )
@@ -1022,7 +1022,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__gt__} returns C{NotImplemented}
         when comparing constants of different types.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__gt__(ValuedLetters.alpha)
         )
@@ -1033,7 +1033,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__ge__} returns C{NotImplemented}
         when comparing constants of different types.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__ge__(ValuedLetters.alpha)
         )
@@ -1044,7 +1044,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__lt__} returns C{NotImplemented}
         when comparing constants belonging to different containers.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__lt__(MoreNamedLetters.digamma)
         )
@@ -1055,7 +1055,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__le__} returns C{NotImplemented}
         when comparing constants belonging to different containers.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__le__(MoreNamedLetters.digamma)
         )
@@ -1066,7 +1066,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__gt__} returns C{NotImplemented}
         when comparing constants belonging to different containers.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__gt__(MoreNamedLetters.digamma)
         )
@@ -1077,7 +1077,7 @@ class OrderedConstantsTests(TestCase):
         L{constantly._constants._Constant.__ge__} returns C{NotImplemented}
         when comparing constants belonging to different containers.
         """
-        self.assertEquals(
+        self.assertEqual(
             NotImplemented,
             NamedLetters.alpha.__ge__(MoreNamedLetters.digamma)
         )
@@ -1110,9 +1110,9 @@ class ValuedLetters(Values):
     # definition is order different from the order of the values, which lets us
     # test that we're not somehow ordering by value and happen the get the same
     # results.
-    alpha   = ValueConstant(u'\u0391')
-    digamma = ValueConstant(u'\u03dc')
-    zeta    = ValueConstant(u'\u0396')
+    alpha   = ValueConstant('\u0391')
+    digamma = ValueConstant('\u03dc')
+    zeta    = ValueConstant('\u0396')
 
 
 

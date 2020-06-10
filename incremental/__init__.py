@@ -7,7 +7,7 @@ Versions for Python packages.
 See L{Version}.
 """
 
-from __future__ import division, absolute_import
+
 
 import sys
 import warnings

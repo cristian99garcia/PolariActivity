@@ -7,7 +7,7 @@ Symbolic constant support, including collections and constants with text,
 numeric, and bit flag values.
 """
 
-from __future__ import division, absolute_import
+
 
 __all__ = []
 
@@ -165,7 +165,7 @@ class _ConstantsContainerType(type):
             return cls
 
         constants = []
-        for (name, descriptor) in attributes.items():
+        for (name, descriptor) in list(attributes.items()):
             if isinstance(descriptor, cls._constantType):
                 if descriptor._container is not None:
                     raise ValueError(
@@ -265,7 +265,7 @@ class _ConstantsContainer(_ConstantsContainerType('', (object,), {})):
         @return: an iterator the elements of which are the L{NamedConstant}
             instances defined in the body of this L{Names} subclass.
         """
-        constants = cls._enumerants.values()
+        constants = list(cls._enumerants.values())
 
         return iter(
             sorted(constants, key=lambda descriptor: descriptor._index))
@@ -455,7 +455,7 @@ class FlagConstant(_Constant):
         return bool(flag & self)
 
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         @return: C{False} if this flag's value is 0, else C{True}.
         """
