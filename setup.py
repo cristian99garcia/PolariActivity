@@ -23,6 +23,7 @@ import os
 import sys
 import subprocess
 import re
+import six
 
 IGNORE_DIRS = ['dist', '.git', 'screenshots']
 IGNORE_FILES = ['.gitignore', 'MANIFEST', '*.pyc', '*~', '*.bak', 'pseudo.po']
@@ -68,7 +69,8 @@ def cmd_genpot(config, options):
 
     args = ['xgettext', '--join-existing', '--language=Python',
             '--keyword=_', '--add-comments=TRANS:', '--output=%s' % pot_file]
-
+    if six.PY3:
+        args.insert(5, '--from-code=UTF-8')
     args += python_files
     retcode = subprocess.call(args)
     if retcode:
