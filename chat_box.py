@@ -21,13 +21,14 @@
 from gettext import gettext as _
 
 from consts import CONNECTION_ERROR, NICKNAME_USED, SUGAR, CHAT_FONT, Color, \
-                   Key, STATUS_CHANNEL
+    Key, STATUS_CHANNEL
 
 from utils import get_urls, beep, remove_usertypes
 from nicknames_listbox import NicknamesListBox
 from topic_label import TopicLabel
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -37,11 +38,10 @@ from gi.repository import GObject
 
 
 class ChatBox(Gtk.VBox):
-
     __gsignals__ = {
         "stop-widget": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Channel
         "send-message": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, message
-        "command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]),   # Channel, command, parameters
+        "command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]),  # Channel, command, parameters
         "change-nickname": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # New nickname
         "query": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Nickname
         "change-topic": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, Topic
@@ -52,13 +52,13 @@ class ChatBox(Gtk.VBox):
 
         self.nick = None
         self.current_channel = None
-        self.channels = [ ]
-        self.last_nick = { }  # channel: str
-        self.nicks = { }  # channel: list
-        self.views = { }  # channel: GtkTextView
-        self.buffers = { }  # channel: GtkTextBuffer
-        self.nicks_listboxs = { }  # channel: NicknamesListBox
-        self.topic_labels = { }  # channel: TopicLabel
+        self.channels = []
+        self.last_nick = {}  # channel: str
+        self.nicks = {}  # channel: list
+        self.views = {}  # channel: GtkTextView
+        self.buffers = {}  # channel: GtkTextBuffer
+        self.nicks_listboxs = {}  # channel: NicknamesListBox
+        self.topic_labels = {}  # channel: TopicLabel
 
         self._last_tag = "message2"
 
@@ -156,13 +156,13 @@ class ChatBox(Gtk.VBox):
         if channel == self.current_channel:
             return
 
-        if self.topic_box.get_children() != []:
+        if self.topic_box.get_children():
             self.topic_box.remove(self.topic_box.get_children()[0])
 
-        if self.scroll.get_child() != None:
+        if self.scroll.get_child() is not None:
             self.scroll.remove(self.scroll.get_child())
 
-        if self.nicks_box.get_children() != []:
+        if self.nicks_box.get_children():
             self.nicks_box.remove(self.nicks_box.get_children()[0])
 
         self.current_channel = channel
@@ -202,7 +202,7 @@ class ChatBox(Gtk.VBox):
         self.entry.set_text("")
 
     def add_text_with_tag(self, channel, text, tag):
-        if not channel in self.channels and channel[1:] in self.channels:
+        if channel not in self.channels and channel[1:] in self.channels:
             channel = channel[1:]
 
         end = self.buffers[channel].get_end_iter()
@@ -215,7 +215,7 @@ class ChatBox(Gtk.VBox):
     def add_message_to_view(self, channel, user, message, force=False):
         if user != self.nick or force:
             if user == self.last_nick[channel]:
-                user = " "  * (len(user) + 2)
+                user = " " * (len(user) + 2)
 
             else:
                 self.last_nick[channel] = user
@@ -244,7 +244,7 @@ class ChatBox(Gtk.VBox):
         end = self.buffers[channel].get_end_iter()
         match = start.forward_search(text, 0, end)
 
-        if match != None:
+        if match is not None:
             match_start, match_end = match
             self.buffers[channel].apply_tag_by_name(tag, match_start, match_end)
             self.search_and_mark(channel, text, match_end, tag)

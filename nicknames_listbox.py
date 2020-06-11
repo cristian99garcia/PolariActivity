@@ -19,9 +19,10 @@
 # Boston, MA 02111-1307, USA.
 
 from consts import Color, SUGAR, ADMIN_PIXBUF, MODERATOR_PIXBUF, \
-                   NORMAL_PIXBUF, UserType, UserState
+    NORMAL_PIXBUF, UserType, UserState
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -31,7 +32,6 @@ from gi.repository import GObject
 
 
 class NicknamesListBox(Gtk.ScrolledWindow):
-
     __gsignals__ = {
         "query": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Nickname
     }

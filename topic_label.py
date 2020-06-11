@@ -23,6 +23,7 @@ from gettext import gettext as _
 from consts import TopicLabelMode, Key
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -32,7 +33,6 @@ from gi.repository import GObject
 
 
 class TopicLabel(Gtk.EventBox):
-
     __gsignals__ = {
         "change-topic": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Topic
     }
@@ -71,17 +71,17 @@ class TopicLabel(Gtk.EventBox):
         self.mode = mode
 
         if self.mode == TopicLabelMode.SHOWING:
-            if self.entry.get_parent() != None:
+            if self.entry.get_parent() is not None:
                 self.remove(self.entry)
 
-            if self.label.get_parent() == None:
+            if self.label.get_parent() is None:
                 self.add(self.label)
 
         elif self.mode == TopicLabelMode.EDITING:
-            if self.label.get_parent() != None:
+            if self.label.get_parent() is not None:
                 self.remove(self.label)
 
-            if self.entry.get_parent() == None:
+            if self.entry.get_parent() is None:
                 self.add(self.entry)
 
         self.show_all()

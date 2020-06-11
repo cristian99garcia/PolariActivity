@@ -21,9 +21,10 @@
 from gettext import gettext as _
 
 from consts import Color, NEW_CHANNEL_SCREEN_FONT, DEFAULT_NICKNAME, \
-                   DEFAULT_SERVER, DEFAULT_PORT, DEFAULT_CHANNEL
+    DEFAULT_SERVER, DEFAULT_PORT, DEFAULT_CHANNEL
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -67,7 +68,6 @@ class AddChannelButton(Gtk.Button):
 
 
 class NewChannelScreen(Gtk.EventBox):
-
     __gsignals__ = {
         "log-in": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str, int]),
         "new-channel": (GObject.SIGNAL_RUN_FIRST, None, [str]),
@@ -143,10 +143,10 @@ class NewChannelScreen(Gtk.EventBox):
             if not self.logged:
                 self.logged = True
                 self.emit("log-in",
-                    self.nick.get_value(),
-                    self.server.get_value(),
-                    self.channels.get_value(),
-                    int(self.port.get_value()))
+                          self.nick.get_value(),
+                          self.server.get_value(),
+                          self.channels.get_value(),
+                          int(self.port.get_value()))
 
             else:
                 self.emit("new-channel", self.channels.get_value())

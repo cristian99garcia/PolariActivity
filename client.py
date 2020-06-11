@@ -28,9 +28,10 @@ from twisted.internet.error import ReactorAlreadyInstalledError
 
 try:
     from twisted.internet import gtk3reactor
+
     gtk3reactor.install()
 except ReactorAlreadyInstalledError:
-    print ("Error doing 'gtk3reactor.install()', may not work properly")
+    print("Error doing 'gtk3reactor.install()', may not work properly")
 
 from twisted.words.protocols import irc
 from twisted.internet import reactor
@@ -47,7 +48,6 @@ def get_random_nickname():
 
 
 class Client(irc.IRCClient, GObject.GObject):
-
     nickname = get_random_nickname()
     first_nickname = nickname
 
@@ -63,7 +63,7 @@ class Client(irc.IRCClient, GObject.GObject):
         "user-quit": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Nickname, Message
         "user-kicked": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str, str]),  # Channel, Nickname, Kicker, Message
         "nicknames-list": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, Nicknames list (splited by " ")
-        "me-command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]), # Channel, Nickname, Message
+        "me-command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]),  # Channel, Nickname, Message
         "status-message": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Message
         "topic-changed": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, Topic
         "mode-changed": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str])  # Channel, UserType, Nickname
@@ -109,7 +109,7 @@ class Client(irc.IRCClient, GObject.GObject):
             self.emit("nickname-changed", self.nickname)
 
     def alterCollidedNick(self, nickname):
-        return (nickname + "^")
+        return nickname + "^"
 
     def userJoined(self, nickname, channel):
         self.emit("user-joined", channel, nickname)
@@ -150,7 +150,7 @@ class Client(irc.IRCClient, GObject.GObject):
             usertype = UserType.ADMIN
 
         self.__who_reply.append(data[5] + "@" + usertype)
- 
+
     def irc_RPL_ENDOFWHO(self, *nargs):
         nicknames = ""
         for nick in self.__who_reply:
@@ -159,7 +159,7 @@ class Client(irc.IRCClient, GObject.GObject):
         nicknames = nicknames[:-1]
 
         self.emit("nicknames-list", self.__who_channel, nicknames)
- 
+
         self.__who_reply = []
         self.__who_channel = None
 
@@ -213,7 +213,9 @@ class Client(irc.IRCClient, GObject.GObject):
         self.emit("topic-changed", channel, topic)
 
         if "." not in nickname:
-            self.emit("system-message", channel, _("{nickname} changed the topic of {channel} to: {topic}").format(nickname=nickname, channel=channel, topic=topic))
+            self.emit("system-message", channel,
+                      _("{nickname} changed the topic of {channel} to: {topic}").format(nickname=nickname,
+                                                                                        channel=channel, topic=topic))
 
     def noticed(self, nickname, mynickname, message):
         self.emit("status-message", "== " + nickname.split("!")[0] + " " + message)
@@ -221,7 +223,8 @@ class Client(irc.IRCClient, GObject.GObject):
         if "You are now identified for" in message:
             new_nick = message.split(" ")[-1][1:-2]
             self.emit("nickname-changed", new_nick)
-            self.emit("system-message", CURRENT_CHANNEL, _("You are now identified for {new_nick}").format(new_nick=new_nick))
+            self.emit("system-message", CURRENT_CHANNEL,
+                      _("You are now identified for {new_nick}").format(new_nick=new_nick))
 
     def modeChanged(self, user, channel, set, modes, args):
         usertype = UserType.NORMAL
@@ -245,14 +248,15 @@ class Client(irc.IRCClient, GObject.GObject):
 
         else:
             if args[0] != None:
-                message = _("{changer} puts mode {plusminus}{modes} to {args}").format(changer=changer, plusminus = "+" if set else "-", modes=modes, args=args[0])
+                message = _("{changer} puts mode {plusminus}{modes} to {args}").format(changer=changer,
+                                                                                       plusminus="+" if set else "-",
+                                                                                       modes=modes, args=args[0])
                 self.emit("system-message", channel, message)
 
         self.emit("mode-changed", channel, usertype, args[0])
 
 
 class ClientFactory(protocol.ClientFactory, GObject.GObject):
-
     protocol = Client
 
     __gsignals__ = {
@@ -267,7 +271,7 @@ class ClientFactory(protocol.ClientFactory, GObject.GObject):
         "user-quit": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Nickname, Message
         "user-kicked": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str, str]),  # Channel, Nickname, Kicker, Message
         "nicknames-list": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, Nicknames list (splited by " ")
-        "me-command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]), # Channel, Nickname, Message
+        "me-command": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str]),  # Channel, Nickname, Message
         "status-message": (GObject.SIGNAL_RUN_FIRST, None, [str]),  # Message
         "topic-changed": (GObject.SIGNAL_RUN_FIRST, None, [str, str]),  # Channel, Topic
         "mode-changed": (GObject.SIGNAL_RUN_FIRST, None, [str, str, str])  # Channel, UserType, Nickname

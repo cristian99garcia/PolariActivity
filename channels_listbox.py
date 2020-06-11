@@ -21,6 +21,7 @@
 from consts import Color, SUGAR, STATUS_CHANNEL
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
@@ -29,7 +30,6 @@ from gi.repository import GObject
 
 
 class ChannelItem(Gtk.EventBox):
-
     __gsignals__ = {
         "selected": (GObject.SIGNAL_RUN_FIRST, None, []),
         "removed": (GObject.SIGNAL_RUN_FIRST, None, []),
@@ -90,7 +90,7 @@ class ChannelItem(Gtk.EventBox):
         if self.button.get_parent() == self.hbox:
             self.hbox.remove(self.button)
 
-        if self.spinner.get_parent() == None:
+        if self.spinner.get_parent() is None:
             self.hbox.pack_end(self.spinner, False, False, 0)
 
         self.spinner.start()
@@ -101,14 +101,13 @@ class ChannelItem(Gtk.EventBox):
         if self.spinner.get_parent() == self.hbox:
             self.hbox.remove(self.spinner)
 
-        if self.button.get_parent() == None and self.use_close_button:
+        if self.button.get_parent() is None and self.use_close_button:
             self.hbox.pack_end(self.button, False, False, 0)
 
         self.show_all()
 
 
 class ChannelsListBox(Gtk.ScrolledWindow):
-
     __gsignals__ = {
         "channel-selected": (GObject.SIGNAL_RUN_FIRST, None, [str]),
         "channel-removed": (GObject.SIGNAL_RUN_FIRST, None, [str]),
