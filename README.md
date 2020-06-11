@@ -17,7 +17,7 @@ git clone https://github.com/sugarlabs/PolariActivity.git ~/Activities/Polari.gi
 On Debian and Ubuntu systems, install the dependencies;
 
 ```
-apt install python-openssl python-service-identity
+apt install python3-openssl python3-service-identity python3-twisted
 ```
 
 Start the activity from the Sugar Home View, set a nickname, and press Connect.
@@ -35,7 +35,5 @@ How to integrate?
 =================
 
 Polari Activity depends on Python, [Sugar Toolkit for GTK+ 3](https://github.com/sugarlabs/sugar-toolkit-gtk3), Python OpenSSL, Python Service Identity, and GTK+ 3.
-
-Polari Activity bundles Twisted and Zope.
 
 Polari Activity is not packaged by Linux distributions.
