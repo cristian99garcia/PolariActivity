@@ -20,14 +20,13 @@
 
 from gettext import gettext as _
 
-from consts import CONNECTION_ERROR, NICKNAME_USED, SUGAR, CHAT_FONT, Color, \
-    Key, STATUS_CHANNEL
+import gi
 
-from utils import get_urls, beep, remove_usertypes
+from consts import CHAT_FONT, Color, \
+    Key, STATUS_CHANNEL
 from nicknames_listbox import NicknamesListBox
 from topic_label import TopicLabel
-
-import gi
+from utils import get_urls, beep, remove_usertypes
 
 gi.require_version("Gtk", "3.0")
 

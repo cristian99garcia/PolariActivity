@@ -18,16 +18,15 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-from consts import Color, SUGAR, ADMIN_PIXBUF, MODERATOR_PIXBUF, \
-    NORMAL_PIXBUF, UserType, UserState
-
 import gi
+
+from consts import ADMIN_PIXBUF, MODERATOR_PIXBUF, \
+    NORMAL_PIXBUF, UserType, UserState
 
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
 from gi.repository import Gdk
-from gi.repository import Pango
 from gi.repository import GObject
 
 

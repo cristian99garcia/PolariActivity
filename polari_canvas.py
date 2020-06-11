@@ -20,18 +20,18 @@
 
 from gettext import gettext as _
 
-from new_channel_screen import NewChannelScreen
+import gi
+
+from afk_manager import AFKManager
 from channels_listbox import ChannelsListBox
 from chat_box import ChatBox
-from consts import Screen, STATUS_CHANNEL, ALL_CHANNELS, CURRENT_CHANNEL, UserType
 from client import ClientFactory
-from afk_manager import AFKManager
+from consts import Screen, STATUS_CHANNEL, ALL_CHANNELS, CURRENT_CHANNEL
+from new_channel_screen import NewChannelScreen
 
-import gi
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
-from gi.repository import GObject
 
 
 class PolariCanvas(Gtk.VBox):

@@ -19,11 +19,9 @@
 # Boston, MA 02111-1307, USA.
 
 import random
-
 from gettext import gettext as _
 
 from consts import ALL_CHANNELS, CURRENT_CHANNEL, UserType
-
 from twisted.internet.error import ReactorAlreadyInstalledError
 
 try:
@@ -36,8 +34,6 @@ except ReactorAlreadyInstalledError:
 from twisted.words.protocols import irc
 from twisted.internet import reactor
 from twisted.internet import protocol
-from twisted.internet import ssl
-from twisted.internet import defer
 
 from gi.repository import GObject
 
