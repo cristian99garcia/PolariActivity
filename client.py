@@ -80,7 +80,7 @@ class Client(irc.IRCClient, GObject.GObject):
     def joined(self, channel):
         self.emit("joined", channel)
         self.emit("status-message", _("== Joined: ") + channel)
-        self.who(channel)
+        self.who(channel.encode())
 
     def privmsg(self, user, channel, msg):
         self.emit("user-message", channel, user.split("!")[0], msg)
@@ -132,7 +132,7 @@ class Client(irc.IRCClient, GObject.GObject):
     def who(self, channel):
         self.__who_reply = []
         self.__who_channel = channel
-        self.sendLine("WHO %s" % channel)
+        self.sendLine("WHO %r" % channel)
 
     def irc_RPL_WHOREPLY(self, server, data):
         usertype = UserType.NORMAL
