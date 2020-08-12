@@ -1,0 +1,23 @@
+v2
+
+* Regenerate POT file (Jui Pradhan),
+* Fix KeyError (Jui Pradhan),
+* Fix UnicodeDecodeError (Saumya Mishra),
+* Update README (Saumya Mishra),
+* Add --from-code parameter to xgettext for a python3 (Saumya Mishra),
+* Remove zope, constantly, twisted, incremental (Saumya Mishra),
+* Optimize imports (Saumya Mishra),
+* PEP8 fixes (Saumya Mishra),
+* Fix TypeError (Saumya Mishra),
+* Rebase with upstream (Saumya Mishra),
+* Port to python3 (Saumya Mishra),
+* Remove unused imports (James Cameron),
+* Add missing gettext imports (James Cameron),
+* Add internationalisation (pipix51),
+* Add README.md (James Cameron),
+* Port setup.py to GTK+3 and verify upstream sources (James Cameron),
+* More features and bug fixes (Cristian Garcia)
+
+v1
+
+* Initial release

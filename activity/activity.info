@@ -1,6 +1,6 @@
 [Activity]
 name = Polari
-activity_version = 1
+activity_version = 2
 bundle_id = org.sugarlabs.SugarPolari
 icon = icon
 exec = sugar-activity3 polari.PolariActivity
