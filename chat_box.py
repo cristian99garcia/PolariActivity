@@ -204,7 +204,11 @@ class ChatBox(Gtk.VBox):
         if channel not in self.channels and channel[1:] in self.channels:
             channel = channel[1:]
 
-        end = self.buffers[channel].get_end_iter()
+        try:
+            end = self.buffers[channel].get_end_iter()
+        except KeyError:
+            self.add_channel(channel)
+            end = self.buffers[channel].get_end_iter()
         self.buffers[channel].insert_with_tags_by_name(end, text, tag)
 
     def add_system_message(self, channel, message):
