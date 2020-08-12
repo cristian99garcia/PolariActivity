@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-30 08:15+1100\n"
+"POT-Creation-Date: 2020-08-12 18:09+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,57 +21,57 @@ msgstr ""
 msgid "Polari"
 msgstr ""
 
-#: chat_box.py:101
+#: chat_box.py:100
 msgid "Speak"
 msgstr ""
 
-#: client.py:78
+#: client.py:76
 msgid "== Signed on!"
 msgstr ""
 
-#: client.py:84
+#: client.py:82
 msgid "== Joined: "
 msgstr ""
 
-#: client.py:101
+#: client.py:99
 #, python-format
 msgid "Nickname is already in use: %s"
 msgstr ""
 
-#: client.py:199
+#: client.py:197
 msgid "You have been marked as being away"
 msgstr ""
 
-#: client.py:203
+#: client.py:201
 msgid "You are no longer marked as being away"
 msgstr ""
 
-#: client.py:214
+#: client.py:213
 #, python-brace-format
 msgid "{nickname} changed the topic of {channel} to: {topic}"
 msgstr ""
 
-#: client.py:222
+#: client.py:223
 #, python-brace-format
 msgid "You are now identified for {new_nick}"
 msgstr ""
 
-#: client.py:246
+#: client.py:247
 #, python-brace-format
 msgid "{changer} puts mode {plusminus}{modes} to {args}"
 msgstr ""
 
-#: client.py:319
+#: client.py:321
 #, python-brace-format
 msgid "Connection lost: {reason}"
 msgstr ""
 
-#: client.py:323
+#: client.py:325
 #, python-brace-format
 msgid "Connection failed: {reason}"
 msgstr ""
 
-#: client.py:326
+#: client.py:328
 #, python-brace-format
 msgid "Connecting to {host}:{port}"
 msgstr ""
@@ -98,81 +98,81 @@ msgstr ""
 msgid "Automatically selected session you tried to create."
 msgstr ""
 
-#: new_channel_screen.py:89
+#: new_channel_screen.py:91
 msgid "Nick"
 msgstr ""
 
-#: new_channel_screen.py:96
+#: new_channel_screen.py:98
 msgid "Server"
 msgstr ""
 
-#: new_channel_screen.py:103
+#: new_channel_screen.py:105
 msgid "Port"
 msgstr ""
 
-#: new_channel_screen.py:110
+#: new_channel_screen.py:112
 msgid "Channel"
 msgstr ""
 
-#: new_channel_screen.py:115
+#: new_channel_screen.py:117
 msgid "Cancel"
 msgstr ""
 
-#: new_channel_screen.py:120
+#: new_channel_screen.py:122
 msgid "Connect!"
 msgstr ""
 
-#: polari.py:71
+#: polari.py:70
 msgid "Add a channel"
 msgstr ""
 
-#: polari_canvas.py:191
+#: polari_canvas.py:193
 msgid "Logging in, please wait"
 msgstr ""
 
-#: polari_canvas.py:212
+#: polari_canvas.py:214
 #, python-format
 msgid "You've already joined %s"
 msgstr ""
 
-#: polari_canvas.py:236
+#: polari_canvas.py:238
 #, python-format
 msgid "Joined to: %s"
 msgstr ""
 
-#: polari_canvas.py:270
+#: polari_canvas.py:272
 #, python-brace-format
 msgid "{old_nick} has changed nick to {new_nick}"
 msgstr ""
 
-#: polari_canvas.py:278
+#: polari_canvas.py:280
 #, python-brace-format
 msgid "{nickname} joined."
 msgstr ""
 
-#: polari_canvas.py:283
+#: polari_canvas.py:285
 #, python-brace-format
 msgid "{nickname} has left."
 msgstr ""
 
-#: polari_canvas.py:291
+#: polari_canvas.py:293
 #, python-brace-format
 msgid "{nickname} has quit. {message}"
 msgstr ""
 
-#: polari_canvas.py:315
+#: polari_canvas.py:317
 #, python-brace-format
 msgid " * {nickname} {message}"
 msgstr ""
 
-#: polari_canvas.py:346
+#: polari_canvas.py:348
 msgid "Polari for Sugar"
 msgstr ""
 
-#: polari_canvas.py:352
+#: polari_canvas.py:354
 msgid "Add channel"
 msgstr ""
 
-#: topic_label.py:53
+#: topic_label.py:55
 msgid "Set a topic for this channel"
 msgstr ""
